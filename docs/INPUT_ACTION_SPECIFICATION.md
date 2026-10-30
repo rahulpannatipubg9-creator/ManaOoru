@@ -16,7 +16,7 @@
 | Look behind (`camera_look_behind`) | Hold C | Future touch action |
 | Zoom | Mouse wheel | Future pinch |
 | Map | M | Future map button |
-| Quick info | Tab | Future info button |
+| Switch character | Tab | Future info button |
 | Pause | Esc | Android lifecycle/menu |
 
 ## Driving

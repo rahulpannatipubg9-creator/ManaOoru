@@ -1,7 +1,7 @@
 extends SceneTree
 
 ## Windowed capture of player v2 in the real game scene (run with: caffeinate -d -i godot --path . --script
-## tests/capture_player_v2.gd). Writes outputs/character_previews/v2_ingame/*.png.
+## tools/captures/capture_player_v2.gd). Writes outputs/character_previews/v2_ingame/*.png.
 
 const OUT := "res://outputs/character_previews/v2_ingame/"
 const GameplayControls := preload("res://scripts/player/gameplay_controls.gd")
@@ -20,7 +20,7 @@ func run() -> void:
 	var person: CharacterBody3D = game.person
 	var character = person.get_node_or_null("TestCharacter")
 	print("CAPTURE model ", character.male_model.scene_file_path if character and character.male_model else "none")
-	# an open stretch of road (as tests/codex_combat_capture.gd), away from the spawn's tuk tuk and NPCs
+	# an open stretch of road (as tools/captures/codex_combat_capture.gd), away from the spawn's tuk tuk and NPCs
 	person.global_position = Vector3(116.0, 1.2, -105.0)
 	await frames(30)
 	var game_cam := root.get_viewport().get_camera_3d()

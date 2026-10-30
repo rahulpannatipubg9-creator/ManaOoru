@@ -332,7 +332,8 @@ func _process(delta: float) -> void:
 	_crouch = lerpf(_crouch, 1.0 if crouching and not scripted else 0.0, blend)
 	_prone = lerpf(_prone, 1.0 if prone and not scripted else 0.0, blend)
 	var peek_val: float = float(body.get("peek_input")) if body.get("peek_input") != null else 0.0
-	_peek = lerpf(_peek, peek_val, blend)
+	# The controller stops updating peek_input during a scripted move, so a lean held then would never let go.
+	_peek = lerpf(_peek, 0.0 if scripted else peek_val, blend)
 	# Rifle stance (the local and remote players both expose is_weapon_equipped() and their own _aim_blend).
 	var armed: bool = body.has_method("is_weapon_equipped") and body.is_weapon_equipped()
 	_armed = lerpf(_armed, 1.0 if armed and not scripted else 0.0, blend)
@@ -735,6 +736,9 @@ func _pose_static_male(speed: float, moving: bool) -> void:
 	if hip >= 0:
 		male_skeleton.set_bone_pose_rotation(hip, male_skeleton.get_bone_rest(hip).basis.get_rotation_quaternion())
 	if seated:
+		# The lean and bob below stop updating here; without this the driver keeps the last frame's tilt.
+		male_model.rotation = Vector3.ZERO
+		male_model.position.y = _male_base_height
 		_pose_male_driving()
 		return
 	var gait := clampf(speed / 6.0, 0.0, 1.0) if moving else 0.0
@@ -999,8 +1003,8 @@ func _pose_male_driving() -> void:
 		left_grip_target = centre + Vector3(cos(turn), sin(turn), 0.0) * WHEEL_RADIUS
 		right_grip_target = centre - Vector3(cos(turn), sin(turn), 0.0) * WHEEL_RADIUS
 		_pose_vehicle_grips()
-		_pose_male_fingers("L", 0.9)
-		_pose_male_fingers("R", 0.9)
+	_pose_male_fingers("L", 0.9)
+	_pose_male_fingers("R", 0.9)
 	male_skeleton.force_update_all_bone_transforms()
 
 ## The pelvis joint in this node's space.

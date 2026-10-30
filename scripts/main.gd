@@ -15,7 +15,6 @@ var _exit_was_pressed := false
 var _interact_was_pressed := false
 var _camera_was_pressed := false
 var _map_was_pressed := false
-var _info_was_pressed := false
 var _recover_was_pressed := false
 var _character_was_pressed := false
 var _pause_was_pressed := false
@@ -218,14 +217,11 @@ func _process(_delta: float) -> void:
 		elif control_state == ControlState.ON_FOOT:
 			if person.has_method("recover_person"):
 				_show_control_hint("Returned to safe ground" if person.recover_person() else "No clear recovery spot")
-	if Input.is_key_pressed(KEY_TAB) and not _info_was_pressed:
-		_show_control_hint("MANA OORU - Godavarikhani exploration")
 	_interact_was_pressed = false
 	var camera_pressed := Input.is_action_pressed("vehicle_camera")
 	if camera_pressed and not _camera_was_pressed:
 		toggle_camera_view()
 	_camera_was_pressed = camera_pressed
-	_info_was_pressed = Input.is_key_pressed(KEY_TAB)
 	_enter_was_pressed = enter_pressed
 	_exit_was_pressed = exit_pressed
 	_recover_was_pressed = Input.is_action_pressed("vehicle_recover")
@@ -270,10 +266,6 @@ func _input(event: InputEvent) -> void:
 		environment_controls.open_menu()
 		get_viewport().set_input_as_handled()
 		return
-	if key_event.keycode == KEY_F7:
-		get_tree().change_scene_to_file("res://scenes/world/chowrasta_city.tscn")
-		get_viewport().set_input_as_handled()
-		return
 	if key_event.keycode == KEY_B:
 		_teleport_to_godavari_bridge()
 		get_viewport().set_input_as_handled()
@@ -295,7 +287,7 @@ func _switch_character() -> void:
 	var character := person.get_node_or_null("TestCharacter")
 	if character and character.has_method("toggle_character"):
 		var selected: String = character.toggle_character()
-		_show_control_hint("CHARACTER: %s  •  Tab to switch" % selected)
+		_show_control_hint(selected)
 
 func _handle_menu_input() -> void:
 	if city_life and city_life.has_modal():
@@ -367,7 +359,8 @@ func _update_mouse_mode() -> void:
 	_clear_control_inputs()
 
 func _notification(what: int) -> void:
-	if what == NOTIFICATION_WM_CLOSE_REQUEST and is_instance_valid(city_life):
+	# Android rarely sends a close request: it pauses the app or asks to go back instead.
+	if what in [NOTIFICATION_WM_CLOSE_REQUEST, NOTIFICATION_WM_GO_BACK_REQUEST, NOTIFICATION_APPLICATION_PAUSED] and is_instance_valid(city_life):
 		city_life.save_progress()
 	if what == NOTIFICATION_WM_WINDOW_FOCUS_OUT:
 		_window_unfocused = true

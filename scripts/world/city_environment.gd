@@ -135,6 +135,7 @@ func set_weather_mode(mode: String) -> void:
 		storm = false
 		auto_weather = true
 		_weather_elapsed = 0.0
+		rain_target = 0.85 if _weather_phase == 1 else 0.0
 		return
 	if mode in ["Clear", "Rain", "Storm"]:
 		storm = mode == "Storm"
@@ -210,12 +211,13 @@ func apply_state() -> void:
 	_lens_material.emission_energy_multiplier = night * 2.0
 	var at: Vector3 = _game.tracked_body().global_position
 	var sorted: Array[int] = []
-	for i in _lamp_positions.size():
-		if _lamp_positions[i].distance_squared_to(at) < 150.0 * 150.0:
-			sorted.append(i)
+	if night > 0.03 and not indoors:
+		for i in _lamp_positions.size():
+			if _lamp_positions[i].distance_squared_to(at) < 150.0 * 150.0:
+				sorted.append(i)
 	sorted.sort_custom(func(a: int, b: int) -> bool: return _lamp_positions[a].distance_squared_to(at) < _lamp_positions[b].distance_squared_to(at))
 	for i in _lamps.size():
-		_lamps[i].visible = night > 0.03 and i < sorted.size() and not indoors
+		_lamps[i].visible = i < sorted.size()
 		if i < sorted.size():
 			_lamps[i].global_position = _lamp_positions[sorted[i]]
 			_lamps[i].light_energy = night * 4.0

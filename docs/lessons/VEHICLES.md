@@ -17,6 +17,14 @@ Code: `scripts/vehicle/` (`vehicle_entry.gd` for getting in and out and the seat
 
 ## Entries
 
+### A wrecked helicopter kept a stale exit prompt (2026-10-30)
+- **Symptom:** after a wreck the prompt stayed on "LAND TO EXIT" even on the ground, and a wreck falling out of the
+  world was never recovered.
+- **Cause:** `helicopter.gd _physics_process` returned on `condition <= 0.0` before the fall check and before
+  updating `_grounded`.
+- **Rule:** an early return in a vehicle's physics step must not skip the state the HUD reads.
+- **Check:** `save_and_feedback_regression`.
+
 ### Driver hanging out of the Porsche window (2026-10-29)
 - **Symptom:** body half outside the car, an arm out of the window, legs through the floor.
 - **Cause:** the character's fixed-angle driving pose, not the seat numbers: the seat put the hips exactly on

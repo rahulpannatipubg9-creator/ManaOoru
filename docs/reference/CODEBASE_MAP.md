@@ -48,7 +48,7 @@ the main thread:
 - **Squad (LAN):** ENet on port 7777 with UDP discovery on 7778 and 7779. Peers trust each other.
 - **Team Deathmatch (LAN):** the host owns the match and checks hit claims. Weapons are limited to the rifles. The
   city is trimmed to a 125 m arena around Chowrastha.
-- **Other scenes:** `chowrasta_city.tscn` (sketch-based map, F7), `godavari_bridge_driving.tscn`.
+- **Other scenes:** `chowrasta_city.tscn` (sketch-based map), `godavari_bridge_driving.tscn`.
 
 The README and the Game Design Document still describe a single-player game with no combat. The code has moved
 well past them.
