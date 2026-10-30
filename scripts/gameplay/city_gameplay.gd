@@ -611,7 +611,7 @@ func attack() -> bool:
 		elif col.has_method("take_damage"):
 			col.take_damage(damage)
 			if armed and not col is VehicleBody3D:
-				effects.hit_click(false, origin.distance_to(endpoint))
+				if effects: effects.hit_click(false, origin.distance_to(endpoint))
 	# Ambient residents use lightweight Node3D actors: test their hit volumes only
 	# before the first world collision, preserving wall occlusion.
 	var closest: Node3D
@@ -628,7 +628,7 @@ func attack() -> bool:
 		closest.take_damage(damage)
 		endpoint = origin + direction * closest_distance
 		if armed:
-			effects.hit_click(false, closest_distance)
+			if effects: effects.hit_click(false, closest_distance)
 	if armed:
 		ammo -= 1
 		if tdm_active:
@@ -679,10 +679,10 @@ static func spread_direction(view: Basis, degrees: float) -> Vector3:
 	return (-view.z + (view.x * along.x + view.y * along.y) * tan(off)).normalized()
 
 func _on_tdm_hit_confirmed(_victim: int, headshot: bool, _killed: bool) -> void:
-	effects.hit_click(headshot, _last_shot_distance)
+	if effects: effects.hit_click(headshot, _last_shot_distance)
 
 func _on_dummy_hit(headshot: bool, _killed: bool) -> void:
-	effects.hit_click(headshot, _last_shot_distance)
+	if effects: effects.hit_click(headshot, _last_shot_distance)
 
 func try_loot_nearby() -> bool:
 	if game.control_state != game.ControlState.ON_FOOT or not GameplayControls.allows(game.person):
