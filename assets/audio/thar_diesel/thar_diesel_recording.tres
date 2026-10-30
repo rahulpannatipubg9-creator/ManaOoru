@@ -1,11 +1,11 @@
 [gd_resource type="Resource" load_steps=7 format=3]
 
 [ext_resource type="Script" path="res://scripts/player/engine_recording.gd" id="1_recording"]
-[ext_resource type="AudioStream" uid="uid://cvqxr2fc7052l" path="res://assets/audio/thar_diesel/diesel_913rpm.wav" id="2_loop"]
-[ext_resource type="AudioStream" uid="uid://degv4kx2b8du1" path="res://assets/audio/thar_diesel/diesel_1791rpm.wav" id="3_loop"]
-[ext_resource type="AudioStream" uid="uid://slhnfxms7jd2" path="res://assets/audio/thar_diesel/diesel_2183rpm.wav" id="4_loop"]
-[ext_resource type="AudioStream" uid="uid://bxppq7yd48q16" path="res://assets/audio/thar_diesel/diesel_2438rpm.wav" id="5_loop"]
-[ext_resource type="AudioStream" uid="uid://2a266t7dvirn" path="res://assets/audio/thar_diesel/diesel_3133rpm.wav" id="6_loop"]
+[ext_resource type="AudioStream" uid="uid://dlkbcf0vtqb27" path="res://assets/audio/thar_diesel/diesel_913rpm.ogg" id="2_loop"]
+[ext_resource type="AudioStream" uid="uid://bm2xl6lsklcf2" path="res://assets/audio/thar_diesel/diesel_1791rpm.ogg" id="3_loop"]
+[ext_resource type="AudioStream" uid="uid://bd3gkv3v8pqhx" path="res://assets/audio/thar_diesel/diesel_2183rpm.ogg" id="4_loop"]
+[ext_resource type="AudioStream" uid="uid://7ul6yt7lodp6" path="res://assets/audio/thar_diesel/diesel_2438rpm.ogg" id="5_loop"]
+[ext_resource type="AudioStream" uid="uid://difislj2yvxbt" path="res://assets/audio/thar_diesel/diesel_3133rpm.ogg" id="6_loop"]
 
 [resource]
 script = ExtResource("1_recording")

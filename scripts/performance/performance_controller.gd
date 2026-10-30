@@ -9,6 +9,19 @@ var _shadow_defaults: Dictionary = {}
 var _default_camera_far := 2000.0
 var active_ambient_count := 0
 var active_ai_count := 0
+var current_draw_calls := 0
+var current_vram_mb := 0.0
+
+func sample_hardware_metrics() -> Dictionary:
+	current_draw_calls = RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_TOTAL_DRAW_CALLS_IN_FRAME)
+	current_vram_mb = Performance.get_monitor(Performance.RENDER_VIDEO_MEM_USED) / (1024.0 * 1024.0)
+	return {
+		"draw_calls": current_draw_calls,
+		"vram_mb": current_vram_mb,
+		"fps": Engine.get_frames_per_second(),
+		"max_draw_calls": int(settings.values.get("max_draw_calls", 250)),
+		"vram_budget_mb": 450.0
+	}
 
 func setup(owner_game: Node) -> void:
 	game = owner_game
@@ -38,7 +51,19 @@ func apply_settings() -> void:
 		var original: float = _base_distances[geometry.get_instance_id()]
 		geometry.visibility_range_end = minf(original, budget.distance) if original > 0.0 else budget.distance
 	for light in _shadow_defaults:
-		if is_instance_valid(light): light.shadow_enabled = _shadow_defaults[light] and budget.shadows
+		if is_instance_valid(light):
+			light.shadow_enabled = _shadow_defaults[light] and budget.shadows
+			if light is DirectionalLight3D and budget.shadows:
+				var cascade: int = int(budget.get("shadow_cascade", 1))
+				if cascade == 1:
+					light.directional_shadow_mode = DirectionalLight3D.SHADOW_ORTHOGONAL
+				elif cascade == 2:
+					light.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS
+				else:
+					light.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
+				var dist: float = float(budget.get("shadow_distance", 35.0))
+				if dist > 0.0:
+					light.directional_shadow_max_distance = dist
 	if game.city_life and game.city_life.environment:
 		game.city_life.environment.effects_budget = budget.effects
 	_timer = 0.0

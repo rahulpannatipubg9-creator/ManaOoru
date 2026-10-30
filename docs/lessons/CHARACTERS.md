@@ -80,3 +80,8 @@ notes are in [characters/](characters/). Code: `scripts/player/test_character.gd
 ### Left hand could not reach the rifle's handguard (2026-10-29)
 - **Cause:** the arms alone are about 9 cm too short at the ready position.
 - **Rule:** turn the chest so the left shoulder comes forward (`_pose_armed()`), then solve the arm.
+
+### Animation LOD and Mobile Bone Limits (2026-10-30)
+- **Symptom:** High bone counts and full 60 FPS blend tree updates on multiple pedestrians, dummies and puppets caused vertex skinning bottlenecks on mobile GPUs (Vulkan/OpenGL ES 3.0).
+- **Rule:** Keep mobile character rigs under 45–50 bones for seamless compatibility with mobile OpenGL/Vulkan skinning limits (preventing uniform buffer overflow). Update character skeletons at full 60 FPS up close (0–15m), but throttle distant pedestrians, bots and puppets to 15–30 FPS animation ticks (30 FPS at 15–35m, 15 FPS beyond 35m).
+- **Check:** `movement_regression.gd`, verify animation fidelity up close and tick throttling in distant views.

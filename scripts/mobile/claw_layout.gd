@@ -72,9 +72,9 @@ static func min_target(safe: Rect2, units_mm: float) -> float:
 	return minf(MIN_TARGET_MM * units_mm, minf(safe.size.x, safe.size.y) * MAX_UNIT_SHARE)
 
 ## Rectangles keyed by slot name. Contextual slots (Vehicle, Context) are always
-## reserved so showing them never pushes other buttons around. `tablet` is kept for
-## callers; the reference proportions already suit both, the mm floor handles phones.
-static func compute(visible_size: Vector2, safe: Rect2, units_mm: float, _tablet := false,
+## reserved so showing them never pushes other buttons around. `tablet` insets
+## the controls inward for comfortable thumb reach on 4:3 and 16:10 aspect ratios.
+static func compute(visible_size: Vector2, safe: Rect2, units_mm: float, tablet := false,
 		button_scale := 1.0, left_handed := false) -> Dictionary:
 	var short_side := minf(safe.size.x, safe.size.y)
 	var min_target := minf(MIN_TARGET_MM * units_mm, short_side * MAX_UNIT_SHARE)
@@ -82,6 +82,10 @@ static func compute(visible_size: Vector2, safe: Rect2, units_mm: float, _tablet
 	var s := button_scale
 	var g := maxf(min_target * 0.18, 10.0 * k)
 	var margin := maxf(g, short_side * 0.03)
+	if tablet:
+		var aspect := safe.size.x / maxf(1.0, safe.size.y)
+		if aspect <= 1.65:
+			margin += short_side * (0.018 / maxf(1.0, s))
 	var t := maxf(min_target, 62.0 * k * s)
 	var left := safe.position.x + margin
 	var right := safe.end.x - margin

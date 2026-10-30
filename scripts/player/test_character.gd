@@ -58,6 +58,8 @@ var _moving_backward := false
 const CROUCH_STRIDE := 1.4
 var _crouch_idle: Animation
 var _crouch_walk: Animation
+var _anim_lod_timer := 0.0
+var _accumulated_anim_delta := 0.0
 ## Bone index -> [idle rotation, idle position, walk rotation, walk position] track indices.
 var _crouch_tracks := {}
 var _crouch_phase := 0.0
@@ -319,6 +321,18 @@ func _seated_leg_angles() -> Vector2:
 func _process(delta: float) -> void:
 	if skeleton == null and male_skeleton == null:
 		return
+	var camera := get_viewport().get_camera_3d()
+	if camera != null:
+		var dist_sq := global_position.distance_squared_to(camera.global_position)
+		if dist_sq > 15.0 * 15.0:
+			var target_fps := 15.0 if dist_sq > 35.0 * 35.0 else 30.0
+			_anim_lod_timer += delta
+			_accumulated_anim_delta += delta
+			if _anim_lod_timer < 1.0 / target_fps:
+				return
+			delta = _accumulated_anim_delta
+			_anim_lod_timer = 0.0
+			_accumulated_anim_delta = 0.0
 	var body := get_parent() as CharacterBody3D
 	var scripted := scripted_speed >= 0.0 or seated
 	var speed := maxf(scripted_speed, 0.0) if scripted else Vector2(body.velocity.x, body.velocity.z).length()

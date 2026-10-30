@@ -218,6 +218,27 @@ func close_menu() -> void:
 	if hud._game.performance_controller.settings.save_to() != OK:
 		hint.text = "Graphics preferences could not be saved."
 		return
+	var dpm_node: Variant = hud._game.get("device_performance_manager")
+	if dpm_node != null:
+		var pc_values: Dictionary = hud._game.performance_controller.settings.values
+		var cascade_val: int = int(pc_values.get("shadow_cascade", 1))
+		var shadow_mode_val: int = DirectionalLight3D.SHADOW_ORTHOGONAL if cascade_val == 1 else (DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS if cascade_val == 2 else DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS)
+		var active_prof: Variant = dpm_node.get("active_profile")
+		var tablet_inset: bool = active_prof.get("tablet_hud_inset", false) if active_prof is Dictionary else false
+		dpm_node.call("save_settings", {
+			"tier": dpm_node.get("active_tier"),
+			"tier_name": "Custom Profile",
+			"target_fps": pc_values.get("fps", 60),
+			"scaling_3d_scale": pc_values.get("scale", 1.0),
+			"shadow_enabled": pc_values.get("shadows", true),
+			"directional_shadow_mode": shadow_mode_val,
+			"directional_shadow_max_distance": pc_values.get("shadow_distance", 35.0),
+			"view_distance": pc_values.get("distance", 550.0),
+			"simulation_distance": pc_values.get("simulation", 220.0),
+			"actors": pc_values.get("actors", 28),
+			"effects": pc_values.get("effects", 0.6),
+			"tablet_hud_inset": tablet_inset
+		}, true)
 	panel.hide()
 	get_tree().paused = false
 	hud._game._clear_control_inputs()
@@ -239,8 +260,16 @@ func _build_graphics(tabs: TabContainer) -> void:
 	graphics_preset.item_selected.connect(func(index: int) -> void:
 		if _graphics_sync: return
 		var controller = hud._game.performance_controller
-		controller.settings.select(["Auto", "Low", "Medium", "High", "Custom"][index])
-		controller.apply_settings()
+		var dpm = hud._game.get("device_performance_manager")
+		var selected_name: String = ["Auto", "Low", "Medium", "High", "Custom"][index]
+		if selected_name == "Auto" and dpm != null:
+			dpm.call("override_tier", dpm.get("detected_tier"), hud._game)
+		else:
+			controller.settings.select(selected_name)
+			controller.apply_settings()
+			if dpm != null and selected_name != "Custom":
+				var tier_idx := 1 if selected_name == "Low" else (2 if selected_name == "Medium" else 3)
+				dpm.set("active_tier", tier_idx)
 		_refresh_graphics())
 	for item in [["3D resolution scale", "scale", 0.5, 1.0, 0.05], ["Building / prop distance (metres)", "distance", 250.0, 1000.0, 50.0], ["Active ambient residents / traffic", "actors", 6.0, 70.0, 1.0], ["Simulation distance (metres)", "simulation", 80.0, 450.0, 10.0], ["Weather effects", "effects", 0.0, 1.0, 0.05]]:
 		var label := Label.new()

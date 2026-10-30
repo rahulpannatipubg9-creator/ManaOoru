@@ -226,8 +226,9 @@ func set_driving_enabled(value: bool) -> void:
 		touch_run_pressed = false
 		tyre_slip = 0.0
 		gearbox.reset()
-	# A car parked at rest goes straight to sleep; any collision wakes it up again.
-	sleeping = not value and linear_velocity.length() < PARK_SLEEP_SPEED
+		sleeping = linear_velocity.length() < PARK_SLEEP_SPEED
+	else:
+		sleeping = false
 
 func set_input_authority(value: bool) -> void:
 	if value == input_authority:
@@ -279,7 +280,7 @@ func settle_on_ground() -> void:
 	if not is_inside_tree():
 		return
 	var origin := global_position + Vector3.UP * 2.0
-	var query := PhysicsRayQueryParameters3D.create(origin, origin + Vector3.DOWN * 50.0, 1 | (1 << (ROAD_LAYER - 1)), [get_rid()])
+	var query := PhysicsRayQueryParameters3D.create(origin, origin + Vector3.DOWN * 50.0, 1, [get_rid()])
 	var hit := get_world_3d().direct_space_state.intersect_ray(query)
 	var placed := global_transform
 	if not hit.is_empty():
@@ -411,7 +412,7 @@ func _apply_wheels(delta: float, drive_force: float, brake: float) -> void:
 	for index in 4:
 		var origin := global_transform * _mounts[index]
 		var query := PhysicsRayQueryParameters3D.create(origin, origin - up * (max_length + wheel_radius),
-			1 | (1 << (ROAD_LAYER - 1)), [get_rid()])
+			1, [get_rid()])
 		var hit := space.intersect_ray(query)
 		# Wheels roll over the world, not over people.
 		if not hit.is_empty() and hit.collider is CharacterBody3D:
@@ -551,12 +552,19 @@ func _record_safe_transform(delta: float) -> void:
 		_safe_transforms = [_safe_transforms[1], global_transform]
 
 ## Engine sound is optional (bare test cars have none).
+## Only the driven vehicle's engine audio runs; parked cars are completely muted.
 func _update_audio(controlled: bool, throttle: float, delta: float) -> void:
 	var audio := get_node_or_null("EngineAudio")
 	if audio == null:
 		return
+	if not controlled:
+		if audio.has_method("mute"):
+			audio.mute()
+		elif audio.has_method("set_running"):
+			audio.set_running(false)
+		return
 	if audio.has_method("set_running"):
-		audio.set_running(controlled)
+		audio.set_running(true)
 	if audio.has_method("set_engine_rpm"):
 		audio.set_engine_rpm(gearbox.rpm, gearbox.gear)
 	if audio.has_method("update_drive_state"):
