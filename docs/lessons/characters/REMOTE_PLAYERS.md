@@ -12,6 +12,14 @@ Other people's characters on this device. Code: `scripts/network/network_player.
 
 ## Entries
 
+### Remote bodies stuttered: smoothing toward the newest packet (2026-10-30)
+- **Symptom:** other players moved in small surges and their feet did not match their speed.
+- **Cause:** `network_player.gd` eased toward the latest 30 Hz state and took the feet's speed from that easing.
+- **Rule:** draw remote bodies `interpolation_delay` (0.1 s) in the past from `_snapshots`, and take leg speed from
+  the sampled motion. Extrapolate at most `extrapolation_cap`, then stop the legs too. Steps come from the character's
+  `foot_planted`, not a timer.
+- **Check:** `feel_regression` `test_remote_buffer`.
+
 ### Everyone looked like they held an M416 (2026-10-29)
 - **Cause:** the rifle model was hard-coded in `network_player.gd`.
 - **Rule:** anything a player can change that others should see must be synced. The held rifle travels in

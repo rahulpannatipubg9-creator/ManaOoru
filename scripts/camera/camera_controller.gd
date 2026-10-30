@@ -38,12 +38,19 @@ const SPEED_FOV_FULL := 30.0
 @export var recoil_recovery_stiffness := 3.0
 @export var recoil_settle_delay := 0.12
 ## How fast each shot's kick reaches the view (per second): high enough to read as a shot, not a cut.
-@export var recoil_kick_rate := 45.0
+@export var recoil_kick_rate := 60.0
+## A shot shakes the view: shake gained per radian of kick, metres at full shake, how fast it dies (per second), its
+## share while aiming, and degrees the field of view jumps per shot.
+@export var shot_shake_per_kick := 22.0
+@export var shot_shake_offset := 0.035
+@export var shot_shake_decay := 7.0
+@export var shot_shake_aim_scale := 0.5
+@export var shot_fov_punch := 0.7
 ## Aiming narrows the field of view to this share, at this rate (per second).
 @export var ads_fov_scale := 0.62
 @export var ads_zoom_rate := 14.0
 ## Seconds the view takes to travel from the shoulder to the sight, and back.
-@export var ads_view_seconds := 0.14
+@export var ads_view_seconds := 0.11
 ## How fast (per second) the view follows a change of stance, and a swap of shoulder.
 @export var stance_camera_rate := 9.0
 @export var shoulder_swap_rate := 10.0
@@ -109,6 +116,7 @@ var _boom_exclude_timer := 0.0
 var _stance_target := 1.45
 var _mount_x := 0.0
 var _dip := 0.0
+var _shake := 0.0
 var _dip_velocity := 0.0
 var _bob_offset := Vector2.ZERO
 
@@ -510,6 +518,10 @@ func add_recoil(pitch_kick: float = 0.022, yaw_kick: float = 0.008, yaw_bias := 
 	_recoil_pending += Vector2(pitch_kick, yaw_bias + (randf() - 0.5) * 2.0 * yaw_kick)
 	_recoil_debt += pitch_kick
 	_since_recoil = 0.0
+	if pitch_kick > 0.0:
+		_shake = minf(_shake + pitch_kick * shot_shake_per_kick, 1.0)
+		if _camera:
+			_camera.fov += shot_fov_punch * (shot_shake_aim_scale if is_aiming else 1.0)
 
 ## Step-timed head bob through the camera's view offsets (the spring arm owns its
 ## position): a dip on each footstep and a sway per stride, stronger when sprinting
@@ -533,8 +545,10 @@ func _update_bob(delta: float) -> void:
 	_dip_velocity += (-landing_dip_stiffness * _dip - landing_dip_damping * _dip_velocity) * step
 	_dip += _dip_velocity * step
 	_bob_offset = _bob_offset.lerp(target, weight)
-	_camera.h_offset = _bob_offset.x
-	_camera.v_offset = _bob_offset.y + _dip
+	_shake = move_toward(_shake, 0.0, shot_shake_decay * delta * maxf(_shake, 0.15))
+	var jolt := Vector2(randf_range(-1.0, 1.0), randf_range(-1.0, 1.0)) * _shake * _shake * shot_shake_offset * (shot_shake_aim_scale if is_aiming else 1.0)
+	_camera.h_offset = _bob_offset.x + jolt.x
+	_camera.v_offset = _bob_offset.y + _dip + jolt.y
 
 ## After a burst the muzzle climb eases back down, as in BGMI, instead of leaving
 ## the view pointing at the sky.

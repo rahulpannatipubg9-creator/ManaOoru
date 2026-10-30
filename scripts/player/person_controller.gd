@@ -29,11 +29,11 @@ var fall_limit := -10.0
 @export var jump_velocity: float = 7.0
 @export_group("Movement feel")
 ## Pick-up into a sprint; lower than `acceleration` so a sprint builds instead of snapping on.
-@export var sprint_acceleration := 13.0
+@export var sprint_acceleration := 18.0
 ## Grip when the input points against the motion, so a reversal plants the feet instead of drifting round.
 @export var reverse_acceleration := 30.0
 ## Share of the acceleration lost on reaching the target speed: the body eases into its pace (0 = linear).
-@export_range(0.0, 0.9) var top_speed_ease := 0.5
+@export_range(0.0, 0.9) var top_speed_ease := 0.35
 ## Fraction of the walking speed while aiming down the sight, as in other shooters.
 @export var aim_speed_scale := 0.62
 ## With a rifle out, sprinting needs the motion this far toward where the body faces (1 = dead ahead).
@@ -48,6 +48,13 @@ var fall_limit := -10.0
 @export var camera_height_lag_limit := 0.4
 ## Fall speed (m/s) that gives the full landing dip; smaller drops dip less, under 2 m/s not at all.
 @export var landing_dip_full_speed := 13.0
+@export_group("Slide")
+## Crouching out of a sprint slides: speed kept at the start, loss per second, longest time, and how far the
+## direction bends toward the input (per second).
+@export var slide_boost := 1.1
+@export var slide_friction := 7.0
+@export var slide_seconds := 0.75
+@export var slide_steer := 1.2
 @export_group("Footsteps")
 @export var footstep_quiet_db := -20.0
 @export var footstep_loud_db := -9.0
@@ -119,6 +126,8 @@ var step_visual_offset := 0.0
 ## Metres the camera sits away from the capsule's height, eased away, so steps and slopes never jolt it.
 var camera_height_lag := 0.0
 var _stance_settle := 0.0
+var _slide_time := 0.0
+var _slide_direction := Vector2.ZERO
 var _footstep_player: AudioStreamPlayer
 ## Which reload the hands are in: its full length, read when weapon_reload_time is set.
 var _reload_total := 0.0
@@ -205,6 +214,21 @@ static func step_ground_velocity(current: Vector2, target: Vector2, pickup: floa
 		var fill := clampf(along / target_speed, 0.0, 1.0)
 		rate = pickup * (1.0 - ease_share * fill * fill)
 	return current.move_toward(target, rate * delta)
+
+func is_sliding() -> bool:
+	return _slide_time > 0.0
+
+## One tick of a slide: the body carries on, slowing, and the input bends its path only a little. It ends in the
+## crouch walk, in the air, or when a wall takes the speed away.
+func _step_slide(braked: Vector2, wanted: Vector2, crouch_speed: float, grounded: bool, delta: float) -> Vector2:
+	_slide_time -= delta
+	if wanted.length_squared() > 0.01:
+		_slide_direction = _slide_direction.slerp(wanted.normalized(), minf(slide_steer * delta, 1.0)).normalized()
+	var speed := Vector2(velocity.x, velocity.z).length() - slide_friction * delta
+	if not grounded or speed <= crouch_speed:
+		_slide_time = 0.0
+		return braked
+	return _slide_direction * speed
 
 ## 0..1 through the current stride, for anything that keeps time with the feet; negative without a character.
 func stride_phase() -> float:
@@ -349,10 +373,8 @@ func _physics_process(delta: float) -> void:
 
 	var key_peek := 0.0
 	if allowed and not downed:
-		if is_weapon_equipped():
-			# Q and E are free-roam keys too (E interacts), so they only lean with a rifle out.
-			if Input.is_action_pressed("lean_left"): key_peek -= 1.0
-			if Input.is_action_pressed("lean_right"): key_peek += 1.0
+		if Input.is_action_pressed("lean_left"): key_peek -= 1.0
+		if Input.is_action_pressed("lean_right"): key_peek += 1.0
 	peek_input = (key_peek if absf(key_peek) > 0.0 else touch_peek_input) if (allowed and not downed) else 0.0
 	if camera_pivot and "target_peek" in camera_pivot:
 		camera_pivot.target_peek = peek_input
@@ -389,6 +411,8 @@ func _physics_process(delta: float) -> void:
 	var flat := step_ground_velocity(Vector2(velocity.x, velocity.z), Vector2(target_velocity.x, target_velocity.z),
 		(sprint_acceleration if is_running else acceleration) * control, stopping_acceleration * control,
 		reverse_acceleration * control, top_speed_ease, delta)
+	if is_sliding():
+		flat = _step_slide(flat, Vector2(direction.x, direction.z), target_speed, was_on_floor, delta)
 	velocity.x = flat.x
 	velocity.z = flat.y
 	if combat_mode and is_weapon_equipped() and not camera_pivot.touch_free_look and not Input.is_action_pressed("free_look"):
@@ -463,6 +487,14 @@ func _update_stance(wants_crouch: bool, wants_prone: bool) -> void:
 		return
 	if wants_prone != prone:
 		_stance_settle = stance_settle_seconds
+	var flat_speed := Vector2(velocity.x, velocity.z).length()
+	if wants_crouch and not crouching and not wants_prone and is_running and is_on_floor() and flat_speed > walk_speed:
+		_slide_time = slide_seconds
+		_slide_direction = Vector2(velocity.x, velocity.z) / flat_speed
+		velocity.x *= slide_boost
+		velocity.z *= slide_boost
+	elif not wants_crouch or wants_prone:
+		_slide_time = 0.0
 	prone = wants_prone
 	crouching = wants_crouch and not wants_prone
 	_capsule.radius = minf(_stand_radius, target_h * 0.45)
@@ -537,8 +569,8 @@ func _update_weapon_presentation(delta: float) -> void:
 	var right := camera.global_basis.x
 	var up := camera.global_basis.y
 	var sprinting := is_running and not aiming and Vector2(velocity.x, velocity.z).length() > 4.0
-	_aim_blend = move_toward(_aim_blend, 1.0 if aiming else 0.0, delta / 0.16)
-	_carry_blend = move_toward(_carry_blend, 1.0 if sprinting else 0.0, delta / 0.22)
+	_aim_blend = move_toward(_aim_blend, 1.0 if aiming else 0.0, delta / 0.12)
+	_carry_blend = move_toward(_carry_blend, 1.0 if sprinting else 0.0, delta / (0.12 if aiming else 0.22))
 	var aim_ease := smoothstep(0.0, 1.0, _aim_blend)
 	var carry_ease := smoothstep(0.0, 1.0, _carry_blend)
 	var base: Vector3

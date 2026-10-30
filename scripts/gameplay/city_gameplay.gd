@@ -3,6 +3,7 @@ extends Node3D
 const Pursuer := preload("res://scripts/gameplay/pursuer.gd")
 const CityAssets := preload("res://scripts/gameplay/city_assets.gd")
 const Weapons := preload("res://scripts/gameplay/weapon_catalog.gd")
+const ShotEffects := preload("res://scripts/gameplay/shot_effects.gd")
 var passenger: Node3D
 var market: Node3D
 var spoken_dialogue := false
@@ -26,7 +27,25 @@ var mag_size := 24
 var reload_seconds := 1.5
 ## Set by tdm_local.gd while a Team Deathmatch is running: no crime, no free-roam respawn.
 var tdm_active := false
-var tdm_local: Node
+var tdm_local: Node:
+	set(value):
+		tdm_local = value
+		if value != null and value.get("session") != null:
+			value.session.hit_confirmed.connect(_on_tdm_hit_confirmed)
+@export_group("Spread")
+## Share of the rifle's spread left when aiming down the sight, crouched and prone.
+@export var spread_aim_scale := 0.15
+@export var spread_crouch_scale := 0.75
+@export var spread_prone_scale := 0.5
+## Degrees added at a full sprint (hip), the share of that left when aiming, and degrees added in the air.
+@export var spread_move := 1.8
+@export var spread_move_aim_scale := 0.3
+@export var spread_air := 3.0
+## The most a held burst widens the spread (degrees), and how fast it closes again (degrees per second).
+@export var bloom_limit := 1.2
+@export var bloom_recovery := 3.0
+## A pause this long (seconds) starts the rifle's recoil pattern again.
+@export var recoil_pattern_reset := 0.3
 ## A rifle (M416 or AK-47) is looted from the street (Chowrastha) before one can be drawn; saved.
 var has_rifle := false
 ## Which rifles are owned (weapon_catalog.gd ids); read it through rifles(). Empty while has_rifle is
@@ -47,7 +66,11 @@ var _crime_time := 0.0
 var _spawn_timer := 0.0
 var _shot_cooldown := 0.0
 var _reload_time := 0.0
-var _foot_timer := 0.0
+var effects: Node3D
+var _bloom := 0.0
+var _burst_shot := 0
+var _last_shot_msec := -100000
+var _last_shot_distance := 0.0
 var _income_time := 0.0
 var _npc_timer := 0.0
 var _npcs: Array[Node] = []
@@ -72,6 +95,8 @@ func setup(owner_game: Node) -> void:
 	game.person.water_system = water
 	_build_ui()
 	_build_marker()
+	effects = ShotEffects.new()
+	add_child(effects)
 	for sound in ["shot", "punch", "step", "explosion", "reload"]:
 		var player := AudioStreamPlayer.new()
 		player.stream = load("res://assets/audio/gameplay/%s.wav" % sound)
@@ -223,12 +248,6 @@ func _process(delta: float) -> void:
 			life.toast("Vehicle taken • police alerted")
 	_last_driving = driving
 	_radio.stream_paused = not driving
-	if game.control_state == game.ControlState.ON_FOOT and game.person.is_on_floor() and game.person.velocity.length() > 0.5:
-		_foot_timer -= delta
-		if _foot_timer <= 0.0:
-			_foot_timer = 0.28 if game.person.is_running else 0.45
-			_audio.step.pitch_scale = randf_range(0.9, 1.1)
-			_audio.step.play()
 	_refresh_status()
 
 func _refresh_status() -> void:
@@ -537,6 +556,8 @@ func attack() -> bool:
 	var camera := get_viewport().get_camera_3d()
 	var origin := camera.global_position
 	var direction := -camera.global_basis.z
+	if armed:
+		direction = spread_direction(camera.global_basis, current_spread())
 	var length := 150.0 if armed else 3.0
 	if not armed:
 		origin = game.person.global_position + Vector3.UP
@@ -559,9 +580,15 @@ func attack() -> bool:
 		if tdm_active and col.has_method("tdm_claim_hit"):
 			col.tdm_claim_hit(hit.position, origin, game.person.weapon_id)
 		elif tdm_active and col.has_method("tdm_dummy_hit"):
+			_last_shot_distance = origin.distance_to(endpoint)
+			col.hit.connect(_on_dummy_hit, CONNECT_ONE_SHOT)
 			col.tdm_dummy_hit(hit.position, game.person.weapon_id)
+			if col.hit.is_connected(_on_dummy_hit):
+				col.hit.disconnect(_on_dummy_hit)
 		elif col.has_method("take_damage"):
 			col.take_damage(damage)
+			if armed and not col is VehicleBody3D:
+				effects.hit_click(false, origin.distance_to(endpoint))
 	# Ambient residents use lightweight Node3D actors: test their hit volumes only
 	# before the first world collision, preserving wall occlusion.
 	var closest: Node3D
@@ -577,20 +604,34 @@ func attack() -> bool:
 	if closest:
 		closest.take_damage(damage)
 		endpoint = origin + direction * closest_distance
+		if armed:
+			effects.hit_click(false, closest_distance)
 	if armed:
 		ammo -= 1
 		if tdm_active:
 			tdm_local.on_shot_fired()
 		_audio.shot.play()
 		var muzzle_position: Vector3 = game.person.weapon_muzzle_position()
-		_tracer(muzzle_position, endpoint)
-		_shot_flash(muzzle_position)
+		effects.tracer(muzzle_position, endpoint)
+		effects.flash(muzzle_position)
+		if closest:
+			effects.puff(endpoint, -direction, true)
+		elif not hit.is_empty():
+			var body_hit: bool = hit.get("collider") is Object and hit.collider.is_in_group("combat_target")
+			effects.puff(endpoint, hit.normal, body_hit)
+		_last_shot_distance = origin.distance_to(endpoint)
+		var since_shot := (Time.get_ticks_msec() - _last_shot_msec) / 1000.0
+		_burst_shot = 0 if since_shot > recoil_pattern_reset else _burst_shot + 1
+		_bloom = minf(_current_bloom() + float(gun.bloom), bloom_limit)
+		_last_shot_msec = Time.get_ticks_msec()
 		game.person.weapon_kick = gun.kick
 		if game.get("network_manager") and game.network_manager.is_active():
 			game.network_manager.notify_local_fired()
 		var stance_mult: float = 0.3 if game.person.get("prone") == true else (0.6 if game.person.get("crouching") == true else 1.0)
 		if game.person.camera_pivot and game.person.camera_pivot.has_method("add_recoil"):
-			game.person.camera_pivot.add_recoil(gun.recoil.x * stance_mult, gun.recoil.y * stance_mult)
+			# Mostly the rifle's own learnable pattern, with a little chance on top.
+			var pattern: Array = gun.recoil_pattern
+			game.person.camera_pivot.add_recoil(gun.recoil.x * stance_mult, gun.recoil.y * 0.4 * stance_mult, float(pattern[_burst_shot % pattern.size()]) * stance_mult)
 	else:
 		_audio.punch.play()
 	var character: Node = game.person.get_node_or_null("TestCharacter")
@@ -599,25 +640,33 @@ func attack() -> bool:
 	report_crime(8.0 if armed else (12.0 if closest else 0.0))
 	return true
 
-func _tracer(from: Vector3, to: Vector3) -> void:
-	var distance := from.distance_to(to)
-	if distance < 0.01: return
-	var line := MeshInstance3D.new()
-	var mesh := CylinderMesh.new()
-	mesh.top_radius = 0.009
-	mesh.bottom_radius = 0.009
-	mesh.height = distance
-	mesh.radial_segments = 4
-	var material := StandardMaterial3D.new()
-	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	material.albedo_color = Color("ffe29a")
-	mesh.material = material
-	line.mesh = mesh
-	add_child(line)
-	line.global_position = (from + to) * 0.5
-	var direction := (to - from).normalized()
-	line.global_basis = Basis(Quaternion(Vector3.UP, direction))
-	get_tree().create_timer(0.10, false).timeout.connect(line.queue_free)
+## Degrees the next shot may stray: tightest aimed, still and prone, widest hip-firing on the run or in the air.
+func spread_for(base: float, aiming: bool, crouching: bool, prone: bool, speed_share: float, airborne: bool, bloom := 0.0) -> float:
+	var move := spread_move * clampf(speed_share, 0.0, 1.0) * (spread_move_aim_scale if aiming else 1.0)
+	var stance := spread_prone_scale if prone else (spread_crouch_scale if crouching else 1.0)
+	return (base * (spread_aim_scale if aiming else 1.0) + move + bloom) * stance + (spread_air if airborne else 0.0)
+
+## The spread of the rifle in the hands right now, for the shot and for anything that draws it (the crosshair).
+func current_spread() -> float:
+	var person: Node = game.person
+	var speed_share: float = Vector2(person.velocity.x, person.velocity.z).length() / maxf(person.run_speed, 0.01)
+	var aiming: bool = person.camera_pivot != null and person.camera_pivot.is_aiming
+	return spread_for(float(Weapons.stats(person.weapon_id).spread), aiming, person.crouching, person.prone, speed_share, not person.is_on_floor(), _current_bloom())
+
+func _current_bloom() -> float:
+	return maxf(_bloom - bloom_recovery * (Time.get_ticks_msec() - _last_shot_msec) / 1000.0, 0.0)
+
+## The look direction turned by up to `degrees`, in a random direction; shots gather toward the middle.
+static func spread_direction(view: Basis, degrees: float) -> Vector3:
+	var along := Vector2.from_angle(randf() * TAU)
+	var off := deg_to_rad(degrees) * randf()
+	return (-view.z + (view.x * along.x + view.y * along.y) * tan(off)).normalized()
+
+func _on_tdm_hit_confirmed(_victim: int, headshot: bool, _killed: bool) -> void:
+	effects.hit_click(headshot, _last_shot_distance)
+
+func _on_dummy_hit(headshot: bool, _killed: bool) -> void:
+	effects.hit_click(headshot, _last_shot_distance)
 
 func try_loot_nearby() -> bool:
 	if game.control_state != game.ControlState.ON_FOOT or not GameplayControls.allows(game.person):
@@ -1177,16 +1226,3 @@ func _speak(text: String) -> void:
 		return
 	DisplayServer.tts_speak(text, voices[0].id, 60, 1.0, 1.0, 0, true)
 
-func _shot_flash(at: Vector3) -> void:
-	var flash := MeshInstance3D.new()
-	var mesh := SphereMesh.new()
-	mesh.radius = 0.065
-	mesh.height = 0.13
-	var material := StandardMaterial3D.new()
-	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	material.albedo_color = Color(1.0, 0.78, 0.18)
-	mesh.material = material
-	flash.mesh = mesh
-	add_child(flash)
-	flash.global_position = at
-	get_tree().create_timer(0.055, false).timeout.connect(flash.queue_free)

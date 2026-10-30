@@ -34,6 +34,11 @@ const STATS := {
 		"recoil": Vector2(0.022, 0.009),
 		# Radians per second the view settles back after a burst (feel only; never checked by the host).
 		"recoil_recovery": 0.38,
+		# Sideways drift of a held burst, shot by shot (radians; feel only). Learnable: right, then back left.
+		"recoil_pattern": [0.002, 0.003, 0.004, 0.003, 0.001, -0.002, -0.004, -0.003, -0.001, 0.002],
+		# Degrees off the sight for a still, standing, hip-fired first shot, and what each further shot adds.
+		"spread": 0.35,
+		"bloom": 0.12,
 		"kick": 0.045,
 	},
 	# The AK hits harder and fires slower than the M416 and climbs more: three body hits kill (0.26 s)
@@ -55,6 +60,9 @@ const STATS := {
 		"min_claim_interval": 0.09,
 		"recoil": Vector2(0.034, 0.016),
 		"recoil_recovery": 0.30,
+		"recoil_pattern": [0.004, 0.007, 0.008, 0.004, -0.003, -0.008, -0.010, -0.006, 0.002, 0.008],
+		"spread": 0.5,
+		"bloom": 0.2,
 		"kick": 0.06,
 	},
 	# The CZ Bren 2 is a modern 5.56 tactical rifle: fast, flat-shooting with tight recoil
@@ -75,6 +83,9 @@ const STATS := {
 		"min_claim_interval": 0.075,
 		"recoil": Vector2(0.020, 0.008),
 		"recoil_recovery": 0.45,
+		"recoil_pattern": [-0.001, -0.002, -0.003, -0.002, 0.0, 0.002, 0.003, 0.001, -0.001, -0.002],
+		"spread": 0.3,
+		"bloom": 0.1,
 		"kick": 0.042,
 	},
 }

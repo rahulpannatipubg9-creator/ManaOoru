@@ -18,6 +18,12 @@
 
 ## Entries
 
+### Feel checks that counted frames failed on a busy machine (2026-10-30)
+- **Symptom:** `feel_regression` passed or failed on ADS, landing and reload depending on what else was running.
+- **Cause:** waiting a number of `process_frame`s assumed 60 fps. Headless draws faster when idle and slower under load.
+- **Rule:** wait `physics_frame`s for a fixed time, or measure real seconds and metres per second.
+- **Check:** `feel_regression` while another worker runs Godot.
+
 ### Tuk-tuk driver test checks a hidden rig (2026-10-29, open)
 - **Symptom:** `tuk_tuk_driver_pose_regression` fails ("Driver wrist must contact its handlebar grip").
 - **Cause:** written on 2026-10-27 for the old `DEF-` rig (`character.skeleton`). Since Rahul became the default,

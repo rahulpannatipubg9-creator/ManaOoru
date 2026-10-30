@@ -205,6 +205,7 @@ func _setup_character() -> void:
 		return
 	_character = CharacterScript.new()
 	_character.male_only = true
+	_character.foot_planted.connect(_on_foot_planted)
 	_character.name = "TestCharacter"
 	add_child(_character)
 	if _character.male_skeleton == null:
@@ -412,10 +413,11 @@ func _process(delta: float) -> void:
 			network_manager.notify_player_eliminated(peer_id)
 
 	if tdm_mode:
+		# With a character the feet make the sound (_on_foot_planted); this covers a body without one.
 		_step_timer -= delta
 		var moved := global_position.distance_to(_last_step_position)
 		_last_step_position = global_position
-		if _step_timer <= 0.0 and moved > 0.06 and stance == 0:
+		if _step_timer <= 0.0 and moved > 0.06 and stance == 0 and _character == null:
 			_step_timer = 0.4
 			_play_tdm_sound(false)
 	_apply_stance_visuals(delta)
@@ -509,6 +511,10 @@ func set_tdm_team(team: int, show_name: bool) -> void:
 	band_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	_armband.material_override = band_material
 	_update_overhead_display()
+
+func _on_foot_planted(_side: int, _speed: float) -> void:
+	if tdm_mode and stance == 0:
+		_play_tdm_sound(false)
 
 func _play_tdm_sound(gunshot: bool) -> void:
 	var player := _shot_player if gunshot else _step_player
