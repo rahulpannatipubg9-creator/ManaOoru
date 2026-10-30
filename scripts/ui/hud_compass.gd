@@ -1,13 +1,16 @@
 extends Control
 
 ## Thin compass tape: the direction the camera faces stays centred and the cardinal
-## points slide past. It draws only when the heading moves by a visible amount.
+## points slide past. It draws when the heading moves by a visible amount, and once a second.
 
 const POINTS := ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
 ## Degrees of heading shown across the full width of the tape.
 const SPAN := 150.0
+## Recorded glyphs go stale when the font atlas grows, so a still tape redraws this often anyway.
+const REFRESH_MS := 1000
 
 var heading := 0.0
+var _next_refresh_ms := 0
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -16,8 +19,10 @@ func _ready() -> void:
 ## Heading in degrees, 0 = north, clockwise.
 func set_heading(degrees: float) -> void:
 	var wrapped := fposmod(degrees, 360.0)
-	if absf(angle_difference(deg_to_rad(wrapped), deg_to_rad(heading))) > deg_to_rad(0.4):
+	var now := Time.get_ticks_msec()
+	if absf(angle_difference(deg_to_rad(wrapped), deg_to_rad(heading))) > deg_to_rad(0.4) or now >= _next_refresh_ms:
 		heading = wrapped
+		_next_refresh_ms = now + REFRESH_MS
 		queue_redraw()
 
 ## Where a compass bearing lands on the tape, or NAN when it is out of view.
