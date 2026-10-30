@@ -1,0 +1,12 @@
+{
+  "source": "Copernicus DEM GLO-30 (tile N18 E079), buildings filtered out and smoothed",
+  "attribution": "\u00a9 DLR e.V. 2010-2014 and \u00a9 Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved",
+  "format": "little-endian float32, row-major; row = z (north to south), column = x (west to east); metres relative to the origin elevation",
+  "size": 417,
+  "cell_size": 15.0,
+  "origin_x": -3120.0,
+  "origin_z": -3120.0,
+  "origin_elevation_m": 156.26,
+  "min_height": -82.0,
+  "max_height": 29.02
+}

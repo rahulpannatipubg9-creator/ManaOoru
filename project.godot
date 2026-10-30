@@ -1,0 +1,178 @@
+[application]
+config/name="MANA OORU"
+config/description="MANA OORU - 3D Exploration Prototype"
+run/main_scene="res://scenes/main.tscn"
+config/icon="res://assets/mana_ooru_icon.svg"
+config/features=PackedStringArray("4.3", "GL Compatibility")
+
+[display]
+window/size/viewport_width=1280
+window/size/viewport_height=720
+window/size/window_width_override=1280
+window/size/window_height_override=720
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+window/handheld/orientation=0
+window/size/resizable=true
+window/size/mode=3
+
+[rendering]
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+renderer/rendering_method.driver="opengl3"
+environment/defaults/default_clear_color=Color(0.38, 0.68, 0.88, 1)
+textures/default_filters/use_nearest_mipmap_filter=false
+textures/vram_compression/import_etc2_astc=true
+
+[input]
+prone={"deadzone":0.5,"events":[Object(InputEventKey,"physical_keycode":90)]}
+lean_left={"deadzone":0.5,"events":[Object(InputEventKey,"physical_keycode":81)]}
+lean_right={"deadzone":0.5,"events":[Object(InputEventKey,"physical_keycode":69)]}
+free_look={"deadzone":0.5,"events":[Object(InputEventKey,"physical_keycode":4194328)]}
+revive={"deadzone":0.5,"events":[Object(InputEventKey,"physical_keycode":72)]}
+loot={"deadzone":0.5,"events":[Object(InputEventKey,"physical_keycode":76)]}
+service={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"physical_keycode":79,"unicode":111)]
+}
+aim={
+"deadzone": 0.5,
+"events": [Object(InputEventMouseButton,"button_index":2)]
+}
+forward={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"physical_keycode":87,"unicode":119)]
+}
+backward={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"physical_keycode":83,"unicode":115)]
+}
+left={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"physical_keycode":65,"unicode":97)]
+}
+right={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"physical_keycode":68,"unicode":100)]
+}
+run={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"physical_keycode":4194325)]
+}
+jump={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"physical_keycode":32,"unicode":32)]
+}
+vehicle_throttle={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"physical_keycode":87,"unicode":119)]
+}
+vehicle_brake={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"physical_keycode":83,"unicode":115)]
+}
+vehicle_steer_left={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"physical_keycode":65,"unicode":97)]
+}
+vehicle_steer_right={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"physical_keycode":68,"unicode":100)]
+}
+vehicle_handbrake={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"physical_keycode":32,"unicode":32)]
+}
+vehicle_enter={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"physical_keycode":69,"unicode":101)]
+}
+vehicle_exit={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"physical_keycode":70,"unicode":102)]
+}
+vehicle_camera={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"physical_keycode":86,"unicode":118)]
+}
+camera_look_behind={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"physical_keycode":66,"unicode":98)]
+}
+vehicle_horn={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"physical_keycode":72,"unicode":104)]
+}
+vehicle_transmission={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"physical_keycode":84,"unicode":116)]
+}
+vehicle_gear_up={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"physical_keycode":88,"unicode":120)]
+}
+vehicle_gear_down={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"physical_keycode":90,"unicode":122)]
+}
+vehicle_lights={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"physical_keycode":76,"unicode":108)]
+}
+vehicle_indicator_left={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"physical_keycode":81,"unicode":113)]
+}
+vehicle_indicator_right={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"physical_keycode":190,"unicode":46)]
+}
+vehicle_recover={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"physical_keycode":82,"unicode":114)]
+}
+crouch={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"physical_keycode":67,"unicode":99)]
+}
+interact={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"physical_keycode":69,"unicode":101)]
+}
+weapon_toggle={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"physical_keycode":49,"unicode":49)]
+}
+map_toggle={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"physical_keycode":77,"unicode":109)]
+}
+minimap_zoom_in={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"physical_keycode":61,"unicode":61)]
+}
+minimap_zoom_out={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"physical_keycode":45,"unicode":45)]
+}
+minimap_orientation={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"physical_keycode":78,"unicode":110)]
+}
+pause={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"physical_keycode":4194305)]
+}
+
+[physics]
+
+common/physics_interpolation=true
+3d/default_gravity=18.0
+
+[input_devices]
+sensors/enable_gyroscope=true
+pointing/emulate_touch_from_mouse=false
+pointing/emulate_mouse_from_touch=false
+
+[audio]
+general/text_to_speech=true

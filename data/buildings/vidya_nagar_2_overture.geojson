@@ -1,0 +1,577 @@
+{
+  "type": "FeatureCollection",
+  "metadata": {
+    "source": "Overture Maps",
+    "release": "2026-10-21.0",
+    "license": "ODbL-1.0",
+    "selection": "ML confidence >=0.85; 450m neighborhood; preserve existing buildings with 1m gap; reject roads plus1m; reject internal holes; original geometries",
+    "attribution": "\u00a9 OpenStreetMap contributors, Overture Maps Foundation; contains Google Open Buildings (CC BY 4.0)",
+    "license_url": "https://opendatacommons.org/licenses/odbl/1-0/",
+    "upstream_url": "https://sites.research.google/open-buildings/",
+    "source_note": "Satellite-derived roof footprints; not surveyed facade replicas. No height or floor counts supplied.",
+    "input_sha256": {
+      "data/osm/godavarikhani_core.json": "de36c1c0df5a0a91c103f4d08583c16616889d9b050be214fa419c71fe2cccb4",
+      "data/buildings/godavarikhani_ms_buildings.json": "e3eaa2d5fcae772120c757e425418e1dccca3bbef041449df144ca2987fa2970"
+    }
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              79.5154686,
+              18.757997
+            ],
+            [
+              79.5155077,
+              18.7580729
+            ],
+            [
+              79.5154082,
+              18.7581193
+            ],
+            [
+              79.5153691,
+              18.7580435
+            ],
+            [
+              79.5154686,
+              18.757997
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "7e718259-1c7c-47fa-95bb-3c72a24134f6",
+        "sources": [
+          {
+            "property": "",
+            "dataset": "Google Open Buildings",
+            "license": null,
+            "record_id": "7JCXQG58+65G6",
+            "update_time": "2023-05-01T00:00:00.000Z",
+            "confidence": 0.8955,
+            "between": null,
+            "provider": "google",
+            "resource": "open_buildings",
+            "version": "2024-04-16"
+          }
+        ],
+        "height": null,
+        "num_floors": null,
+        "names": null
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              79.5167426,
+              18.7571219
+            ],
+            [
+              79.516791,
+              18.7571726
+            ],
+            [
+              79.5164278,
+              18.7574875
+            ],
+            [
+              79.5163793,
+              18.7574369
+            ],
+            [
+              79.5167426,
+              18.7571219
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "3c8403d2-74cb-40af-8003-9b9ba87888b3",
+        "sources": [
+          {
+            "property": "",
+            "dataset": "Google Open Buildings",
+            "license": null,
+            "record_id": "7JCXQG48+WJG4",
+            "update_time": "2023-05-01T00:00:00.000Z",
+            "confidence": 0.8867,
+            "between": null,
+            "provider": "google",
+            "resource": "open_buildings",
+            "version": "2024-04-16"
+          }
+        ],
+        "height": null,
+        "num_floors": null,
+        "names": null
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              79.5170742,
+              18.7563001
+            ],
+            [
+              79.5171924,
+              18.7563545
+            ],
+            [
+              79.5171395,
+              18.7564588
+            ],
+            [
+              79.5170213,
+              18.7564044
+            ],
+            [
+              79.5170742,
+              18.7563001
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "828a6fb5-9aeb-4240-9680-74c5a3f17f1c",
+        "sources": [
+          {
+            "property": "",
+            "dataset": "Google Open Buildings",
+            "license": null,
+            "record_id": "7JCXQG48+HR53",
+            "update_time": "2023-05-01T00:00:00.000Z",
+            "confidence": 0.8843,
+            "between": null,
+            "provider": "google",
+            "resource": "open_buildings",
+            "version": "2024-04-16"
+          }
+        ],
+        "height": null,
+        "num_floors": null,
+        "names": null
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              79.5160516,
+              18.752538
+            ],
+            [
+              79.5161047,
+              18.7525854
+            ],
+            [
+              79.5160567,
+              18.7526343
+            ],
+            [
+              79.5160035,
+              18.7525869
+            ],
+            [
+              79.5160516,
+              18.752538
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "019ceeb7-f4c6-4c92-ad10-52f523b31d95",
+        "sources": [
+          {
+            "property": "",
+            "dataset": "Google Open Buildings",
+            "license": null,
+            "record_id": "7JCXQG38+2CMG",
+            "update_time": "2023-05-01T00:00:00.000Z",
+            "confidence": 0.8762,
+            "between": null,
+            "provider": "google",
+            "resource": "open_buildings",
+            "version": "2024-04-16"
+          }
+        ],
+        "height": null,
+        "num_floors": null,
+        "names": null
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              79.5184057,
+              18.7533385
+            ],
+            [
+              79.5184673,
+              18.7534267
+            ],
+            [
+              79.5183897,
+              18.753476
+            ],
+            [
+              79.5183281,
+              18.7533878
+            ],
+            [
+              79.5184057,
+              18.7533385
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "62842c4f-b125-4011-851c-4da2c14188c6",
+        "sources": [
+          {
+            "property": "",
+            "dataset": "Google Open Buildings",
+            "license": null,
+            "record_id": "7JCXQG39+9968",
+            "update_time": "2023-05-01T00:00:00.000Z",
+            "confidence": 0.8748,
+            "between": null,
+            "provider": "google",
+            "resource": "open_buildings",
+            "version": "2024-04-16"
+          }
+        ],
+        "height": null,
+        "num_floors": null,
+        "names": null
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              79.5185882,
+              18.7535029
+            ],
+            [
+              79.5185947,
+              18.7535484
+            ],
+            [
+              79.518521,
+              18.7535579
+            ],
+            [
+              79.5185145,
+              18.7535125
+            ],
+            [
+              79.5185882,
+              18.7535029
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "28e81c49-7655-4638-989c-fe8171f78b6e",
+        "sources": [
+          {
+            "property": "",
+            "dataset": "Google Open Buildings",
+            "license": null,
+            "record_id": "7JCXQG39+CC78",
+            "update_time": "2023-05-01T00:00:00.000Z",
+            "confidence": 0.8748,
+            "between": null,
+            "provider": "google",
+            "resource": "open_buildings",
+            "version": "2024-04-16"
+          }
+        ],
+        "height": null,
+        "num_floors": null,
+        "names": null
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              79.5174748,
+              18.7577754
+            ],
+            [
+              79.5175525,
+              18.7578089
+            ],
+            [
+              79.5174957,
+              18.7579284
+            ],
+            [
+              79.5174181,
+              18.7578949
+            ],
+            [
+              79.5174748,
+              18.7577754
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "61386810-f0bb-4a08-b7a4-b9ccd021056f",
+        "sources": [
+          {
+            "property": "",
+            "dataset": "Google Open Buildings",
+            "license": null,
+            "record_id": "7JCXQG58+4XX4",
+            "update_time": "2023-05-01T00:00:00.000Z",
+            "confidence": 0.8672,
+            "between": null,
+            "provider": "google",
+            "resource": "open_buildings",
+            "version": "2024-04-16"
+          }
+        ],
+        "height": null,
+        "num_floors": null,
+        "names": null
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              79.516854,
+              18.757219
+            ],
+            [
+              79.5164818,
+              18.757544
+            ],
+            [
+              79.5164499,
+              18.7575108
+            ],
+            [
+              79.516822,
+              18.7571858
+            ],
+            [
+              79.516854,
+              18.757219
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "cd49a29a-b7e5-43c6-9916-c04a04d8881e",
+        "sources": [
+          {
+            "property": "",
+            "dataset": "Google Open Buildings",
+            "license": null,
+            "record_id": "7JCXQG48+WMRH",
+            "update_time": "2023-05-01T00:00:00.000Z",
+            "confidence": 0.8593,
+            "between": null,
+            "provider": "google",
+            "resource": "open_buildings",
+            "version": "2024-04-16"
+          }
+        ],
+        "height": null,
+        "num_floors": null,
+        "names": null
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              79.5185559,
+              18.7561149
+            ],
+            [
+              79.5186487,
+              18.7561444
+            ],
+            [
+              79.5185984,
+              18.7562879
+            ],
+            [
+              79.5185203,
+              18.756263
+            ],
+            [
+              79.5185574,
+              18.7561571
+            ],
+            [
+              79.5185427,
+              18.7561524
+            ],
+            [
+              79.5185559,
+              18.7561149
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "abcfa07f-1364-4e3d-9f1d-90cc190853d9",
+        "sources": [
+          {
+            "property": "",
+            "dataset": "Google Open Buildings",
+            "license": null,
+            "record_id": "7JCXQG49+FCP4",
+            "update_time": "2023-05-01T00:00:00.000Z",
+            "confidence": 0.8585,
+            "between": null,
+            "provider": "google",
+            "resource": "open_buildings",
+            "version": "2024-04-16"
+          }
+        ],
+        "height": null,
+        "num_floors": null,
+        "names": null
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              79.51402,
+              18.7528045
+            ],
+            [
+              79.5139534,
+              18.752873
+            ],
+            [
+              79.5139076,
+              18.7528327
+            ],
+            [
+              79.5139741,
+              18.7527641
+            ],
+            [
+              79.51402,
+              18.7528045
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "d35392fa-7819-4684-af18-4f5c6052aef4",
+        "sources": [
+          {
+            "property": "",
+            "dataset": "Google Open Buildings",
+            "license": null,
+            "record_id": "7JCXQG37+4HGQ",
+            "update_time": "2023-05-01T00:00:00.000Z",
+            "confidence": 0.856,
+            "between": null,
+            "provider": "google",
+            "resource": "open_buildings",
+            "version": "2024-04-16"
+          }
+        ],
+        "height": null,
+        "num_floors": null,
+        "names": null
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              79.5165365,
+              18.7571966
+            ],
+            [
+              79.5165649,
+              18.7572266
+            ],
+            [
+              79.5163523,
+              18.7574095
+            ],
+            [
+              79.5163238,
+              18.7573795
+            ],
+            [
+              79.5165365,
+              18.7571966
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "6d0161b4-189e-454c-a6de-f7a878dd7a05",
+        "sources": [
+          {
+            "property": "",
+            "dataset": "Google Open Buildings",
+            "license": null,
+            "record_id": "7JCXQG48+WHG2",
+            "update_time": "2023-05-01T00:00:00.000Z",
+            "confidence": 0.8509,
+            "between": null,
+            "provider": "google",
+            "resource": "open_buildings",
+            "version": "2024-04-16"
+          }
+        ],
+        "height": null,
+        "num_floors": null,
+        "names": null
+      }
+    }
+  ]
+}

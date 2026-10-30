@@ -1,0 +1,132 @@
+[gd_scene load_steps=11 format=3]
+
+[ext_resource type="Script" path="res://scripts/vehicle/rigid_vehicle.gd" id="1_player"]
+[ext_resource type="Script" path="res://scripts/camera/camera_controller.gd" id="2_camera"]
+[ext_resource type="PackedScene" path="res://assets/models/porsche_911/porsche_body.glb" id="3_body"]
+[ext_resource type="PackedScene" path="res://assets/models/porsche_911/porsche_tyre.glb" id="4_tyre"]
+[ext_resource type="PackedScene" path="res://assets/models/porsche_911/porsche_rim.glb" id="5_rim"]
+[ext_resource type="Script" path="res://scripts/player/engine_sound.gd" id="6_engine_sound"]
+[ext_resource type="Script" path="res://scripts/player/drivetrain_profile.gd" id="7_drivetrain"]
+[ext_resource type="Resource" path="res://assets/audio/porsche_911/porsche_911_recording.tres" id="8_recording"]
+
+[sub_resource type="Resource" id="Drivetrain_992"]
+script = ExtResource("7_drivetrain")
+gear_ratios = Array[float]([5.44, 3.73, 2.72, 2.08, 1.67, 1.37, 1.1, 0.86])
+reverse_ratio = 4.85
+final_drive = 3.0
+driveline_efficiency = 0.85
+automatic_available = true
+shift_time = 0.12
+idle_rpm = 750.0
+redline_rpm = 7500.0
+torque_curve = Array[Vector2]([Vector2(750, 200), Vector2(1500, 380), Vector2(2300, 530), Vector2(5000, 530), Vector2(6500, 486), Vector2(7500, 400)])
+launch_rpm = 2200.0
+launch_torque_ratio = 1.0
+cylinders = 6
+diesel_clatter = 0.0
+turbo_whine = 0.03
+engine_recording = ExtResource("8_recording")
+
+[sub_resource type="BoxShape3D" id="BoxShape_porsche"]
+size = Vector3(1.85, 0.95, 4.45)
+
+[node name="Porsche911" type="RigidBody3D"]
+script = ExtResource("1_player")
+braking_acceleration = 11.0
+drag_area = 0.58
+rolling_resistance = 0.012
+vehicle_mass = 1565.0
+suspension_rest_length = 0.542
+suspension_bump_travel = 0.1
+suspension_droop_travel = 0.12
+suspension_frequency = 2.0
+suspension_damping_ratio = 0.5
+center_of_mass_height = 0.4
+wheel_radius = 0.358
+tyre_friction = 1.9
+drivetrain = SubResource("Drivetrain_992")
+
+[node name="Chassis" type="Node3D" parent="."]
+position = Vector3(0, 0.45, 0)
+
+[node name="Porsche" parent="Chassis" instance=ExtResource("3_body")]
+position = Vector3(0, -0.45, 0)
+
+[node name="FrontIndicator" type="Marker3D" parent="Chassis"]
+position = Vector3(0, 0.2, 2.25)
+
+[node name="FrontLeftWheel" type="Node3D" parent="."]
+position = Vector3(-0.784, 0.358, 1.251)
+rotation = Vector3(0, 0, 1.5708)
+
+[node name="Tyre" parent="FrontLeftWheel" instance=ExtResource("4_tyre")]
+
+[node name="FrontRightWheel" type="Node3D" parent="."]
+position = Vector3(0.784, 0.358, 1.251)
+rotation = Vector3(0, 0, 1.5708)
+
+[node name="Tyre" parent="FrontRightWheel" instance=ExtResource("4_tyre")]
+rotation = Vector3(3.14159, 0, 0)
+
+[node name="RearLeftWheel" type="Node3D" parent="."]
+position = Vector3(-0.784, 0.358, -1.251)
+rotation = Vector3(0, 0, 1.5708)
+
+[node name="Tyre" parent="RearLeftWheel" instance=ExtResource("4_tyre")]
+
+[node name="RearRightWheel" type="Node3D" parent="."]
+position = Vector3(0.784, 0.358, -1.251)
+rotation = Vector3(0, 0, 1.5708)
+
+[node name="Tyre" parent="RearRightWheel" instance=ExtResource("4_tyre")]
+rotation = Vector3(3.14159, 0, 0)
+
+[node name="FrontLeftHub" type="Node3D" parent="."]
+position = Vector3(-0.784, 0.358, 1.251)
+rotation = Vector3(0, 0, 1.5708)
+
+[node name="Rim" parent="FrontLeftHub" instance=ExtResource("5_rim")]
+
+[node name="FrontRightHub" type="Node3D" parent="."]
+position = Vector3(0.784, 0.358, 1.251)
+rotation = Vector3(0, 0, 1.5708)
+
+[node name="Rim" parent="FrontRightHub" instance=ExtResource("5_rim")]
+rotation = Vector3(3.14159, 0, 0)
+
+[node name="RearLeftHub" type="Node3D" parent="."]
+position = Vector3(-0.784, 0.358, -1.251)
+rotation = Vector3(0, 0, 1.5708)
+
+[node name="Rim" parent="RearLeftHub" instance=ExtResource("5_rim")]
+
+[node name="RearRightHub" type="Node3D" parent="."]
+position = Vector3(0.784, 0.358, -1.251)
+rotation = Vector3(0, 0, 1.5708)
+
+[node name="Rim" parent="RearRightHub" instance=ExtResource("5_rim")]
+rotation = Vector3(3.14159, 0, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("BoxShape_porsche")
+position = Vector3(0, 0.675, -0.01)
+
+[node name="CameraPivot" type="Node3D" parent="."]
+position = Vector3(0, 1.45, 0)
+script = ExtResource("2_camera")
+first_person_offset = Vector3(0.32, 1.0, -0.15)
+first_person_follows_body = true
+first_person_min_pitch = -0.6
+first_person_max_pitch = 0.5
+
+[node name="SpringArm3D" type="SpringArm3D" parent="CameraPivot"]
+spring_length = 5.5
+collision_mask = 1
+margin = 0.2
+
+[node name="Camera3D" type="Camera3D" parent="CameraPivot/SpringArm3D"]
+current = true
+fov = 68.0
+
+[node name="EngineAudio" type="AudioStreamPlayer3D" parent="."]
+script = ExtResource("6_engine_sound")

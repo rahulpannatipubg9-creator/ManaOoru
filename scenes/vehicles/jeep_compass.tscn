@@ -1,0 +1,132 @@
+[gd_scene load_steps=11 format=3]
+
+[ext_resource type="Script" path="res://scripts/vehicle/rigid_vehicle.gd" id="1_player"]
+[ext_resource type="Script" path="res://scripts/camera/camera_controller.gd" id="2_camera"]
+[ext_resource type="PackedScene" path="res://assets/models/jeep_compass/compass_body.glb" id="3_body"]
+[ext_resource type="PackedScene" path="res://assets/models/jeep_compass/compass_tyre.glb" id="4_tyre"]
+[ext_resource type="PackedScene" path="res://assets/models/jeep_compass/compass_rim.glb" id="5_rim"]
+[ext_resource type="Script" path="res://scripts/player/engine_sound.gd" id="6_engine_sound"]
+[ext_resource type="Script" path="res://scripts/player/drivetrain_profile.gd" id="7_drivetrain"]
+[ext_resource type="Resource" path="res://assets/audio/thar_diesel/thar_diesel_recording.tres" id="8_engine_recording"]
+
+[sub_resource type="Resource" id="Drivetrain_Compass"]
+script = ExtResource("7_drivetrain")
+gear_ratios = Array[float]([4.7, 2.84, 1.91, 1.38, 1.0, 0.81, 0.7, 0.58, 0.48])
+reverse_ratio = 3.81
+final_drive = 4.334
+driveline_efficiency = 0.87
+automatic_available = true
+shift_time = 0.2
+idle_rpm = 800.0
+redline_rpm = 4500.0
+torque_curve = Array[Vector2]([Vector2(800, 170), Vector2(1250, 280), Vector2(1750, 350), Vector2(2500, 350), Vector2(3750, 318), Vector2(4500, 240)])
+launch_rpm = 2000.0
+launch_torque_ratio = 1.7
+cylinders = 4
+diesel_clatter = 0.5
+engine_recording = ExtResource("8_engine_recording")
+turbo_whine = 0.06
+
+[sub_resource type="BoxShape3D" id="BoxShape_compass"]
+size = Vector3(1.8, 1.3, 4.25)
+
+[node name="JeepCompass" type="RigidBody3D"]
+script = ExtResource("1_player")
+braking_acceleration = 9.5
+drag_area = 0.9
+rolling_resistance = 0.014
+vehicle_mass = 1655.0
+suspension_rest_length = 0.547
+suspension_bump_travel = 0.13
+suspension_droop_travel = 0.16
+suspension_frequency = 1.5
+suspension_damping_ratio = 0.45
+center_of_mass_height = 0.55
+wheel_radius = 0.353
+tyre_friction = 1.75
+drivetrain = SubResource("Drivetrain_Compass")
+
+[node name="Chassis" type="Node3D" parent="."]
+position = Vector3(0, 0.55, 0)
+
+[node name="Compass" parent="Chassis" instance=ExtResource("3_body")]
+position = Vector3(0, -0.55, 0)
+
+[node name="FrontIndicator" type="Marker3D" parent="Chassis"]
+position = Vector3(0, 0.15, 2.1)
+
+[node name="FrontLeftWheel" type="Node3D" parent="."]
+position = Vector3(-0.721, 0.353, 1.282)
+rotation = Vector3(0, 0, 1.5708)
+
+[node name="Tyre" parent="FrontLeftWheel" instance=ExtResource("4_tyre")]
+
+[node name="FrontRightWheel" type="Node3D" parent="."]
+position = Vector3(0.721, 0.353, 1.282)
+rotation = Vector3(0, 0, 1.5708)
+
+[node name="Tyre" parent="FrontRightWheel" instance=ExtResource("4_tyre")]
+rotation = Vector3(3.14159, 0, 0)
+
+[node name="RearLeftWheel" type="Node3D" parent="."]
+position = Vector3(-0.721, 0.353, -1.282)
+rotation = Vector3(0, 0, 1.5708)
+
+[node name="Tyre" parent="RearLeftWheel" instance=ExtResource("4_tyre")]
+
+[node name="RearRightWheel" type="Node3D" parent="."]
+position = Vector3(0.721, 0.353, -1.282)
+rotation = Vector3(0, 0, 1.5708)
+
+[node name="Tyre" parent="RearRightWheel" instance=ExtResource("4_tyre")]
+rotation = Vector3(3.14159, 0, 0)
+
+[node name="FrontLeftHub" type="Node3D" parent="."]
+position = Vector3(-0.721, 0.353, 1.282)
+rotation = Vector3(0, 0, 1.5708)
+
+[node name="Rim" parent="FrontLeftHub" instance=ExtResource("5_rim")]
+
+[node name="FrontRightHub" type="Node3D" parent="."]
+position = Vector3(0.721, 0.353, 1.282)
+rotation = Vector3(0, 0, 1.5708)
+
+[node name="Rim" parent="FrontRightHub" instance=ExtResource("5_rim")]
+rotation = Vector3(3.14159, 0, 0)
+
+[node name="RearLeftHub" type="Node3D" parent="."]
+position = Vector3(-0.721, 0.353, -1.282)
+rotation = Vector3(0, 0, 1.5708)
+
+[node name="Rim" parent="RearLeftHub" instance=ExtResource("5_rim")]
+
+[node name="RearRightHub" type="Node3D" parent="."]
+position = Vector3(0.721, 0.353, -1.282)
+rotation = Vector3(0, 0, 1.5708)
+
+[node name="Rim" parent="RearRightHub" instance=ExtResource("5_rim")]
+rotation = Vector3(3.14159, 0, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("BoxShape_compass")
+position = Vector3(0, 0.95, 0.028)
+
+[node name="CameraPivot" type="Node3D" parent="."]
+position = Vector3(0, 1.7, 0)
+script = ExtResource("2_camera")
+first_person_offset = Vector3(0.37, 1.36, -0.15)
+first_person_follows_body = true
+first_person_min_pitch = -0.6
+first_person_max_pitch = 0.5
+
+[node name="SpringArm3D" type="SpringArm3D" parent="CameraPivot"]
+spring_length = 5.5
+collision_mask = 1
+margin = 0.2
+
+[node name="Camera3D" type="Camera3D" parent="CameraPivot/SpringArm3D"]
+current = true
+fov = 68.0
+
+[node name="EngineAudio" type="AudioStreamPlayer3D" parent="."]
+script = ExtResource("6_engine_sound")

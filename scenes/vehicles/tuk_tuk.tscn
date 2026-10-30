@@ -1,0 +1,95 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/vehicles/rigid_thar.tscn" id="1_base"]
+[ext_resource type="PackedScene" path="res://assets/models/tuk_tuk/gdk_tuk_tuk.glb" id="2_tuk_tuk"]
+[ext_resource type="Script" path="res://scripts/player/drivetrain_profile.gd" id="3_drivetrain"]
+[ext_resource type="Script" path="res://scripts/vehicle/tuk_tuk_visual.gd" id="4_tuk_visual"]
+
+[sub_resource type="Resource" id="Drivetrain_tuk_tuk"]
+script = ExtResource("3_drivetrain")
+gear_ratios = Array[float]([3.8, 2.25, 1.45, 1.0])
+reverse_ratio = 3.65
+final_drive = 6.5
+driveline_efficiency = 0.82
+automatic_available = true
+shift_time = 0.3
+idle_rpm = 850.0
+redline_rpm = 4000.0
+torque_curve = Array[Vector2]([Vector2(850, 10), Vector2(1500, 16), Vector2(2500, 20), Vector2(3200, 19), Vector2(4000, 15)])
+launch_rpm = 1900.0
+launch_torque_ratio = 1.55
+cylinders = 1
+diesel_clatter = 0.12
+turbo_whine = 0.0
+
+[sub_resource type="BoxShape3D" id="TukTukCollision"]
+size = Vector3(1.22, 1.58, 2.62)
+
+[node name="TukTuk" instance=ExtResource("1_base")]
+drivetrain = SubResource("Drivetrain_tuk_tuk")
+vehicle_mass = 650.0
+braking_acceleration = 6.0
+drag_area = 0.9
+rolling_resistance = 0.018
+suspension_rest_length = 0.52
+suspension_bump_travel = 0.11
+suspension_droop_travel = 0.14
+suspension_frequency = 2.0
+suspension_damping_ratio = 0.62
+center_of_mass_height = 0.55
+wheel_radius = 0.245
+tyre_friction = 1.45
+tyre_cornering_stiffness = 18.0
+max_steer_angle = 0.72
+high_speed_steer_share = 0.34
+steer_rate = 2.4
+rear_wheel_drive = true
+paint_color = Color(0.14, 0.55, 0.28, 1)
+seat_hip = Vector3(0, 0.98, 0.22)
+pedal_point = Vector3(0, 0.48, 0.48)
+left_hand_grip = Vector3(0.25, 1.17, 0.60)
+right_hand_grip = Vector3(-0.25, 1.17, 0.60)
+entry_half_width = 0.68
+
+[node name="Chassis" parent="." index="0"]
+visible = false
+
+[node name="FrontLeftWheel" parent="." index="1"]
+position = Vector3(-0.08, 0.245, 1.204)
+visible = false
+
+[node name="FrontRightWheel" parent="." index="2"]
+position = Vector3(0.08, 0.245, 1.204)
+visible = false
+
+[node name="RearLeftWheel" parent="." index="3"]
+position = Vector3(-0.48, 0.245, -0.98)
+visible = false
+
+[node name="RearRightWheel" parent="." index="4"]
+position = Vector3(0.48, 0.245, -0.98)
+visible = false
+
+[node name="FrontLeftHub" parent="." index="5"]
+visible = false
+
+[node name="FrontRightHub" parent="." index="6"]
+visible = false
+
+[node name="RearLeftHub" parent="." index="7"]
+visible = false
+
+[node name="RearRightHub" parent="." index="8"]
+visible = false
+
+[node name="CollisionShape3D" parent="." index="9"]
+position = Vector3(0, 1.16, 0)
+shape = SubResource("TukTukCollision")
+
+[node name="CameraPivot" parent="." index="10"]
+position = Vector3(0, 1.48, 0)
+first_person_offset = Vector3(0, 0.27, 0.08)
+
+[node name="TukTukVisual" parent="." index="11" instance=ExtResource("2_tuk_tuk")]
+position = Vector3(0, 0.14, 0)
+script = ExtResource("4_tuk_visual")

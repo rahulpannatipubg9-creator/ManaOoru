@@ -1,0 +1,35 @@
+# Godot 4+ internal cache and imported resources
+.godot/
+
+# Compiled export binaries and APK builds (~5.6 GB)
+builds/
+*.apk
+*.aab
+*.exe
+*.zip
+*.dmg
+*.app/
+
+# Intermediate Blender auto-backups and heavy 3D sculpting dumps (>100MB)
+*.blend1
+*.blend2
+tools/**/blend/*.blend1
+tools/hyper3d_character/
+tools/player_character_v2/
+tools/rahul_character/
+tools/character_animation/
+tools/facebuilder_head/
+
+# Intermediate model sources and reference captures
+assets/models/panipuri_cart/source/
+assets/models/characters/references/Screenshot*
+assets/test_only/device_screenshots/
+
+# Temporary work directories, test captures, and local outputs
+work/
+outputs/
+
+# OS-specific metadata & logs
+.DS_Store
+Thumbs.db
+*.log

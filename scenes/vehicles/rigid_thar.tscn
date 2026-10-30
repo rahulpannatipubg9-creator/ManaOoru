@@ -1,0 +1,109 @@
+[gd_scene load_steps=11 format=3]
+
+[ext_resource type="Script" path="res://scripts/vehicle/rigid_vehicle.gd" id="1_player"]
+[ext_resource type="Script" path="res://scripts/camera/camera_controller.gd" id="2_camera"]
+[ext_resource type="PackedScene" path="res://assets/models/thar/thar_body.glb" id="3_thar_body"]
+[ext_resource type="PackedScene" path="res://assets/models/thar/thar_tyre.glb" id="4_thar_tyre"]
+[ext_resource type="PackedScene" path="res://assets/models/thar/thar_rim.glb" id="5_thar_rim"]
+[ext_resource type="Script" path="res://scripts/player/engine_sound.gd" id="6_engine_sound"]
+[ext_resource type="Script" path="res://scripts/player/drivetrain_profile.gd" id="7_drivetrain"]
+[ext_resource type="Resource" path="res://assets/audio/thar_diesel/thar_diesel_recording.tres" id="8_engine_recording"]
+
+[sub_resource type="Resource" id="Drivetrain_thar"]
+script = ExtResource("7_drivetrain")
+engine_recording = ExtResource("8_engine_recording")
+
+[sub_resource type="BoxShape3D" id="BoxShape_player"]
+size = Vector3(1.9, 1.45, 4.28)
+
+[node name="RigidThar" type="RigidBody3D"]
+script = ExtResource("1_player")
+drivetrain = SubResource("Drivetrain_thar")
+vehicle_mass = 1800.0
+suspension_rest_length = 0.506
+wheel_radius = 0.394
+
+[node name="Chassis" type="Node3D" parent="."]
+position = Vector3(0, 0.55, 0)
+
+[node name="Thar" parent="Chassis" instance=ExtResource("3_thar_body")]
+position = Vector3(0, -0.55, 0)
+
+[node name="FrontIndicator" type="Marker3D" parent="Chassis"]
+position = Vector3(0, 0.25, 2.02)
+
+[node name="FrontLeftWheel" type="Node3D" parent="."]
+position = Vector3(-0.858, 0.394, 1.3)
+rotation = Vector3(0, 0, 1.5708)
+
+[node name="Tyre" parent="FrontLeftWheel" instance=ExtResource("4_thar_tyre")]
+
+[node name="FrontRightWheel" type="Node3D" parent="."]
+position = Vector3(0.858, 0.394, 1.3)
+rotation = Vector3(0, 0, 1.5708)
+
+[node name="Tyre" parent="FrontRightWheel" instance=ExtResource("4_thar_tyre")]
+rotation = Vector3(3.14159, 0, 0)
+
+[node name="RearLeftWheel" type="Node3D" parent="."]
+position = Vector3(-0.858, 0.394, -1.3)
+rotation = Vector3(0, 0, 1.5708)
+
+[node name="Tyre" parent="RearLeftWheel" instance=ExtResource("4_thar_tyre")]
+
+[node name="RearRightWheel" type="Node3D" parent="."]
+position = Vector3(0.858, 0.394, -1.3)
+rotation = Vector3(0, 0, 1.5708)
+
+[node name="Tyre" parent="RearRightWheel" instance=ExtResource("4_thar_tyre")]
+rotation = Vector3(3.14159, 0, 0)
+
+[node name="FrontLeftHub" type="Node3D" parent="."]
+position = Vector3(-0.858, 0.394, 1.3)
+rotation = Vector3(0, 0, 1.5708)
+
+[node name="Rim" parent="FrontLeftHub" instance=ExtResource("5_thar_rim")]
+
+[node name="FrontRightHub" type="Node3D" parent="."]
+position = Vector3(0.858, 0.394, 1.3)
+rotation = Vector3(0, 0, 1.5708)
+
+[node name="Rim" parent="FrontRightHub" instance=ExtResource("5_thar_rim")]
+rotation = Vector3(3.14159, 0, 0)
+
+[node name="RearLeftHub" type="Node3D" parent="."]
+position = Vector3(-0.858, 0.394, -1.3)
+rotation = Vector3(0, 0, 1.5708)
+
+[node name="Rim" parent="RearLeftHub" instance=ExtResource("5_thar_rim")]
+
+[node name="RearRightHub" type="Node3D" parent="."]
+position = Vector3(0.858, 0.394, -1.3)
+rotation = Vector3(0, 0, 1.5708)
+
+[node name="Rim" parent="RearRightHub" instance=ExtResource("5_thar_rim")]
+rotation = Vector3(3.14159, 0, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("BoxShape_player")
+position = Vector3(0, 1.17, -0.134)
+
+[node name="CameraPivot" type="Node3D" parent="."]
+position = Vector3(0, 1.75, 0)
+script = ExtResource("2_camera")
+first_person_offset = Vector3(-0.36, 1.68, 0.12)
+first_person_follows_body = true
+first_person_min_pitch = -0.6
+first_person_max_pitch = 0.5
+
+[node name="SpringArm3D" type="SpringArm3D" parent="CameraPivot"]
+spring_length = 5.5
+collision_mask = 1
+margin = 0.2
+
+[node name="Camera3D" type="Camera3D" parent="CameraPivot/SpringArm3D"]
+current = true
+fov = 68.0
+
+[node name="EngineAudio" type="AudioStreamPlayer3D" parent="."]
+script = ExtResource("6_engine_sound")

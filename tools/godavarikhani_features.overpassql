@@ -1,0 +1,28 @@
+[out:json][timeout:90];
+(
+  node(around:3000,18.751925,79.513352)[highway~"^(traffic_signals|stop|give_way|crossing|speed_camera|street_lamp|bus_stop|mini_roundabout|turning_circle|motorway_junction)$"];
+  node(around:3000,18.751925,79.513352)[traffic_sign];
+  node(around:3000,18.751925,79.513352)[traffic_calming];
+  node(around:3000,18.751925,79.513352)[shop];
+  node(around:3000,18.751925,79.513352)[amenity];
+  node(around:3000,18.751925,79.513352)[tourism];
+  node(around:3000,18.751925,79.513352)[office];
+  node(around:3000,18.751925,79.513352)[man_made];
+  node(around:3000,18.751925,79.513352)[natural=tree];
+  node(around:3000,18.751925,79.513352)[barrier];
+  node(around:3000,18.751925,79.513352)[railway];
+  node(around:3000,18.751925,79.513352)[place];
+  way(around:3000,18.751925,79.513352)[landuse];
+  way(around:3000,18.751925,79.513352)[leisure];
+  way(around:3000,18.751925,79.513352)[natural];
+  way(around:3000,18.751925,79.513352)[waterway];
+  way(around:3000,18.751925,79.513352)[railway];
+  way(around:3000,18.751925,79.513352)[amenity];
+  way(around:3000,18.751925,79.513352)[barrier];
+  nwr(around:3000,18.751925,79.513352)[name][!highway];
+  nwr(around:3000,18.751925,79.513352)[historic];
+  nwr(around:3000,18.751925,79.513352)[healthcare];
+);
+out body;
+>;
+out skel qt;

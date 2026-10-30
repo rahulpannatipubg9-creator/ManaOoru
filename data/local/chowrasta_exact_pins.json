@@ -1,0 +1,19 @@
+{
+  "_readme": "Explicit Chowrasta-area pins with an exact source coordinate. Do not add a business here from an approximate address; use a verified map pin or an OSM feature coordinate.",
+  "pins": [
+    {
+      "name": "NEW ASHOK THEATRE",
+      "category": "theatre",
+      "lon": 79.51507258,
+      "lat": 18.7542867,
+      "source": "OpenStreetMap way 331357115 centroid"
+    },
+    {
+      "name": "ARJUN SWEET HOUSE",
+      "category": "shop=sweets",
+      "lon": 79.5150628,
+      "lat": 18.7539006,
+      "source": "OpenStreetMap node 3384168812"
+    }
+  ]
+}

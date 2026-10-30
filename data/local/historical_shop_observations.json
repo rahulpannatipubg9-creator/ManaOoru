@@ -1,0 +1,31 @@
+{
+  "capture_date": "2020-06-11",
+  "source": "Mapillary / geomannar",
+  "reference_url": "https://www.mapillary.com/app/?pKey=974874736621788&focus=photo",
+  "license": "Imagery reference CC BY-SA 4.0; no imagery bundled",
+  "blocks": [
+    {
+      "osm_way_id": 599199178,
+      "building_name": "Bhaskar Bhavan",
+      "names": [
+        "Sri Sai Thirumala Kiranam",
+        "Sri Krishna Clinic",
+        "Fino Payment Bank",
+        "Notary"
+      ],
+      "placement_status": "Matched block; individual shop bay coordinates unverified",
+      "image_ids": [
+        "974874736621788",
+        "265002268660621",
+        "312099400405841"
+      ]
+    }
+  ],
+  "unlocated_observations": [
+    {
+      "name": "Men’s Club Fashions",
+      "image_id": "823279371904098",
+      "status": "Historical name read; exact building unverified; no destination pin"
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "source": "ESA WorldCover 10 m 2021 v200 (tile N18E078)",
+  "attribution": "\u00a9 ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium",
+  "license": "CC BY 4.0",
+  "format": "uint8 class codes, row-major; row = z (north to south), column = x (west to east)",
+  "size": 624,
+  "cell_size": 10.0,
+  "origin_x": -3120.0,
+  "origin_z": -3120.0,
+  "classes": {
+    "10": "tree cover",
+    "20": "shrubland",
+    "30": "grassland",
+    "40": "cropland",
+    "50": "built-up",
+    "60": "bare / sparse vegetation",
+    "70": "snow and ice",
+    "80": "permanent water",
+    "90": "herbaceous wetland",
+    "95": "mangroves",
+    "100": "moss and lichen"
+  },
+  "share": {
+    "tree cover": 0.3628,
+    "shrubland": 0.0066,
+    "grassland": 0.1257,
+    "cropland": 0.179,
+    "built-up": 0.2517,
+    "bare / sparse vegetation": 0.0448,
+    "permanent water": 0.0294
+  }
+}

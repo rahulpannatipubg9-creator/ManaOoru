@@ -1,0 +1,4 @@
+{
+  "_readme": "Traffic signals that exist in Godavarikhani but are not yet mapped in OpenStreetMap. Add one entry per signalised junction: {\"lat\": 18.7519, \"lon\": 79.5133, \"note\": \"Chowrastha\"}. Better still, add them to openstreetmap.org as highway=traffic_signals so everyone benefits; tools/fetch_osm.sh will then pick them up.",
+  "traffic_signals": []
+}

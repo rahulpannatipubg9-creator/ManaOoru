@@ -1,0 +1,11 @@
+{
+  "source": "Meta and World Resources Institute, High Resolution Canopy Height Maps (tile 123310201)",
+  "attribution": "Meta and World Resources Institute (WRI) 2024. High Resolution Canopy Height Maps by WRI and Meta.",
+  "license": "CC BY 4.0",
+  "format": "little-endian float32 per tree: x, z (game metres), height (m), crown radius (m)",
+  "count": 179070,
+  "min_height_m": 5,
+  "mean_height_m": 11.62,
+  "cell_m": 7.0,
+  "cover_share": 0.35
+}

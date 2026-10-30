@@ -1,0 +1,15 @@
+{
+  "source": "17 user supplied October 2025 Google Street View screenshots, ordered along Vidyanagar Road No. 2",
+  "usage": "Visual reference only. No screenshot imagery used as textures. Camera points establish viewing sequence, not building centroids.",
+  "mapped_entrance_way": 278779328,
+  "entrance_junction_lon_lat": [79.5163817,18.7549674],
+  "camera_points_lat_lon": [[18.7549992,79.5162967],[18.755122,79.5161551],[18.7551819,79.5160801],[18.7552417,79.5160092],[18.7553006,79.5159377],[18.755422,79.5157926],[18.7555507,79.5156519],[18.7556767,79.5155096],[18.7557448,79.5154414],[18.7559798,79.5151775],[18.756046,79.5151082],[18.7561079,79.5150389],[18.756288,79.5148255],[18.7564101,79.5146802],[18.7564101,79.5146802],[18.7564734,79.5146112],[18.7567871,79.5142607]],
+  "segments": [
+    {"images":[1,2,3,4,5],"observations":"Rusty blue entrance posts, faded white panel, narrow paved lane, single-storey pale blue/cream houses close to left, corrugated roof edges, grilles, right compound wall and trees"},
+    {"images":[6,7,8,9],"observations":"Lane opens into wide tree-lined setbacks; single-storey quarters, low walls, gates, soil/grass shoulders, occasional roadside drainage; preserve open space rather than filling it with buildings"},
+    {"images":[10,11,12],"observations":"Narrower lane again; taller pale blue dwelling on right, exposed brick parapet, steps, gates, porch roofs, dense vegetation on left"},
+    {"images":[13,14,15,16,17],"observations":"Closely spaced low houses, pale green/cream/blue walls, corrugated porches, blue awnings, roof water tanks, ventilation blocks, laundry and plants"}
+  ],
+  "unknowns":"Exact road/building dimensions, hidden geometry, parcel boundaries and individual source-building bindings. Remaining sequence extends beyond entrance way and must be matched before changing geometry.",
+  "implementation_status":"Entrance aligned to mapped junction/lane; 4-segment street replica (compound walls, gates, corrugated porches, authentic pale blue/cream/mint facades, water tanks, and setback trees) generated and integrated via VidyaNagarTwoStreetBuilder."
+}

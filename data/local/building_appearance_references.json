@@ -1,0 +1,20 @@
+{
+  "description": "Historical visual-reference pilot; not a current-condition survey. Source map geometry and business ownership remain unchanged.",
+  "buildings": {
+    "osm/way/599199178": {
+      "building_name": "Bhaskar Bhavan",
+      "identity_source": "User identification and two supplied October 2025 Street View screenshots: opposite New Ashok Theatre",
+      "current_reference_observations": "Faded pink two-storey block, recessed upper corridor, green fabric screening on part of upper floor, many distinct ground-floor storefronts. Individual business ownership/entrance coordinates remain unverified; do not assign all visible names to one storefront.",
+      "capture_date": "2020-06-11",
+      "photographer": "geomannar",
+      "image_ids": ["518945536129912", "974874736621788"],
+      "reference_url": "https://www.mapillary.com/app/?pKey=974874736621788&focus=photo",
+      "license": "Mapillary imagery CC BY-SA 4.0; historical appearance observations, no imagery bundled",
+      "match_basis": "Long narrow roadside block southeast of the New Ashok Theatre Road sequence, immediately northeast of the camera at 18.754043,79.5154641. Both adjacent panoramas show the same two-storey pink block, continuous upper-floor frontage and ground-floor shops. Match uses road side, block direction and endpoints; camera GPS is not used as a building position.",
+      "confidence": "visual interpretation; not surveyed",
+      "building:levels": "2",
+      "building:colour": "#c78f7f",
+      "limitations": "Colour is an approximate muted salmon interpretation under overcast light. No metric height, current shop identities, detailed window layout or entrance coordinates are asserted. No building footprint changes. Applies to the mapped roadside strip only, not the parallel rear strip."
+    }
+  }
+}

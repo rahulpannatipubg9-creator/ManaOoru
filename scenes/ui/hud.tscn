@@ -1,0 +1,239 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/hud.gd" id="1_hud"]
+
+[node name="HUD" type="CanvasLayer"]
+script = ExtResource("1_hud")
+
+[node name="Panel" type="PanelContainer" parent="."]
+offset_left = 22.0
+offset_top = 20.0
+offset_right = 340.0
+offset_bottom = 195.0
+modulate = Color(1, 1, 1, 0.92)
+
+[node name="Margin" type="MarginContainer" parent="Panel"]
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 12
+
+[node name="VBox" type="VBoxContainer" parent="Panel/Margin"]
+theme_override_constants/separation = 5
+
+[node name="Title" type="Label" parent="Panel/Margin/VBox"]
+theme_override_colors/font_color = Color(0.05, 0.18, 0.28, 1)
+theme_override_font_sizes/font_size = 26
+text = "MANA OORU"
+
+[node name="Subtitle" type="Label" parent="Panel/Margin/VBox"]
+theme_override_colors/font_color = Color(0.18, 0.3, 0.36, 1)
+text = "3D Exploration Prototype - v0.1"
+
+[node name="Status" type="Label" parent="Panel/Margin/VBox"]
+text = "Status: Walking"
+
+[node name="Position" type="Label" parent="Panel/Margin/VBox"]
+text = "Position: (0, 0, 0)"
+
+[node name="Coins" type="Label" parent="Panel/Margin/VBox"]
+text = "Coins: 0 / 10"
+
+[node name="Speed" type="Label" parent="Panel/Margin/VBox"]
+text = "Speed: 000 km/h"
+
+[node name="Gear" type="Label" parent="Panel/Margin/VBox"]
+text = "Gear: D1  ·  750 rpm"
+visible = false
+
+[node name="Help" type="Label" parent="Panel/Margin/VBox"]
+theme_override_colors/font_color = Color(0.15, 0.25, 0.3, 1)
+text = "Joystick to move  |  Swipe right to look"
+
+[node name="Offline" type="Label" parent="."]
+offset_left = 22.0
+offset_top = 680.0
+offset_right = 280.0
+offset_bottom = 710.0
+theme_override_colors/font_color = Color(0.95, 0.98, 0.92, 1)
+theme_override_font_sizes/font_size = 16
+text = "● Offline mode"
+
+[node name="InteractionPrompt" type="Label" parent="."]
+anchors_preset = 12
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -260.0
+offset_top = -150.0
+offset_right = 260.0
+offset_bottom = -95.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_colors/font_color = Color(1, 0.92, 0.55, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.9)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+theme_override_font_sizes/font_size = 24
+text = "F / ENTER  -  ENTER VEHICLE  |  E - INTERACT"
+horizontal_alignment = 1
+visible = false
+
+[node name="VehicleControlsHint" type="Label" parent="."]
+offset_left = 390.0
+offset_top = 90.0
+offset_right = 890.0
+offset_bottom = 170.0
+theme_override_colors/font_color = Color(1, 0.95, 0.72, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.8)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+theme_override_font_sizes/font_size = 18
+text = "VEHICLE CONTROLS"
+horizontal_alignment = 1
+visible = false
+
+[node name="TouchControls" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 1
+
+[node name="JoystickBase" type="ColorRect" parent="TouchControls"]
+mouse_filter = 2
+color = Color(0.08, 0.14, 0.18, 0.42)
+
+[node name="JoystickKnob" type="ColorRect" parent="TouchControls/JoystickBase"]
+mouse_filter = 2
+color = Color(0.85, 0.92, 0.95, 0.72)
+
+[node name="Up" type="Button" parent="TouchControls"]
+offset_left = 116.0
+offset_top = 510.0
+offset_right = 196.0
+offset_bottom = 590.0
+theme_override_font_sizes/font_size = 30
+text = "▲"
+
+[node name="Down" type="Button" parent="TouchControls"]
+offset_left = 116.0
+offset_top = 680.0
+offset_right = 196.0
+offset_bottom = 760.0
+theme_override_font_sizes/font_size = 30
+text = "▼"
+
+[node name="Left" type="Button" parent="TouchControls"]
+offset_left = 30.0
+offset_top = 595.0
+offset_right = 110.0
+offset_bottom = 675.0
+theme_override_font_sizes/font_size = 30
+text = "◀"
+
+[node name="Right" type="Button" parent="TouchControls"]
+offset_left = 202.0
+offset_top = 595.0
+offset_right = 282.0
+offset_bottom = 675.0
+theme_override_font_sizes/font_size = 30
+text = "▶"
+
+[node name="Run" type="Button" parent="TouchControls"]
+offset_left = 315.0
+offset_top = 610.0
+offset_right = 445.0
+offset_bottom = 680.0
+theme_override_font_sizes/font_size = 20
+text = "RUN"
+
+[node name="Jump" type="Button" parent="TouchControls"]
+offset_left = 1080.0
+offset_top = 590.0
+offset_right = 1245.0
+offset_bottom = 690.0
+theme_override_font_sizes/font_size = 22
+text = "JUMP"
+
+[node name="Reset" type="Button" parent="TouchControls"]
+offset_left = 1080.0
+offset_top = 480.0
+offset_right = 1245.0
+offset_bottom = 565.0
+theme_override_font_sizes/font_size = 20
+text = "RESET"
+
+[node name="Enter" type="Button" parent="TouchControls"]
+offset_left = 900.0
+offset_top = 500.0
+offset_right = 1060.0
+offset_bottom = 590.0
+theme_override_font_sizes/font_size = 22
+text = "ENTER"
+visible = false
+
+[node name="Exit" type="Button" parent="TouchControls"]
+offset_left = 900.0
+offset_top = 500.0
+offset_right = 1060.0
+offset_bottom = 590.0
+theme_override_font_sizes/font_size = 22
+text = "EXIT"
+visible = false
+
+[node name="Handbrake" type="Button" parent="TouchControls"]
+offset_left = 900.0
+offset_top = 600.0
+offset_right = 1060.0
+offset_bottom = 680.0
+theme_override_font_sizes/font_size = 18
+text = "BRAKE"
+visible = false
+
+[node name="Camera" type="Button" parent="TouchControls"]
+offset_left = 1080.0
+offset_top = 400.0
+offset_right = 1245.0
+offset_bottom = 475.0
+theme_override_font_sizes/font_size = 18
+text = "CAMERA"
+visible = false
+
+[node name="GearMode" type="Button" parent="TouchControls"]
+offset_left = 1080.0
+offset_top = 300.0
+offset_right = 1245.0
+offset_bottom = 375.0
+theme_override_font_sizes/font_size = 18
+text = "AUTO"
+visible = false
+
+[node name="GearUp" type="Button" parent="TouchControls"]
+offset_left = 1080.0
+offset_top = 500.0
+offset_right = 1160.0
+offset_bottom = 580.0
+theme_override_font_sizes/font_size = 24
+text = "+"
+visible = false
+
+[node name="GearDown" type="Button" parent="TouchControls"]
+offset_left = 1165.0
+offset_top = 500.0
+offset_right = 1245.0
+offset_bottom = 580.0
+theme_override_font_sizes/font_size = 24
+text = "−"
+visible = false
+
+[node name="LookHint" type="Label" parent="TouchControls"]
+offset_left = 900.0
+offset_top = 665.0
+offset_right = 1245.0
+offset_bottom = 705.0
+theme_override_colors/font_color = Color(1, 1, 1, 0.85)
+theme_override_font_sizes/font_size = 16
+text = "Swipe right side to look"
+horizontal_alignment = 2

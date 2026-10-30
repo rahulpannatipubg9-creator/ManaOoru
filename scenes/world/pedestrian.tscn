@@ -1,0 +1,56 @@
+[gd_scene load_steps=11 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/pedestrian.gd" id="1_pedestrian"]
+[sub_resource type="CapsuleMesh" id="Capsule_body"]
+radius = 0.28
+height = 1.0
+[sub_resource type="StandardMaterial3D" id="Material_shirt"]
+albedo_color = Color(0.14, 0.42, 0.26, 1)
+[sub_resource type="SphereMesh" id="Sphere_head"]
+radius = 0.22
+height = 0.44
+[sub_resource type="StandardMaterial3D" id="Material_skin"]
+albedo_color = Color(0.68, 0.38, 0.22, 1)
+[sub_resource type="CapsuleMesh" id="Capsule_legs"]
+radius = 0.11
+height = 0.6
+[sub_resource type="StandardMaterial3D" id="Material_pants"]
+albedo_color = Color(0.08, 0.09, 0.12, 1)
+[sub_resource type="CapsuleMesh" id="Capsule_arms"]
+radius = 0.095
+height = 0.58
+
+[node name="Pedestrian" type="Node3D"]
+script = ExtResource("1_pedestrian")
+[node name="Body" type="MeshInstance3D" parent="."]
+mesh = SubResource("Capsule_body")
+material_override = SubResource("Material_shirt")
+position = Vector3(0, 0.85, 0)
+[node name="Head" type="MeshInstance3D" parent="."]
+mesh = SubResource("Sphere_head")
+material_override = SubResource("Material_skin")
+position = Vector3(0, 1.68, 0)
+[node name="LeftArmPivot" type="Node3D" parent="."]
+position = Vector3(-0.37, 1.34, 0)
+[node name="Arm" type="MeshInstance3D" parent="LeftArmPivot"]
+mesh = SubResource("Capsule_arms")
+material_override = SubResource("Material_shirt")
+position = Vector3(0, -0.26, 0)
+[node name="RightArmPivot" type="Node3D" parent="."]
+position = Vector3(0.37, 1.34, 0)
+[node name="Arm" type="MeshInstance3D" parent="RightArmPivot"]
+mesh = SubResource("Capsule_arms")
+material_override = SubResource("Material_shirt")
+position = Vector3(0, -0.26, 0)
+[node name="LeftLegPivot" type="Node3D" parent="."]
+position = Vector3(-0.16, 0.65, 0)
+[node name="Leg" type="MeshInstance3D" parent="LeftLegPivot"]
+mesh = SubResource("Capsule_legs")
+material_override = SubResource("Material_pants")
+position = Vector3(0, -0.28, 0)
+[node name="RightLegPivot" type="Node3D" parent="."]
+position = Vector3(0.16, 0.65, 0)
+[node name="Leg" type="MeshInstance3D" parent="RightLegPivot"]
+mesh = SubResource("Capsule_legs")
+material_override = SubResource("Material_pants")
+position = Vector3(0, -0.28, 0)

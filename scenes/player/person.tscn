@@ -1,0 +1,55 @@
+[gd_scene load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://scripts/player/person_controller.gd" id="1_person"]
+[ext_resource type="Script" path="res://scripts/camera/camera_controller.gd" id="2_camera"]
+[ext_resource type="Script" path="res://scripts/player/test_character.gd" id="3_test_character"]
+
+[sub_resource type="CapsuleMesh" id="Capsule_body"]
+radius = 0.34
+height = 1.15
+[sub_resource type="StandardMaterial3D" id="Material_shirt"]
+albedo_color = Color(0.32, 0.35, 0.18, 1)
+[sub_resource type="SphereMesh" id="Sphere_head"]
+radius = 0.27
+height = 0.54
+[sub_resource type="StandardMaterial3D" id="Material_skin"]
+albedo_color = Color(0.56, 0.40, 0.31, 1)
+[sub_resource type="CapsuleMesh" id="Capsule_legs"]
+radius = 0.14
+height = 0.82
+[sub_resource type="StandardMaterial3D" id="Material_pants"]
+albedo_color = Color(0.04, 0.04, 0.04, 1)
+[sub_resource type="CapsuleShape3D" id="Shape_person"]
+radius = 0.42
+height = 1.8
+
+[node name="Person" type="CharacterBody3D"]
+script = ExtResource("1_person")
+[node name="Body" type="MeshInstance3D" parent="."]
+mesh = SubResource("Capsule_body")
+material_override = SubResource("Material_shirt")
+position = Vector3(0, 1.0, 0)
+[node name="Head" type="MeshInstance3D" parent="."]
+mesh = SubResource("Sphere_head")
+material_override = SubResource("Material_skin")
+position = Vector3(0, 1.85, 0)
+[node name="Legs" type="MeshInstance3D" parent="."]
+mesh = SubResource("Capsule_legs")
+material_override = SubResource("Material_pants")
+position = Vector3(0, 0.42, 0)
+[node name="TestCharacter" type="Node3D" parent="."]
+script = ExtResource("3_test_character")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("Shape_person")
+position = Vector3(0, 0.9, 0)
+[node name="CameraPivot" type="Node3D" parent="."]
+position = Vector3(0, 1.45, 0)
+script = ExtResource("2_camera")
+[node name="SpringArm3D" type="SpringArm3D" parent="CameraPivot"]
+spring_length = 5.5
+collision_mask = 1
+margin = 0.2
+[node name="Camera3D" type="Camera3D" parent="CameraPivot/SpringArm3D"]
+current = true
+fov = 68.0

@@ -1,0 +1,40 @@
+{
+  "note": "User-requested directory coordinates; exact storefront positions unverified. Not OSM data.",
+  "shops": [
+    {
+      "name": "Sampath Mobiles",
+      "lat": 18.75067,
+      "lon": 79.51119,
+      "kind": "mobile_phone",
+      "source": "https://india.worldplaces.me/review/165319500-sampath-mobiles.html"
+    },
+    {
+      "name": "Agra Footwear",
+      "lat": 18.75067,
+      "lon": 79.5112,
+      "kind": "shoes",
+      "source": "https://india.worldplaces.me/review/223947496-agra-footwear.html"
+    },
+    {
+      "name": "Ambika Sai Electronics",
+      "lat": 18.75053,
+      "lon": 79.51075,
+      "kind": "electronics",
+      "source": "https://india.worldplaces.me/view-place/76664168-ambika-sai-electronics.html"
+    },
+    {
+      "name": "Prakash Bros Jewellers",
+      "lat": 18.75025,
+      "lon": 79.51067,
+      "kind": "jewelry",
+      "source": "https://india.worldplaces.me/review/193446886-prakash-bros-jewellers.html"
+    },
+    {
+      "name": "Sagarika Furniture Showroom, Markandeya Colony",
+      "lat": 18.76118,
+      "lon": 79.49837,
+      "kind": "furniture",
+      "source": "https://india.worldplaces.me/review/96020946-sagarika-furniture-show-room-markandeyacolony-godavarikhani.html"
+    }
+  ]
+}

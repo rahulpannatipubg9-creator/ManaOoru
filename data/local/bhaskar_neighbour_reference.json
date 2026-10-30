@@ -1,0 +1,14 @@
+{
+  "status": "reference_only_pending_footprint_binding",
+  "source": "User supplied Google Street View screenshot; visible capture label October 2025",
+  "context": "Beside Bhaskar Bhavan, at the side-road entrance shown as Vidyanagar Road No. 1",
+  "observations": [
+    "Cream/weathered pale yellow building with red roof fascia",
+    "Two visible storeys and exterior staircase",
+    "Rooftop telecommunications equipment and adjacent lattice mast",
+    "Boundary wall and railing along the foreground",
+    "Side road separates this frontage from the pink Bhaskar Bhavan block"
+  ],
+  "placement_constraints": "Do not spawn from panorama camera coordinates. Establish the specific mapped footprint and wall before modeling. Preserve side-road clearance. Exact heights, tower dimensions and hidden geometry are unknown.",
+  "bundled_imagery": false
+}

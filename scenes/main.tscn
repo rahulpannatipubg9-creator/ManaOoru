@@ -1,0 +1,44 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
+[ext_resource type="PackedScene" path="res://scenes/world/world.tscn" id="2_world"]
+[ext_resource type="PackedScene" path="res://scenes/vehicles/rigid_thar.tscn" id="3_vehicle"]
+[ext_resource type="PackedScene" path="res://scenes/player/person.tscn" id="4_person"]
+[ext_resource type="PackedScene" path="res://scenes/vehicles/porsche_911.tscn" id="5_porsche"]
+[ext_resource type="PackedScene" path="res://scenes/vehicles/jeep_compass.tscn" id="6_compass"]
+[ext_resource type="PackedScene" path="res://scenes/vehicles/gdk_helicopter.tscn" id="7_helicopter"]
+[ext_resource type="PackedScene" path="res://scenes/vehicles/tuk_tuk.tscn" id="8_tuk_tuk"]
+
+[node name="ManaOoru" type="Node3D"]
+script = ExtResource("1_main")
+
+[node name="World" parent="." instance=ExtResource("2_world")]
+
+[node name="Vehicle" parent="." instance=ExtResource("3_vehicle") groups=["enterable_vehicle"]]
+position = Vector3(120, 1.2, -105)
+
+[node name="Porsche 911" parent="." instance=ExtResource("5_porsche") groups=["enterable_vehicle"]]
+position = Vector3(18, 1.2, 18)
+rotation = Vector3(0, 1.5708, 0)
+
+[node name="ParkedVehicle_2" parent="." instance=ExtResource("3_vehicle") groups=["enterable_vehicle"]]
+position = Vector3(-18, 1.2, 18)
+rotation = Vector3(0, -1.5708, 0)
+paint_color = Color(0.86, 0.87, 0.87, 1)
+
+[node name="ParkedVehicle_3" parent="." instance=ExtResource("6_compass") groups=["enterable_vehicle"]]
+position = Vector3(48, 1.2, 72)
+
+[node name="ParkedVehicle_4" parent="." instance=ExtResource("3_vehicle") groups=["enterable_vehicle"]]
+position = Vector3(-54, 1.2, -72)
+rotation = Vector3(0, 3.1416, 0)
+paint_color = Color(0.55, 0.36, 0.22, 1)
+
+[node name="Chowrastha Helicopter" parent="." instance=ExtResource("7_helicopter") groups=["enterable_vehicle"]]
+position = Vector3(25, 2, 25)
+
+[node name="Tuk Tuk" parent="." instance=ExtResource("8_tuk_tuk") groups=["enterable_vehicle"]]
+position = Vector3(124, 1.2, -98)
+
+[node name="Player" parent="." instance=ExtResource("4_person")]
+position = Vector3(116, 1.2, -105)

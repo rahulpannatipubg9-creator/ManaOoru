@@ -1,0 +1,63 @@
+{
+ "generated_from": "OpenStreetMap + Overture Maps places 2026-10-21.0",
+ "bus_stops": [
+  {
+   "name": "Vittal Nagar Bus Stop",
+   "lon": 79.52523420000001,
+   "lat": 18.7291679,
+   "source": "Overture Maps (meta)"
+  },
+  {
+   "name": "Vittal Nagar Bus Stop",
+   "lon": 79.51829,
+   "lat": 18.73592,
+   "source": "Overture Maps (meta)"
+  },
+  {
+   "name": "L B Nagar Bus Stop",
+   "lon": 79.5150709,
+   "lat": 18.7452891,
+   "source": "Overture Maps (meta)"
+  },
+  {
+   "name": "Godavarikhani Vegetable Market Bus Stop",
+   "lon": 79.51603445,
+   "lat": 18.7493684,
+   "source": "Overture Maps (meta)"
+  },
+  {
+   "name": "Macherial Highway Bus Stop",
+   "lon": 79.51146,
+   "lat": 18.76749,
+   "source": "Overture Maps (meta)"
+  }
+ ],
+ "markets": [
+  {
+   "name": "Saturday market",
+   "lon": 79.5161998,
+   "lat": 18.7572074,
+   "source": "OpenStreetMap"
+  }
+ ],
+ "entrances": [
+  {
+   "name": "BAPUGI NAGAR",
+   "lon": 79.5152754,
+   "lat": 18.7576381,
+   "source": "OpenStreetMap"
+  },
+  {
+   "name": "SURYA NAGAR",
+   "lon": 79.516854,
+   "lat": 18.7554296,
+   "source": "OpenStreetMap"
+  },
+  {
+   "name": "VIDYA NAGAR 2",
+   "lon": 79.5163546,
+   "lat": 18.7549391,
+   "source": "OpenStreetMap"
+  }
+ ]
+}

@@ -1,0 +1,11 @@
+{
+  "source": "Google Open Buildings 2.5D Temporal Dataset (2023-06-30), building_height band",
+  "license": "CC BY 4.0",
+  "attribution": "Building heights: Google Open Buildings 2.5D (CC BY 4.0)",
+  "format": "gzip of size*size uint8; row = z (north to south), column = x (west to east); value / units_per_meter = metres",
+  "size": 3050,
+  "cell_size": 2.0,
+  "origin_x": -3050.0,
+  "origin_z": -3050.0,
+  "units_per_meter": 4.0
+}

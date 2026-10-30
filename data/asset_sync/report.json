@@ -1,0 +1,20 @@
+{
+  "changed": [],
+  "review_scene": "/Users/rahulpannati/Downloads/AI Agents Practice/ManaOoru/scenes/world/imported_buildings_review.tscn",
+  "exports": 9,
+  "license_review": [
+    "/Users/rahulpannati/Downloads/3d.blend",
+    "/Users/rahulpannati/Downloads/Chubby magic girl.blend",
+    "/Users/rahulpannati/Downloads/IsometricSchool.blend",
+    "/Users/rahulpannati/Downloads/Mahindra Thar 3D Model.blend",
+    "/Users/rahulpannati/Downloads/cctv-v1.blend",
+    "/Users/rahulpannati/Downloads/untitled.blend"
+  ],
+  "failures": [],
+  "not_tested": [
+    "real-world placement",
+    "collision",
+    "mobile frame rate",
+    "texture fidelity against photos"
+  ]
+}

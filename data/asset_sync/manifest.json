@@ -1,0 +1,245 @@
+{
+  "/Users/rahulpannati/Documents/New project/Destination_Dine_In/Destination_Dine_In.blend": {
+    "sha256": "aca60c04c7bf748cdf60c25070ce6bff3dd467a460977af339a8f70aade767a5",
+    "source": "/Users/rahulpannati/Documents/New project/Destination_Dine_In/Destination_Dine_In.blend",
+    "checked_at": 1793057757.753268,
+    "status": "exported_review",
+    "output": "/Users/rahulpannati/Downloads/AI Agents Practice/ManaOoru/assets/models/city_buildings/destination_dine_in/destination_dine_in.glb",
+    "provenance": "User-created building model; photographic reference rights not independently verified",
+    "metadata": {
+      "scene": "Destination_Dine_In",
+      "objects": 414,
+      "bounds_blender": {
+        "min": [
+          -11.0,
+          -8.0,
+          -0.2750000059604645
+        ],
+        "max": [
+          11.0,
+          8.0,
+          8.449999809265137
+        ]
+      },
+      "triangles_source": 14800,
+      "placement": "review_only",
+      "dimensions_estimated": true
+    }
+  },
+  "/Users/rahulpannati/Documents/New project/Dolphin_Shop_Row/Dolphin_Shop_Row.blend": {
+    "sha256": "c1e015ab32a86f2789b911d8522781515a346e40c3e5a6a9d8bc924a647242db",
+    "source": "/Users/rahulpannati/Documents/New project/Dolphin_Shop_Row/Dolphin_Shop_Row.blend",
+    "checked_at": 1793057759.9334521,
+    "status": "exported_review",
+    "output": "/Users/rahulpannati/Downloads/AI Agents Practice/ManaOoru/assets/models/city_buildings/dolphin_shop_row/dolphin_shop_row.glb",
+    "provenance": "User-created building model; photographic reference rights not independently verified",
+    "metadata": {
+      "scene": "Dolphin_Shop_Row",
+      "objects": 461,
+      "bounds_blender": {
+        "min": [
+          -19.0,
+          -10.5,
+          -0.4000000059604645
+        ],
+        "max": [
+          19.0,
+          8.0,
+          14.263924598693848
+        ]
+      },
+      "triangles_source": 6828,
+      "placement": "review_only",
+      "dimensions_estimated": true
+    }
+  },
+  "/Users/rahulpannati/Documents/New project/Godavarikhani_Bus_Station/Godavarikhani_Bus_Station.blend": {
+    "sha256": "260351be8927b6848922f025d010a98d0271d7b40449590125be8926a7f9e45f",
+    "source": "/Users/rahulpannati/Documents/New project/Godavarikhani_Bus_Station/Godavarikhani_Bus_Station.blend",
+    "checked_at": 1793057761.3005729,
+    "status": "exported_review",
+    "output": "/Users/rahulpannati/Downloads/AI Agents Practice/ManaOoru/assets/models/city_buildings/godavarikhani_bus_station/godavarikhani_bus_station.glb",
+    "provenance": "User-created building model; photographic reference rights not independently verified",
+    "metadata": {
+      "scene": "Godavarikhani_Bus_Station",
+      "objects": 687,
+      "bounds_blender": {
+        "min": [
+          -50.0,
+          -34.0,
+          -0.550000011920929
+        ],
+        "max": [
+          50.0,
+          58.0,
+          26.024747848510742
+        ]
+      },
+      "triangles_source": 12664,
+      "placement": "review_only",
+      "dimensions_estimated": true
+    }
+  },
+  "/Users/rahulpannati/Documents/New project/Mythri_Rajesh_Theatre/Mythri_Rajesh_Theatre.blend": {
+    "sha256": "37a4537cfb539abd1c6fc65308614981dbf8691ae9f7a7e7e4c9311b94f72d96",
+    "source": "/Users/rahulpannati/Documents/New project/Mythri_Rajesh_Theatre/Mythri_Rajesh_Theatre.blend",
+    "checked_at": 1793057762.88187,
+    "status": "exported_review",
+    "output": "/Users/rahulpannati/Downloads/AI Agents Practice/ManaOoru/assets/models/city_buildings/mythri_rajesh_theatre/mythri_rajesh_theatre.glb",
+    "provenance": "User-created building model; photographic reference rights not independently verified",
+    "metadata": {
+      "scene": "Mythri_Rajesh_Theatre",
+      "objects": 266,
+      "bounds_blender": {
+        "min": [
+          -21.0,
+          -15.0,
+          -0.3100000023841858
+        ],
+        "max": [
+          19.5,
+          24.5,
+          11.25
+        ]
+      },
+      "triangles_source": 4742,
+      "placement": "review_only",
+      "dimensions_estimated": true
+    }
+  },
+  "/Users/rahulpannati/Documents/New project/Sai_Leela_Residency/Sai_Leela_Residency.blend": {
+    "sha256": "91aa84598f153a6044cda756e0c57cbcb5728ecd167e695913499a60f745da8d",
+    "source": "/Users/rahulpannati/Documents/New project/Sai_Leela_Residency/Sai_Leela_Residency.blend",
+    "checked_at": 1793057763.929597,
+    "status": "exported_review",
+    "output": "/Users/rahulpannati/Downloads/AI Agents Practice/ManaOoru/assets/models/city_buildings/sai_leela_residency/sai_leela_residency.glb",
+    "provenance": "User-created building model; photographic reference rights not independently verified",
+    "metadata": {
+      "scene": "Sai_Leela_Residency",
+      "objects": 270,
+      "bounds_blender": {
+        "min": [
+          -12.0,
+          -11.5,
+          -0.375
+        ],
+        "max": [
+          12.0,
+          12.0,
+          23.09284782409668
+        ]
+      },
+      "triangles_source": 25985,
+      "placement": "review_only",
+      "dimensions_estimated": true
+    }
+  },
+  "/Users/rahulpannati/Documents/New project/Singareni_Sector_2_Stadium/Singareni_Sector_2_Stadium.blend": {
+    "sha256": "a9e08aa7976160fc10e5b4fda07e824913d51286286d17f71f22a34075328201",
+    "source": "/Users/rahulpannati/Documents/New project/Singareni_Sector_2_Stadium/Singareni_Sector_2_Stadium.blend",
+    "checked_at": 1793057765.1394649,
+    "status": "exported_review",
+    "output": "/Users/rahulpannati/Downloads/AI Agents Practice/ManaOoru/assets/models/city_buildings/singareni_sector_2_stadium/singareni_sector_2_stadium.glb",
+    "provenance": "User-created building model; photographic reference rights not independently verified",
+    "metadata": {
+      "scene": "Singareni_Sector_2_Stadium",
+      "objects": 1332,
+      "bounds_blender": {
+        "min": [
+          -75.0,
+          -45.0,
+          -0.7000000476837158
+        ],
+        "max": [
+          75.0,
+          105.0,
+          25.475000381469727
+        ]
+      },
+      "triangles_source": 28125,
+      "placement": "review_only",
+      "dimensions_estimated": true
+    }
+  },
+  "/Users/rahulpannati/Documents/New project/Singareni_Sector_2_Stadium/Stadium_with_Swimming_Pool.blend": {
+    "sha256": "68b6bfc71921481a8eb90a056f50cd90118265cd9206b06f22537449b928b7d8",
+    "source": "/Users/rahulpannati/Documents/New project/Singareni_Sector_2_Stadium/Stadium_with_Swimming_Pool.blend",
+    "checked_at": 1793057767.223556,
+    "status": "exported_review",
+    "output": "/Users/rahulpannati/Downloads/AI Agents Practice/ManaOoru/assets/models/city_buildings/stadium_with_swimming_pool/stadium_with_swimming_pool.glb",
+    "provenance": "User-created building model; photographic reference rights not independently verified",
+    "metadata": {
+      "scene": "Singareni_Sector_2_Stadium",
+      "objects": 1332,
+      "bounds_blender": {
+        "min": [
+          -75.0,
+          -45.0,
+          -0.7000000476837158
+        ],
+        "max": [
+          75.0,
+          105.0,
+          25.475000381469727
+        ]
+      },
+      "triangles_source": 28125,
+      "placement": "review_only",
+      "dimensions_estimated": true
+    }
+  },
+  "/Users/rahulpannati/Documents/New project/Singareni_Super_Market/Singareni_Super_Market.blend": {
+    "sha256": "9cbe766fa36040141f57cf841a67c3d269e4da0196b806746509db5ce149a755",
+    "source": "/Users/rahulpannati/Documents/New project/Singareni_Super_Market/Singareni_Super_Market.blend",
+    "checked_at": 1793057769.2935429,
+    "status": "exported_review",
+    "output": "/Users/rahulpannati/Downloads/AI Agents Practice/ManaOoru/assets/models/city_buildings/singareni_super_market/singareni_super_market.glb",
+    "provenance": "User-created building model; photographic reference rights not independently verified",
+    "metadata": {
+      "scene": "Singareni_Super_Market",
+      "objects": 388,
+      "bounds_blender": {
+        "min": [
+          -14.0,
+          -7.099999904632568,
+          -0.2750000059604645
+        ],
+        "max": [
+          14.0,
+          8.449999809265137,
+          8.300000190734863
+        ]
+      },
+      "triangles_source": 17064,
+      "placement": "review_only",
+      "dimensions_estimated": true
+    }
+  },
+  "/Users/rahulpannati/Documents/New project/Srinivasa_Theatre/Srinivasa_Theatre.blend": {
+    "sha256": "073f273d238833770a7211dba266e54c85034f4dd411a3c00037c6fbe86825a3",
+    "source": "/Users/rahulpannati/Documents/New project/Srinivasa_Theatre/Srinivasa_Theatre.blend",
+    "checked_at": 1793057770.669816,
+    "status": "exported_review",
+    "output": "/Users/rahulpannati/Downloads/AI Agents Practice/ManaOoru/assets/models/city_buildings/srinivasa_theatre/srinivasa_theatre.glb",
+    "provenance": "User-created building model; photographic reference rights not independently verified",
+    "metadata": {
+      "scene": "Srinivasa_Theatre",
+      "objects": 263,
+      "bounds_blender": {
+        "min": [
+          -15.008999824523926,
+          -11.199999809265137,
+          -0.23999999463558197
+        ],
+        "max": [
+          15.008999824523926,
+          24.0,
+          11.099995613098145
+        ]
+      },
+      "triangles_source": 5529,
+      "placement": "review_only",
+      "dimensions_estimated": true
+    }
+  }
+}

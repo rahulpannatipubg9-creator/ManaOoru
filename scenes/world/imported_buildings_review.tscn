@@ -1,0 +1,40 @@
+[gd_scene load_steps=10 format=3]
+
+[ext_resource type="PackedScene" path="res://assets/models/city_buildings/destination_dine_in/destination_dine_in.glb" id="1"]
+[ext_resource type="PackedScene" path="res://assets/models/city_buildings/dolphin_shop_row/dolphin_shop_row.glb" id="2"]
+[ext_resource type="PackedScene" path="res://assets/models/city_buildings/godavarikhani_bus_station/godavarikhani_bus_station.glb" id="3"]
+[ext_resource type="PackedScene" path="res://assets/models/city_buildings/mythri_rajesh_theatre/mythri_rajesh_theatre.glb" id="4"]
+[ext_resource type="PackedScene" path="res://assets/models/city_buildings/sai_leela_residency/sai_leela_residency.glb" id="5"]
+[ext_resource type="PackedScene" path="res://assets/models/city_buildings/singareni_sector_2_stadium/singareni_sector_2_stadium.glb" id="6"]
+[ext_resource type="PackedScene" path="res://assets/models/city_buildings/stadium_with_swimming_pool/stadium_with_swimming_pool.glb" id="7"]
+[ext_resource type="PackedScene" path="res://assets/models/city_buildings/singareni_super_market/singareni_super_market.glb" id="8"]
+[ext_resource type="PackedScene" path="res://assets/models/city_buildings/srinivasa_theatre/srinivasa_theatre.glb" id="9"]
+
+[node name="ImportedBuildingsReview" type="Node3D"]
+
+[node name="destination_dine_in" parent="." instance=ExtResource("1")]
+position = Vector3(0, 0, 0)
+
+[node name="dolphin_shop_row" parent="." instance=ExtResource("2")]
+position = Vector3(90, 0, 0)
+
+[node name="godavarikhani_bus_station" parent="." instance=ExtResource("3")]
+position = Vector3(180, 0, 0)
+
+[node name="mythri_rajesh_theatre" parent="." instance=ExtResource("4")]
+position = Vector3(0, 0, 100)
+
+[node name="sai_leela_residency" parent="." instance=ExtResource("5")]
+position = Vector3(90, 0, 100)
+
+[node name="singareni_sector_2_stadium" parent="." instance=ExtResource("6")]
+position = Vector3(180, 0, 100)
+
+[node name="stadium_with_swimming_pool" parent="." instance=ExtResource("7")]
+position = Vector3(0, 0, 200)
+
+[node name="singareni_super_market" parent="." instance=ExtResource("8")]
+position = Vector3(90, 0, 200)
+
+[node name="srinivasa_theatre" parent="." instance=ExtResource("9")]
+position = Vector3(180, 0, 200)

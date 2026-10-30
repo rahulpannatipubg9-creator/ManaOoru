@@ -1,0 +1,40 @@
+# Weapons: lessons
+
+Code: `scripts/gameplay/weapon_catalog.gd` (every rifle's model, grips, muzzle and stats),
+`person_controller.gd` (holding and aiming), `city_gameplay.gd` (firing, ownership, switching),
+`weapon_pickup.gd`, `tdm_session.gd` (host checks).
+
+## Adding a new rifle
+
+1. Export it with a script like `tools/export_ak47.py`: metres, barrel along +Z, origin at the pistol grip,
+   textures embedded, loose parts removed or listed.
+2. Add an entry to `weapon_catalog.gd` with a **new id** (never renumber; ids go over the network). Line its
+   bore up with the M416's (x 0.097, y 0.109) through `offset`, so aiming and sights keep working, and give its
+   own hand grips and muzzle in the holder's space.
+3. Measure the model (grip, handguard, muzzle) rather than guessing; render the character holding it.
+4. Keep the head damage within the host's `max_hit_damage` (100) and `min_claim_interval` below the fire interval.
+5. Bump `PROTOCOL_VERSION` in `tdm_session.gd` if stats or messages change, and add the licence to
+   `ASSET_LICENSES.md`.
+6. Run `weapon_switch_regression`, `weapon_pickup_regression`, `codex_weapon_presentation_regression`,
+   `tdm_match_regression`, `tdm_network_regression`, `tdm_integration_regression`.
+
+## Entries
+
+### Loose pieces floating under the M416 (2026-10-25)
+- **Cause:** the source model carries three accessory meshes not attached to the rifle.
+- **Rule:** measure each part of a downloaded weapon; hide or delete pieces that are not part of it
+  (`loose_parts` in the catalog).
+
+### Rifle stats were scattered constants (2026-10-29)
+- **Cause:** damage, fire rate, recoil, muzzle and grips were hard-coded for the M416 in five files.
+- **Rule:** one source of truth, `weapon_catalog.gd`. The host takes damage and the fire-rate limit from the rifle
+  named in the claim and refuses unknown ids, so a client cannot claim more than a real rifle does.
+
+### Assigning a plain array to a typed one (2026-10-29)
+- **Symptom:** `Invalid assignment ... owned_rifles with value of type 'Array'`.
+- **Rule:** `owned_rifles` is `Array[int]`; use `give_rifle()` or a typed array, not `[0, 1]`.
+
+### New touch button overlapped others on tablets (2026-10-29)
+- **Cause:** the ⇄ swap slot was placed beside the grenade without checking every device shape and scale.
+- **Rule:** any new touch slot goes in `claw_layout.gd` + `button_slots()` + `hud_layout_profiles.gd` and must pass
+  `mobile_controls_regression` (7 device shapes × 3 scales × both hands).

@@ -1,0 +1,3011 @@
+{
+  "version": 0.6,
+  "generator": "Overpass API 0.7.62.4 2390de5a",
+  "osm3s": {
+    "timestamp_osm_base": "2026-10-26T09:53:50Z",
+    "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL."
+  },
+  "elements": [
+
+{
+  "type": "node",
+  "id": 2363286766,
+  "lat": 18.7606587,
+  "lon": 79.4854370,
+  "tags": {
+    "amenity": "school",
+    "name": "st.claire high school"
+  }
+},
+{
+  "type": "node",
+  "id": 2363286774,
+  "lat": 18.7555856,
+  "lon": 79.4890737,
+  "tags": {
+    "amenity": "bank",
+    "brand": "State Bank of India",
+    "brand:wikidata": "Q1340361",
+    "brand:wikipedia": "en:State Bank of India",
+    "name": "State Bank of India",
+    "short_name": "SBI",
+    "website": "https://www.sbi.co.in"
+  }
+},
+{
+  "type": "node",
+  "id": 2714542549,
+  "lat": 18.7464757,
+  "lon": 79.5095845,
+  "tags": {
+    "amenity": "theatre",
+    "name": "URVASI THEATER"
+  }
+},
+{
+  "type": "node",
+  "id": 2714552193,
+  "lat": 18.7454648,
+  "lon": 79.5068647,
+  "tags": {
+    "amenity": "place_of_worship",
+    "name": "Hanuman Temple",
+    "religion": "hindu"
+  }
+},
+{
+  "type": "node",
+  "id": 2714553153,
+  "lat": 18.7447704,
+  "lon": 79.5065124,
+  "tags": {
+    "amenity": "atm",
+    "name": "SBH ATM"
+  }
+},
+{
+  "type": "node",
+  "id": 4105781703,
+  "lat": 18.7511090,
+  "lon": 79.5126723,
+  "tags": {
+    "addr:street": "shivaji nagar opposite to pochamma temple lane",
+    "name": "SHANKAR KIRANAM & GENERAL Stores",
+    "opening_hours": "Mo-Su 07:00-22:00",
+    "phone": "9247297970",
+    "shop": "convenience"
+  }
+},
+{
+  "type": "node",
+  "id": 6536317593,
+  "lat": 18.7491656,
+  "lon": 79.5106839,
+  "tags": {
+    "addr:district": "Karimnagar",
+    "addr:full": "Opp: Reddy Complex Laxminagar Godavarikhani",
+    "addr:state": "Telangana",
+    "amenity": "hospital",
+    "name": "Vijaya Children`S Hospital",
+    "source": "OpenGovernmentData"
+  }
+},
+{
+  "type": "node",
+  "id": 6536405326,
+  "lat": 18.7557425,
+  "lon": 79.5071943,
+  "tags": {
+    "addr:district": "Karimnagar",
+    "addr:full": "19-3-158/6, Markandeya Colony,Near Srk College",
+    "addr:state": "Telangana",
+    "amenity": "hospital",
+    "fax": "244901",
+    "name": "Sainath Reddy Hospital",
+    "source": "OpenGovernmentData"
+  }
+},
+{
+  "type": "node",
+  "id": 6536506651,
+  "lat": 18.7571089,
+  "lon": 79.5061590,
+  "tags": {
+    "addr:district": "Karimnagar",
+    "addr:full": "21-2-19/5 Markandeya Colony Godhavarikhani",
+    "addr:postcode": "505209",
+    "addr:state": "Telangana",
+    "amenity": "hospital",
+    "name": "Surendra Nehru Hospital",
+    "source": "OpenGovernmentData"
+  }
+},
+{
+  "type": "node",
+  "id": 6537187306,
+  "lat": 18.7505130,
+  "lon": 79.5107509,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:full": "Laxminagar, Godavarikhani",
+    "addr:postcode": "505209",
+    "addr:state": "Telangana",
+    "amenity": "hospital",
+    "name": "Ambica Hospital",
+    "source": "OpenGovernmentData"
+  }
+},
+{
+  "type": "node",
+  "id": 6542777509,
+  "lat": 18.7463654,
+  "lon": 79.5190188,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:full": "AH Godavarikhani, Near SBH near",
+    "addr:state": "Telangana",
+    "addr:street": "Karimnagar road",
+    "addr:subdistrict": "Ramagundam",
+    "amenity": "hospital",
+    "name": "Area Hospital, Godavarikhani",
+    "source": "OpenGovernmentData"
+  }
+},
+{
+  "type": "node",
+  "id": 6563201450,
+  "lat": 18.7568803,
+  "lon": 79.5061080,
+  "tags": {
+    "addr:district": "Karimnagar",
+    "addr:full": "Laxminagar, Godavarikhani",
+    "addr:postcode": "505209",
+    "addr:state": "Telangana",
+    "amenity": "hospital",
+    "fixme": "Please verify the accurate position of the hospital I have mapped the facility based on the adress provided in Open Government data",
+    "name": "Pavani Eye Hospital - Godavarikhani",
+    "source": "OpenGovernmentData"
+  }
+},
+{
+  "type": "node",
+  "id": 6830204267,
+  "lat": 18.7489060,
+  "lon": 79.5107689,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:full": "Dr RYD Goud Dental Hospital, Laxmi Nagar, Godavarikhnai",
+    "addr:postcode": "505209",
+    "addr:state": "Telangana",
+    "amenity": "hospital",
+    "name": "Ashwini Children's Hospital",
+    "source": "OpenGovernmentData"
+  }
+},
+{
+  "type": "node",
+  "id": 6830204268,
+  "lat": 18.7506493,
+  "lon": 79.5110938,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:full": "Ambika Hospital, Laxmi Nagar, Godavarikhnai",
+    "addr:postcode": "505209",
+    "addr:state": "Telangana",
+    "amenity": "hospital",
+    "name": "Asha General Hospital",
+    "source": "OpenGovernmentData"
+  }
+},
+{
+  "type": "node",
+  "id": 6830428560,
+  "lat": 18.7479378,
+  "lon": 79.5117625,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:full": "Sangeetha Mobiles, Medhari Basthi, Kalyan Nagar, Godavarikhnai",
+    "addr:postcode": "505209",
+    "addr:state": "Telangana",
+    "amenity": "hospital",
+    "contact:phone": "08728-246060",
+    "name": "Suraksha hospital,Godavarikhnai",
+    "operator:type": "private",
+    "source": "OpenGovernmentData"
+  }
+},
+{
+  "type": "node",
+  "id": 6830428561,
+  "lat": 18.7483700,
+  "lon": 79.5102500,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:full": "Beside Axis Bank ATM, Laxmi Nagar, Godavarikhnai",
+    "addr:postcode": "505209",
+    "addr:state": "Telangana",
+    "amenity": "dentist",
+    "name": "Suguna Dental Hospital",
+    "operator:type": "private",
+    "source": "OpenGovernmentData"
+  }
+},
+{
+  "type": "node",
+  "id": 6830428562,
+  "lat": 18.7495351,
+  "lon": 79.5109144,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:full": "Opp The Professional Couriers, Laxmi Nagar, Godavarikhani",
+    "addr:postcode": "505209",
+    "addr:state": "Telangana",
+    "amenity": "dentist",
+    "name": "Sri Sandhya Rani Dental Hospital",
+    "operator:type": "private",
+    "source": "OpenGovernmentData"
+  }
+},
+{
+  "type": "node",
+  "id": 6830428563,
+  "lat": 18.7506400,
+  "lon": 79.5099700,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:full": "Leela Bar and Restaurant, Laxmi Nagar, Godavarikhani",
+    "addr:postcode": "505209",
+    "addr:state": "Telangana",
+    "amenity": "hospital",
+    "name": "Sree Mamatha Hospital",
+    "operator:type": "private",
+    "source": "OpenGovernmentData"
+  }
+},
+{
+  "type": "node",
+  "id": 6830428565,
+  "lat": 18.7506966,
+  "lon": 79.5094169,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:full": "VRC Building, Swarantra Chowk, Laxmi Nagar, Godavarikhnai",
+    "addr:postcode": "505209",
+    "addr:state": "Telangana",
+    "amenity": "hospital",
+    "contact:mobile": "9333104108, 9866235548",
+    "name": "Sigma Hospitals",
+    "opening_hours": "24/7",
+    "operator:type": "private",
+    "source": "OpenGovernmentData"
+  }
+},
+{
+  "type": "node",
+  "id": 6830428568,
+  "lat": 18.7493800,
+  "lon": 79.5108700,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:full": "Beside Aparna General Store, Laxmi Nagar, Godavarikhnai",
+    "addr:postcode": "505209",
+    "addr:state": "Telangana",
+    "amenity": "hospital",
+    "name": "RKP Hospital",
+    "opening_hours": "24/7",
+    "operator:type": "government",
+    "source": "OpenGovernmentData"
+  }
+},
+{
+  "type": "node",
+  "id": 6830428571,
+  "lat": 18.7494000,
+  "lon": 79.5121600,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:full": "Beside Maharshi Colour Lab, Laxmi Nagar, Godavarikhnai",
+    "addr:postcode": "505209",
+    "addr:state": "Telangana",
+    "amenity": "hospital",
+    "contact:phone": "08728-247489",
+    "healthcare": "hospital",
+    "name": "Radha Krishna Skin Clinic",
+    "operator:type": "government",
+    "source": "OpenGovernmentData"
+  }
+},
+{
+  "type": "node",
+  "id": 6830428575,
+  "lat": 18.7480654,
+  "lon": 79.5110739,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:full": "Opp Grammina Bank, Laxmi Nagar, Godavarikhnai",
+    "addr:postcode": "505211",
+    "addr:state": "Telangana",
+    "amenity": "hospital",
+    "name": "Laxmiveni Maternity and ENT Hospital",
+    "operator:type": "private",
+    "source": "OpenGovernmentData"
+  }
+},
+{
+  "type": "node",
+  "id": 6830428581,
+  "lat": 18.7567881,
+  "lon": 79.5063416,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:full": "Sri Kaktiya Junior College, Laxmi Nagar, Godavarikhani",
+    "addr:postcode": "505209",
+    "addr:state": "Telangana",
+    "amenity": "hospital",
+    "name": "Gemini Hospitals",
+    "source": "OpenGovernmentData"
+  }
+},
+{
+  "type": "node",
+  "id": 6830428586,
+  "lat": 18.7486900,
+  "lon": 79.5106400,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:full": "Beside Apollo Pharmacy, Laxmi Nagar, Godavarikhnai",
+    "addr:postcode": "505209",
+    "addr:state": "Telangana",
+    "amenity": "hospital",
+    "name": "Dr RYD Goud Dental Hospital",
+    "source": "OpenGovernmentData"
+  }
+},
+{
+  "type": "node",
+  "id": 6837577290,
+  "lat": 18.7358845,
+  "lon": 79.5181981,
+  "tags": {
+    "amenity": "pharmacy",
+    "healthcare": "pharmacy",
+    "name": "Shabari Medical Store",
+    "source": "survey"
+  }
+},
+{
+  "type": "node",
+  "id": 6837577314,
+  "lat": 18.7480665,
+  "lon": 79.5058790,
+  "tags": {
+    "amenity": "college",
+    "name": "Aurobindo Degree college",
+    "source": "survey"
+  }
+},
+{
+  "type": "node",
+  "id": 6837577568,
+  "lat": 18.7432798,
+  "lon": 79.5209701,
+  "tags": {
+    "amenity": "place_of_worship",
+    "name": "Ganesh & Durgama temple",
+    "religion": "hindu",
+    "source": "survey"
+  }
+},
+{
+  "type": "node",
+  "id": 6840090481,
+  "lat": 18.7478202,
+  "lon": 79.5108921,
+  "tags": {
+    "amenity": "bank",
+    "name": "Grammina bank",
+    "source": "survey"
+  }
+},
+{
+  "type": "node",
+  "id": 6840090556,
+  "lat": 18.7493346,
+  "lon": 79.5108354,
+  "tags": {
+    "name": "Aparna General store",
+    "shop": "department_store",
+    "source": "survey"
+  }
+},
+{
+  "type": "node",
+  "id": 6840090564,
+  "lat": 18.7494414,
+  "lon": 79.5123417,
+  "tags": {
+    "name": "Maharshi Colour lab",
+    "shop": "photo",
+    "source": "survey"
+  }
+},
+{
+  "type": "node",
+  "id": 6840090570,
+  "lat": 18.7485771,
+  "lon": 79.5106094,
+  "tags": {
+    "amenity": "pharmacy",
+    "name": "Apollo Pharmacy",
+    "source": "survey"
+  }
+},
+{
+  "type": "node",
+  "id": 6840090661,
+  "lat": 18.7509635,
+  "lon": 79.5100620,
+  "tags": {
+    "amenity": "restaurant",
+    "name": "Leela Bar And Restaurant",
+    "source": "survey"
+  }
+},
+{
+  "type": "node",
+  "id": 6840090842,
+  "lat": 18.7567606,
+  "lon": 79.5067846,
+  "tags": {
+    "amenity": "college",
+    "name": "Sri Kaktiya Junior college",
+    "source": "survey"
+  }
+},
+{
+  "type": "node",
+  "id": 6847212662,
+  "lat": 18.7493896,
+  "lon": 79.5106478,
+  "tags": {
+    "name": "R SRINIVASA KIRANAM & GENERAL Stores",
+    "shop": "department_store",
+    "source": "survey"
+  }
+},
+{
+  "type": "node",
+  "id": 6847212722,
+  "lat": 18.7490810,
+  "lon": 79.5106030,
+  "tags": {
+    "amenity": "pharmacy",
+    "name": "satyam pharmacy",
+    "source": "survey"
+  }
+},
+{
+  "type": "node",
+  "id": 6847212724,
+  "lat": 18.7504725,
+  "lon": 79.5109876,
+  "tags": {
+    "name": "TRIGGER",
+    "shop": "clothes",
+    "source": "survey"
+  }
+},
+{
+  "type": "node",
+  "id": 6850830334,
+  "lat": 18.7495328,
+  "lon": 79.5107575,
+  "tags": {
+    "name": "Sai Thirumala Meterials& tailors",
+    "shop": "tailor",
+    "source": "survey"
+  }
+},
+{
+  "type": "node",
+  "id": 6850830359,
+  "lat": 18.7481372,
+  "lon": 79.5111518,
+  "tags": {
+    "amenity": "bank",
+    "name": "State Bank Of India",
+    "source": "survey"
+  }
+},
+{
+  "type": "node",
+  "id": 6853049456,
+  "lat": 18.7347880,
+  "lon": 79.5194940,
+  "tags": {
+    "amenity": "bank",
+    "branch": "Vittal nagar branch",
+    "brand": "State Bank of India",
+    "brand:wikidata": "Q1340361",
+    "name": "State Bank of India",
+    "short_name": "SBI",
+    "source": "survey"
+  }
+},
+{
+  "type": "node",
+  "id": 6853050083,
+  "lat": 18.7477942,
+  "lon": 79.5194152,
+  "tags": {
+    "amenity": "place_of_worship",
+    "name": "Ram mandir",
+    "religion": "hindu",
+    "source": "survey"
+  }
+},
+{
+  "type": "node",
+  "id": 6853050084,
+  "lat": 18.7494060,
+  "lon": 79.5115180,
+  "tags": {
+    "amenity": "bank",
+    "name": "KDCC Bank",
+    "source": "survey"
+  }
+},
+{
+  "type": "node",
+  "id": 6853248979,
+  "lat": 18.7486750,
+  "lon": 79.5198302,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:full": "Ram Nagar, Godavarikhani, Ramagundam, Telangana",
+    "addr:postcode": "505209",
+    "addr:state": "Telangana",
+    "amenity": "hospital",
+    "name": "Arun's Dada Hospital",
+    "operator:type": "private",
+    "source": "OpenGovernmentData"
+  }
+},
+{
+  "type": "node",
+  "id": 6853248980,
+  "lat": 18.7506109,
+  "lon": 79.5097071,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:full": "Gandhi Nagar, Laxmi Nagar, Ramagundam",
+    "addr:postcode": "505211",
+    "addr:state": "Telangana",
+    "amenity": "hospital",
+    "name": "Sri Sai Aditya Hospital",
+    "operator:type": "private",
+    "source": "OpenGovernmentData"
+  }
+},
+{
+  "type": "node",
+  "id": 6976908414,
+  "lat": 18.7548204,
+  "lon": 79.5052200,
+  "tags": {
+    "amenity": "restaurant",
+    "cuisine": "indian",
+    "name": "Taj family restaurant"
+  }
+},
+{
+  "type": "node",
+  "id": 6976908415,
+  "lat": 18.7557346,
+  "lon": 79.5057190,
+  "tags": {
+    "name": "Kalakruti",
+    "shop": "clothes"
+  }
+},
+{
+  "type": "node",
+  "id": 6976908417,
+  "lat": 18.7583329,
+  "lon": 79.5047577,
+  "tags": {
+    "amenity": "hospital",
+    "healthcare": "hospital",
+    "name": "area hospital"
+  }
+},
+{
+  "type": "node",
+  "id": 7088242170,
+  "lat": 18.7622708,
+  "lon": 79.5082725,
+  "tags": {
+    "amenity": "place_of_worship",
+    "name": "Hanum temple",
+    "religion": "hindu"
+  }
+},
+{
+  "type": "node",
+  "id": 7088242172,
+  "lat": 18.7618082,
+  "lon": 79.5080800,
+  "tags": {
+    "amenity": "place_of_worship",
+    "name": "Poshamma Temple",
+    "religion": "hindu"
+  }
+},
+{
+  "type": "node",
+  "id": 7088242173,
+  "lat": 18.7612996,
+  "lon": 79.5069514,
+  "tags": {
+    "amenity": "place_of_worship",
+    "name": "Venkateshwara temple",
+    "religion": "hindu"
+  }
+},
+{
+  "type": "node",
+  "id": 7088395793,
+  "lat": 18.7673344,
+  "lon": 79.5078927,
+  "tags": {
+    "amenity": "place_of_worship",
+    "name": "Shivalayam temple",
+    "religion": "hindu"
+  }
+},
+{
+  "type": "node",
+  "id": 7244011095,
+  "lat": 18.7494907,
+  "lon": 79.5125600,
+  "tags": {
+    "shop": "bakery"
+  }
+},
+{
+  "type": "node",
+  "id": 7463216013,
+  "lat": 18.7399764,
+  "lon": 79.5134823,
+  "tags": {
+    "amenity": "school",
+    "name": "Ushodhaya High School"
+  }
+},
+{
+  "type": "node",
+  "id": 7465709748,
+  "lat": 18.7480869,
+  "lon": 79.5168032,
+  "tags": {
+    "amenity": "police",
+    "name": "I Town Police station Godavarikhani"
+  }
+},
+{
+  "type": "node",
+  "id": 7465709749,
+  "lat": 18.7485915,
+  "lon": 79.5168203,
+  "tags": {
+    "amenity": "bank",
+    "brand": "State Bank of India",
+    "brand:wikidata": "Q1340361",
+    "brand:wikipedia": "en:State Bank of India",
+    "name": "State Bank of India"
+  }
+},
+{
+  "type": "node",
+  "id": 7465709750,
+  "lat": 18.7487512,
+  "lon": 79.5166003,
+  "tags": {
+    "amenity": "fuel",
+    "brand": "Indian Oil",
+    "brand:wikidata": "Q1289348",
+    "brand:wikipedia": "en:Indian Oil Corporation",
+    "name": "Indian Oil  Petrol Pump"
+  }
+},
+{
+  "type": "node",
+  "id": 7466613407,
+  "lat": 18.7399046,
+  "lon": 79.5137377,
+  "tags": {
+    "amenity": "bank",
+    "brand": "Andhra Bank",
+    "brand:wikidata": "Q2003476",
+    "brand:wikipedia": "en:Andhra Bank",
+    "name": "Andhra Bank"
+  }
+},
+{
+  "type": "node",
+  "id": 7466613415,
+  "lat": 18.7383914,
+  "lon": 79.5219049,
+  "tags": {
+    "amenity": "place_of_worship",
+    "name": "masjid",
+    "religion": "muslim"
+  }
+},
+{
+  "type": "node",
+  "id": 7466613420,
+  "lat": 18.7392566,
+  "lon": 79.5228487,
+  "tags": {
+    "amenity": "bar",
+    "name": "Raja Rani bar & restaurent"
+  }
+},
+{
+  "type": "node",
+  "id": 7466613421,
+  "lat": 18.7446837,
+  "lon": 79.5101483,
+  "tags": {
+    "amenity": "theatre",
+    "name": "Srinivasa Theatre"
+  }
+},
+{
+  "type": "node",
+  "id": 7466810167,
+  "lat": 18.7435314,
+  "lon": 79.5077281,
+  "tags": {
+    "shop": "supermarket"
+  }
+},
+{
+  "type": "node",
+  "id": 7466810168,
+  "lat": 18.7431837,
+  "lon": 79.5078357,
+  "tags": {
+    "amenity": "community_centre",
+    "name": "Siri Function Hall"
+  }
+},
+{
+  "type": "node",
+  "id": 7466810169,
+  "lat": 18.7486275,
+  "lon": 79.5008571,
+  "tags": {
+    "amenity": "community_centre",
+    "name": "RK gardens"
+  }
+},
+{
+  "type": "node",
+  "id": 7636545437,
+  "lat": 18.7766233,
+  "lon": 79.5178977,
+  "tags": {
+    "amenity": "fuel",
+    "source": "Maxar"
+  }
+},
+{
+  "type": "node",
+  "id": 9821548988,
+  "lat": 18.7420096,
+  "lon": 79.5185547,
+  "tags": {
+    "access": "customers",
+    "amenity": "drinking_water",
+    "bottle": "yes",
+    "fee": "yes",
+    "operator": "Sri Rajarajeshwara Mineral Water",
+    "payment:app": "yes",
+    "payment:cash": "yes",
+    "wheelchair": "no"
+  }
+},
+{
+  "type": "node",
+  "id": 9903907746,
+  "lat": 18.7408568,
+  "lon": 79.5110400,
+  "tags": {
+    "addr:city": "Godhavarikhani",
+    "addr:postcode": "505209",
+    "addr:street": "ramesh nagar",
+    "name": "vayuputra shop",
+    "opening_hours": "Mo-Sa 08:00-18:00",
+    "operator": "medical",
+    "payment:app": "yes",
+    "payment:cash": "yes",
+    "shop": "medical_supply"
+  }
+},
+{
+  "type": "node",
+  "id": 9903907747,
+  "lat": 18.7414125,
+  "lon": 79.5113769,
+  "tags": {
+    "addr:city": "Godhavarikhani",
+    "addr:postcode": "505209",
+    "addr:street": "ramesh nagar",
+    "opening_hours": "Mo-Su 09:00-21:00",
+    "shop": "general"
+  }
+},
+{
+  "type": "node",
+  "id": 9903907749,
+  "lat": 18.7359850,
+  "lon": 79.5085668,
+  "tags": {
+    "addr:city": "godhavarikhani",
+    "addr:postcode": "505209",
+    "addr:street": "hanuman nagar",
+    "amenity": "place_of_worship",
+    "name": "hanuman temple",
+    "religion": "hindu"
+  }
+},
+{
+  "type": "node",
+  "id": 9903907751,
+  "lat": 18.7420422,
+  "lon": 79.5114301,
+  "tags": {
+    "addr:city": "Godhavarikhani",
+    "addr:postcode": "505209",
+    "addr:street": "ramesh nagar",
+    "amenity": "bar",
+    "name": "Bar"
+  }
+},
+{
+  "type": "node",
+  "id": 9903907752,
+  "lat": 18.7417393,
+  "lon": 79.5119959,
+  "tags": {
+    "addr:city": "Godhavarikhani",
+    "addr:postcode": "505209",
+    "amenity": "bar",
+    "name": "Bar"
+  }
+},
+{
+  "type": "node",
+  "id": 9903907753,
+  "lat": 18.7415292,
+  "lon": 79.5119159,
+  "tags": {
+    "addr:city": "Godhavarikhani",
+    "addr:postcode": "505209",
+    "addr:street": "ramesh naga",
+    "shop": "bakery"
+  }
+},
+{
+  "type": "node",
+  "id": 9903907754,
+  "lat": 18.7419203,
+  "lon": 79.5119708,
+  "tags": {
+    "addr:city": "Godhavarikhani",
+    "addr:postcode": "505209",
+    "addr:street": "ramesh nagar",
+    "name": "surya electrical",
+    "shop": "electrical"
+  }
+},
+{
+  "type": "node",
+  "id": 9903907755,
+  "lat": 18.7413418,
+  "lon": 79.5116102,
+  "tags": {
+    "addr:city": "Godhavarikhani",
+    "addr:postcode": "505209",
+    "addr:street": "ramesh nagar",
+    "name": "ayyappa shop",
+    "shop": "general"
+  }
+},
+{
+  "type": "node",
+  "id": 9903907756,
+  "lat": 18.7408330,
+  "lon": 79.5112691,
+  "tags": {
+    "addr:city": "Godhavarikhani",
+    "addr:postcode": "505209",
+    "addr:street": "ramesh nagar",
+    "shop": "photo"
+  }
+},
+{
+  "type": "node",
+  "id": 9903907758,
+  "lat": 18.7405464,
+  "lon": 79.5111210,
+  "tags": {
+    "shop": "general"
+  }
+},
+{
+  "type": "node",
+  "id": 9903907759,
+  "lat": 18.7414619,
+  "lon": 79.5116341,
+  "tags": {
+    "addr:city": "Godhavarikhani",
+    "addr:postcode": "505209",
+    "addr:street": "ramesh nagr",
+    "amenity": "fast_food",
+    "cuisine": "chinese",
+    "diet:meat": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 9903907760,
+  "lat": 18.7415108,
+  "lon": 79.5114371,
+  "tags": {
+    "addr:street": "ramesh nagar",
+    "opening_hours": "Mo-Su 09:00-21:00",
+    "payment:cash": "yes",
+    "payment:easycard": "yes",
+    "shop": "tea"
+  }
+},
+{
+  "type": "node",
+  "id": 9903907761,
+  "lat": 18.7432710,
+  "lon": 79.5173339,
+  "tags": {
+    "addr:city": "godhavarikahi",
+    "addr:postcode": "505209",
+    "addr:street": "jawahar nagar",
+    "shop": "general"
+  }
+},
+{
+  "type": "node",
+  "id": 9961349959,
+  "lat": 18.7612684,
+  "lon": 79.5082717,
+  "tags": {
+    "addr:postcode": "505209",
+    "addr:street": "near by bus stand",
+    "amenity": "grave_yard",
+    "religion": "christian"
+  }
+},
+{
+  "type": "node",
+  "id": 9961349961,
+  "lat": 18.7584642,
+  "lon": 79.5052981,
+  "tags": {
+    "amenity": "place_of_worship",
+    "religion": "hindu"
+  }
+},
+{
+  "type": "node",
+  "id": 9961349962,
+  "lat": 18.7577753,
+  "lon": 79.5081874,
+  "tags": {
+    "amenity": "college",
+    "name": "Govt Inter College"
+  }
+},
+{
+  "type": "node",
+  "id": 9961349963,
+  "lat": 18.7561660,
+  "lon": 79.5064456,
+  "tags": {
+    "amenity": "college",
+    "name": "Sri Chaithanya degree college"
+  }
+},
+{
+  "type": "node",
+  "id": 11002519164,
+  "lat": 18.7394770,
+  "lon": 79.5224614,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:place": "5 Incline Colony",
+    "addr:state": "Telangana",
+    "addr:street": "5 Incline colony",
+    "addr:subdistrict": "Ramagundam",
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "name": "Urban Primary Health Centre 5Inkline Colony",
+    "operational_status": "operational",
+    "operator:type": "government",
+    "source": "OpenDataTelangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11031470116,
+  "lat": 18.7397716,
+  "lon": 79.5218560,
+  "tags": {
+    "amenity": "school"
+  }
+},
+{
+  "type": "node",
+  "id": 11031470170,
+  "lat": 18.7392643,
+  "lon": 79.5225973,
+  "tags": {
+    "shop": "wine"
+  }
+},
+{
+  "type": "node",
+  "id": 11031470171,
+  "lat": 18.7444498,
+  "lon": 79.5211555,
+  "tags": {
+    "shop": "wine"
+  }
+},
+{
+  "type": "node",
+  "id": 11031470172,
+  "lat": 18.7388034,
+  "lon": 79.5223650,
+  "tags": {
+    "name": "FRUIT SHOP",
+    "shop": "farm"
+  }
+},
+{
+  "type": "node",
+  "id": 11031470173,
+  "lat": 18.7388209,
+  "lon": 79.5223453,
+  "tags": {
+    "name": "Groceries",
+    "shop": "supermarket"
+  }
+},
+{
+  "type": "node",
+  "id": 11031470174,
+  "lat": 18.7387772,
+  "lon": 79.5223764,
+  "tags": {
+    "name": "Sweet Shop and Bakery",
+    "shop": "confectionery"
+  }
+},
+{
+  "type": "node",
+  "id": 11031470175,
+  "lat": 18.7386673,
+  "lon": 79.5223636,
+  "tags": {
+    "name": "Sweet Shop and Bakery",
+    "shop": "confectionery"
+  }
+},
+{
+  "type": "node",
+  "id": 11031470176,
+  "lat": 18.7385116,
+  "lon": 79.5226187,
+  "tags": {
+    "shop": "butcher"
+  }
+},
+{
+  "type": "node",
+  "id": 11031470189,
+  "lat": 18.7490219,
+  "lon": 79.5163598,
+  "tags": {
+    "shop": "wine"
+  }
+},
+{
+  "type": "node",
+  "id": 11031477609,
+  "lat": 18.7572074,
+  "lon": 79.5161998,
+  "tags": {
+    "name": "Saturday market",
+    "shop": "greengrocer"
+  }
+},
+{
+  "type": "node",
+  "id": 11031477610,
+  "lat": 18.7381397,
+  "lon": 79.5224957,
+  "tags": {
+    "amenity": "doctors",
+    "healthcare": "doctor",
+    "healthcare:speciality": "general",
+    "name": "Primary Care Physician"
+  }
+},
+{
+  "type": "node",
+  "id": 11031477611,
+  "lat": 18.7489805,
+  "lon": 79.5151480,
+  "tags": {
+    "shop": "wine"
+  }
+},
+{
+  "type": "node",
+  "id": 11031494300,
+  "lat": 18.7418377,
+  "lon": 79.5218067,
+  "tags": {
+    "amenity": "atm",
+    "brand": "State Bank of India",
+    "brand:wikidata": "Q1340361",
+    "name": "SBI ATM machine",
+    "operator": "State Bank of India",
+    "operator:wikidata": "Q1340361",
+    "short_name": "SBI"
+  }
+},
+{
+  "type": "node",
+  "id": 11031564440,
+  "lat": 18.7392085,
+  "lon": 79.5222010,
+  "tags": {
+    "amenity": "car_wash"
+  }
+},
+{
+  "type": "node",
+  "id": 11031564441,
+  "lat": 18.7388183,
+  "lon": 79.5227430,
+  "tags": {
+    "amenity": "atm"
+  }
+},
+{
+  "type": "node",
+  "id": 11031564442,
+  "lat": 18.7388334,
+  "lon": 79.5223113,
+  "tags": {
+    "shop": "dairy"
+  }
+},
+{
+  "type": "node",
+  "id": 11031564443,
+  "lat": 18.7390194,
+  "lon": 79.5225631,
+  "tags": {
+    "name": "Tea Shop",
+    "shop": "tea"
+  }
+},
+{
+  "type": "node",
+  "id": 11031586490,
+  "lat": 18.7351038,
+  "lon": 79.5197506,
+  "tags": {
+    "amenity": "post_office",
+    "name": "Vittal Nagar"
+  }
+},
+{
+  "type": "node",
+  "id": 11031586491,
+  "lat": 18.7348131,
+  "lon": 79.5194716,
+  "tags": {
+    "amenity": "atm",
+    "brand": "State Bank of India",
+    "brand:wikidata": "Q1340361",
+    "operator": "State Bank of India",
+    "operator:wikidata": "Q1340361",
+    "short_name": "SBI"
+  }
+},
+{
+  "type": "node",
+  "id": 11637570821,
+  "lat": 18.7541006,
+  "lon": 79.5156918,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:place": "Busstand Colony",
+    "addr:state": "Telangana",
+    "addr:street": "Busstand colony",
+    "addr:subdistrict": "Ramagundam",
+    "amenity": "health_post",
+    "healthcare": "yes",
+    "name": "SubCentre Addaguntapally",
+    "operational_status": "operational",
+    "operator:type": "government",
+    "source": "OpenDataTelangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11642968606,
+  "lat": 18.7728745,
+  "lon": 79.5259701,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:place": "Uhc Janagoam",
+    "addr:state": "Telangana",
+    "addr:street": "Janagoam",
+    "addr:subdistrict": "Ramagundam",
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "name": "Urban  Primary Health Centre Jangaon",
+    "operational_status": "operational",
+    "operator:type": "government",
+    "source": "OpenDataTelangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11935468782,
+  "lat": 18.7487452,
+  "lon": 79.5177689,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:place": "Vittalnagar",
+    "addr:state": "Telangana",
+    "addr:street": "Vittalnagar",
+    "addr:subdistrict": "Ramagundam",
+    "amenity": "health_post",
+    "healthcare": "yes",
+    "name": "SubCentre Vittalnagar",
+    "operational_status": "operational",
+    "operator:type": "government",
+    "source": "OpenDataTelangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11936213834,
+  "lat": 18.7461952,
+  "lon": 79.5031750,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:place": "Addaguntapally",
+    "addr:state": "Telangana",
+    "addr:street": "Addaguntapally",
+    "addr:subdistrict": "Ramagundam",
+    "amenity": "clinic",
+    "healthcare": "clinic",
+    "name": "Urban Primary Health centre Addaguntapally",
+    "operational_status": "operational",
+    "operator:type": "government",
+    "source": "OpenDataTelangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11936576535,
+  "lat": 18.7450725,
+  "lon": 79.5133835,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:place": "Lb Nagar",
+    "addr:state": "Telangana",
+    "addr:street": "LB Nagar",
+    "addr:subdistrict": "Ramagundam",
+    "amenity": "health_post",
+    "healthcare": "yes",
+    "name": "SubCentre LB Nagar",
+    "operational_status": "operational",
+    "operator:type": "government",
+    "source": "OpenDataTelangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11937607118,
+  "lat": 18.7512548,
+  "lon": 79.5058532,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:place": "Ah Godavarikhani",
+    "addr:state": "Telangana",
+    "addr:street": "Karimnagar road",
+    "addr:subdistrict": "Ramagundam",
+    "amenity": "hospital",
+    "healthcare": "hospital",
+    "name": "Area hospital Godavarikhani",
+    "operational_status": "operational",
+    "operator:type": "government",
+    "source": "OpenDataTelangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11942758405,
+  "lat": 18.7591089,
+  "lon": 79.5153844,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Ramnagar-3 (I)",
+    "source": "OpenDataTelangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11951239123,
+  "lat": 18.7631125,
+  "lon": 79.5102677,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Jai Bheem nagar",
+    "source": "OpenDataTelangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11954041358,
+  "lat": 18.7516843,
+  "lon": 79.5182294,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Ramanagar - 2",
+    "source": "OpenDataTelangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11954498970,
+  "lat": 18.7427358,
+  "lon": 79.5171601,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Jawasharnagar-1",
+    "source": "OpenDataTelangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11954779322,
+  "lat": 18.7506311,
+  "lon": 79.5184998,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Ramanagar - 2 (I)",
+    "source": "OpenDataTelangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11956376566,
+  "lat": 18.7439016,
+  "lon": 79.4906089,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Shakernagar-1",
+    "source": "OpenDataTelangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11957833364,
+  "lat": 18.7543519,
+  "lon": 79.4998719,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Chandrababu Colony-5",
+    "source": "OpenDataTelangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11957928610,
+  "lat": 18.7339155,
+  "lon": 79.5180090,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Vittalnagar-4 (i)",
+    "source": "OpenDataTelangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11958733155,
+  "lat": 18.7368099,
+  "lon": 79.5147824,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Tilaknagar-1",
+    "source": "OpenDataTelangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11959068306,
+  "lat": 18.7493269,
+  "lon": 79.5139602,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Ramnagar -4 (III)",
+    "source": "OpenDataTelangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11959617177,
+  "lat": 18.7350865,
+  "lon": 79.5168047,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Tilaknagar-2",
+    "source": "OpenDataTelangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11961534600,
+  "lat": 18.7336945,
+  "lon": 79.5231816,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Vittalnagar- 3",
+    "source": "OpenDataTelangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11962048521,
+  "lat": 18.7456986,
+  "lon": 79.5134050,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Rameshanagar-3",
+    "source": "OpenDataTelangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11963163760,
+  "lat": 18.7522535,
+  "lon": 79.5115806,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Vidyanagar(ACPI)-3",
+    "source": "OpenDataTelangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11964021167,
+  "lat": 18.7455641,
+  "lon": 79.5042822,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Addaguntapalli Sadhanagar - 2",
+    "source": "OpenDataTelangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11964040033,
+  "lat": 18.7707129,
+  "lon": 79.5131036,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Janagam - 2",
+    "source": "OpenDataTelangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11964177049,
+  "lat": 18.7405374,
+  "lon": 79.5188767,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Sub Center Area - 6",
+    "source": "OpenDataTelangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11964293693,
+  "lat": 18.7535367,
+  "lon": 79.5173237,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "I B Colony",
+    "source": "OpenDataTelangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11964510708,
+  "lat": 18.7426837,
+  "lon": 79.5171962,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Jawaharnagar - 1",
+    "source": "OpenDataTelangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11964520147,
+  "lat": 18.7498131,
+  "lon": 79.5197021,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Ramnagar -4 (I)",
+    "source": "OpenDataTelangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11964605162,
+  "lat": 18.7542184,
+  "lon": 79.5087052,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Swathanthra Chowk Area -1",
+    "source": "OpenDataTelangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11965024031,
+  "lat": 18.7716297,
+  "lon": 79.5258054,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Janagam-1",
+    "source": "OpenDataTelangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11965355712,
+  "lat": 18.7313272,
+  "lon": 79.5207968,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Vittalnagar-5 (v)",
+    "source": "OpenDataTelangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11965365132,
+  "lat": 18.7634179,
+  "lon": 79.5151985,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "tarakaramanger-I",
+    "source": "OpenDataTelangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11966445724,
+  "lat": 18.7600102,
+  "lon": 79.5153013,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Vinobhanagar -1",
+    "source": "OpenDataTelangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11966801742,
+  "lat": 18.7577121,
+  "lon": 79.4973913,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "KCR colony",
+    "source": "OpenDataTelangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11969012675,
+  "lat": 18.7341051,
+  "lon": 79.5235012,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Vittalnagar -4",
+    "source": "OpenDataTelangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11971426165,
+  "lat": 18.7597940,
+  "lon": 79.5170172,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "C S P Colony - 2",
+    "source": "OpenData Telangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11971430105,
+  "lat": 18.7694085,
+  "lon": 79.4953108,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Malkapur & Ramaiahpalli - I",
+    "source": "OpenData Telangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11971433116,
+  "lat": 18.7532941,
+  "lon": 79.4867002,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Kashaipalli-3",
+    "source": "OpenData Telangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11971441154,
+  "lat": 18.7335942,
+  "lon": 79.5089056,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Barathnagar-4",
+    "source": "OpenData Telangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11971446258,
+  "lat": 18.7328975,
+  "lon": 79.5148024,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Tilakanagar-3",
+    "source": "OpenData Telangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11971446259,
+  "lat": 18.7357990,
+  "lon": 79.5167007,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Vittalnagar -2",
+    "source": "OpenData Telangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11971446260,
+  "lat": 18.7304996,
+  "lon": 79.5243014,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Vittalnagar -5 (vi)",
+    "source": "OpenData Telangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11971447099,
+  "lat": 18.7690923,
+  "lon": 79.4889962,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Narrashalapalli.",
+    "source": "OpenData Telangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11971449538,
+  "lat": 18.7418995,
+  "lon": 79.5105048,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Kakateeyanagar-5",
+    "source": "OpenData Telangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11971458735,
+  "lat": 18.7453907,
+  "lon": 79.5137047,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "LB Nagar -2 (ACPI)-1",
+    "source": "OpenData Telangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11971459827,
+  "lat": 18.7701907,
+  "lon": 79.5062931,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "P H colony",
+    "source": "OpenData Telangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11971460362,
+  "lat": 18.7390960,
+  "lon": 79.5196968,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Jawaharnagar (5 Incline)-4",
+    "source": "OpenData Telangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11971460615,
+  "lat": 18.7536967,
+  "lon": 79.5092871,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Gandhinagar -2",
+    "source": "OpenData Telangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11971469506,
+  "lat": 18.7514032,
+  "lon": 79.5142103,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Ambedker nagar",
+    "source": "OpenData Telangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11971469507,
+  "lat": 18.7523887,
+  "lon": 79.5081049,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Ashoknagar -1",
+    "source": "OpenData Telangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11971473054,
+  "lat": 18.7483979,
+  "lon": 79.5075256,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Addaguntapalli -1",
+    "source": "OpenData Telangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11971474408,
+  "lat": 18.7438978,
+  "lon": 79.5097987,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Kakateeyanagar-1",
+    "source": "OpenData Telangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11971474523,
+  "lat": 18.7489008,
+  "lon": 79.5191979,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Ramnagar -4(II)",
+    "source": "OpenData Telangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11971476003,
+  "lat": 18.7377955,
+  "lon": 79.5163983,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Jawaharnagar (Vittalnagar)-5",
+    "source": "OpenData Telangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11971481119,
+  "lat": 18.7452008,
+  "lon": 79.5057030,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Addaguntapalli  3",
+    "source": "OpenData Telangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11971482353,
+  "lat": 18.7561965,
+  "lon": 79.5150022,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Vudyanagar (ACPI) - 2",
+    "source": "OpenData Telangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11971482517,
+  "lat": 18.7492977,
+  "lon": 79.5058049,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Ganeshnagar - 2",
+    "source": "OpenData Telangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11971482518,
+  "lat": 18.7427942,
+  "lon": 79.5044082,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Indiranagar -5",
+    "source": "OpenData Telangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11971482637,
+  "lat": 18.7499873,
+  "lon": 79.5068067,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Ganeshnagar - 2",
+    "source": "OpenData Telangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11971484364,
+  "lat": 18.7381923,
+  "lon": 79.5102058,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Dwarakanagar-3",
+    "source": "OpenData Telangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11971484580,
+  "lat": 18.7582842,
+  "lon": 79.5066062,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Bus stand colony -1",
+    "source": "OpenData Telangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11971484709,
+  "lat": 18.7492964,
+  "lon": 79.5057003,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Ganeshnagar - 3",
+    "source": "OpenData Telangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11971486197,
+  "lat": 18.7407965,
+  "lon": 79.5200146,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Jawaharnagar (Ambedkernagar-3)",
+    "source": "OpenData Telangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11971486306,
+  "lat": 18.7564955,
+  "lon": 79.5113008,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Gandhinagar - I",
+    "source": "OpenData Telangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11971486413,
+  "lat": 18.7457901,
+  "lon": 79.5106604,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Kalyananagar-2",
+    "source": "OpenData Telangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11971486414,
+  "lat": 18.7427967,
+  "lon": 79.5217010,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Krishnagar - 2",
+    "source": "OpenData Telangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11971487173,
+  "lat": 18.7363730,
+  "lon": 79.4937082,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Chaitanyapuri Colony -1",
+    "source": "OpenData Telangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11971489877,
+  "lat": 18.7418995,
+  "lon": 79.5203003,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Jawaharnagar ( Parsharam-II )",
+    "source": "OpenData Telangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11971490167,
+  "lat": 18.7408816,
+  "lon": 79.5146824,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Jawaharnagar-5",
+    "source": "OpenData Telangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11971492597,
+  "lat": 18.7412988,
+  "lon": 79.5013008,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Indiranagar - 2",
+    "source": "OpenData Telangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11971492616,
+  "lat": 18.7535011,
+  "lon": 79.5172928,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Seethanagar",
+    "source": "OpenData Telangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11971494327,
+  "lat": 18.7543983,
+  "lon": 79.5056950,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Markandeya Colony - 4",
+    "source": "OpenData Telangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11971495209,
+  "lat": 18.7454859,
+  "lon": 79.5135062,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "LB Nagar-1",
+    "source": "OpenData Telangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11971495943,
+  "lat": 18.7356872,
+  "lon": 79.5115905,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "N T R Nagar-2",
+    "source": "OpenData Telangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11971496150,
+  "lat": 18.7541970,
+  "lon": 79.5163004,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Leninagar",
+    "source": "OpenData Telangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11971496785,
+  "lat": 18.7426926,
+  "lon": 79.5099919,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Kakateeyanagar-2",
+    "source": "OpenData Telangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11971498579,
+  "lat": 18.7351982,
+  "lon": 79.5089988,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Santhoshnagar-3",
+    "source": "OpenData Telangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11971498582,
+  "lat": 18.7331966,
+  "lon": 79.5222978,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Vittalnagar -1(I)",
+    "source": "OpenData Telangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11971498711,
+  "lat": 18.7408994,
+  "lon": 79.5186983,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Parsharamnagr-1",
+    "source": "OpenData Telangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11971500673,
+  "lat": 18.7462771,
+  "lon": 79.5090256,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Maruthinagari  Kalyananagasr-2)",
+    "source": "OpenData Telangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11971502181,
+  "lat": 18.7420005,
+  "lon": 79.5154998,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Mahaveer youth - 4",
+    "source": "OpenData Telangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11971502400,
+  "lat": 18.7526020,
+  "lon": 79.5038060,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Markandeya Colony -3",
+    "source": "OpenData Telangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11971502816,
+  "lat": 18.7394986,
+  "lon": 79.5110976,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Rameshnagar - 5",
+    "source": "OpenData Telangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11971507481,
+  "lat": 18.7401018,
+  "lon": 79.5043002,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Sanjeevnagar-2",
+    "source": "OpenData Telangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11971508781,
+  "lat": 18.7309982,
+  "lon": 79.5214026,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Vittalnagar-4(ii)",
+    "source": "OpenData Telangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11971509126,
+  "lat": 18.7436997,
+  "lon": 79.5113967,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Santhoshnagasr-2",
+    "source": "OpenData Telangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11971509129,
+  "lat": 18.7546999,
+  "lon": 79.5150029,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Vidhyanagar -I",
+    "source": "OpenData Telangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11971509130,
+  "lat": 18.7312992,
+  "lon": 79.5232165,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Vittalnagar -5 (iv)",
+    "source": "OpenData Telangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11971513305,
+  "lat": 18.7542008,
+  "lon": 79.5139012,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Vidhyanagar -2",
+    "source": "OpenData Telangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11971513733,
+  "lat": 18.7486957,
+  "lon": 79.5178004,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Tarakanamangar-2",
+    "source": "OpenData Telangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11971514093,
+  "lat": 18.7556999,
+  "lon": 79.5124970,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Sector - 1",
+    "source": "OpenData Telangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11971514878,
+  "lat": 18.7324003,
+  "lon": 79.5226981,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Vittalnagar- 4(iii)",
+    "source": "OpenData Telangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11971520176,
+  "lat": 18.7444001,
+  "lon": 79.5120028,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Thirumalanagar-4",
+    "source": "OpenData Telangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11971520177,
+  "lat": 18.7504000,
+  "lon": 79.5163004,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Vinobhanagar ( Seetanagar)",
+    "source": "OpenData Telangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11971520511,
+  "lat": 18.7538091,
+  "lon": 79.5130114,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Vidhyanagasr - 4",
+    "source": "OpenData Telangana"
+  }
+},
+{
+  "type": "node",
+  "id": 11971525249,
+  "lat": 18.7335967,
+  "lon": 79.5232031,
+  "tags": {
+    "addr:district": "Peddapalli",
+    "addr:state": "Telangana",
+    "addr:subdistrict": "Ramagundam (U)",
+    "amenity": "childcare",
+    "name": "Vittalnagar - I",
+    "source": "OpenData Telangana"
+  }
+},
+{
+  "type": "node",
+  "id": 13707521637,
+  "lat": 18.7601255,
+  "lon": 79.5082894,
+  "tags": {
+    "amenity": "bus_station",
+    "bus": "yes",
+    "name": "TGSRTC  Bus Station , Godavarikhani",
+    "public_transport": "station"
+  }
+},
+{
+  "type": "way",
+  "id": 265835414,
+  "center": {
+    "lat": 18.7444783,
+    "lon": 79.5064560
+  },
+  "nodes": [
+    2714554349,
+    2714554352,
+    2714554355,
+    2714554359,
+    2714554349
+  ],
+  "tags": {
+    "amenity": "place_of_worship",
+    "building": "yes",
+    "name": "HAMEEDIYA MASJID",
+    "religion": "muslim"
+  }
+},
+{
+  "type": "way",
+  "id": 331352233,
+  "center": {
+    "lat": 18.7469233,
+    "lon": 79.5176309
+  },
+  "nodes": [
+    3384128175,
+    3384128176,
+    3384128177,
+    3384137528,
+    3384128178,
+    3384128175
+  ],
+  "tags": {
+    "amenity": "school",
+    "name": "SACRED HEART HIGH SCHOOL EM"
+  }
+},
+{
+  "type": "way",
+  "id": 331356630,
+  "center": {
+    "lat": 18.7581581,
+    "lon": 79.5134918
+  },
+  "nodes": [
+    3384165126,
+    3384165127,
+    3384165128,
+    3384165129,
+    3384165126
+  ],
+  "tags": {
+    "amenity": "hospital",
+    "name": "GOVT HOSPITAL(SMALL)"
+  }
+},
+{
+  "type": "way",
+  "id": 331358664,
+  "center": {
+    "lat": 18.7578369,
+    "lon": 79.5081660
+  },
+  "nodes": [
+    3384174677,
+    3384174678,
+    3384174679,
+    3384174680,
+    3384174677
+  ],
+  "tags": {
+    "amenity": "college",
+    "name": "Govt inter college"
+  }
+},
+{
+  "type": "way",
+  "id": 331794128,
+  "center": {
+    "lat": 18.7592661,
+    "lon": 79.5021143
+  },
+  "nodes": [
+    3388956393,
+    3388956394,
+    3388956395,
+    3388956396,
+    3388956397,
+    3388956398,
+    3388956393
+  ],
+  "tags": {
+    "amenity": "hospital",
+    "name": "area hospital"
+  }
+},
+{
+  "type": "way",
+  "id": 331794939,
+  "center": {
+    "lat": 18.7606310,
+    "lon": 79.5056163
+  },
+  "nodes": [
+    3388955892,
+    3388963693,
+    3388963694,
+    3388963695,
+    3388955892
+  ],
+  "tags": {
+    "amenity": "fuel",
+    "name": "gas station"
+  }
+},
+{
+  "type": "way",
+  "id": 597955865,
+  "center": {
+    "lat": 18.7610670,
+    "lon": 79.5077114
+  },
+  "nodes": [
+    5692118702,
+    5692118701,
+    5692118700,
+    5692118699,
+    5692118702
+  ],
+  "tags": {
+    "amenity": "cafe",
+    "brand": "Chai Point",
+    "brand:wikidata": "Q28173415",
+    "building": "yes",
+    "cuisine": "coffee_shop",
+    "name": "Chai Point",
+    "takeaway": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 597955866,
+  "center": {
+    "lat": 18.7610803,
+    "lon": 79.5075333
+  },
+  "nodes": [
+    5692118706,
+    5692118705,
+    5692118704,
+    5692118703,
+    5692118706
+  ],
+  "tags": {
+    "amenity": "cafe",
+    "brand": "Chai Point",
+    "brand:wikidata": "Q28173415",
+    "building": "yes",
+    "cuisine": "coffee_shop",
+    "name": "Chai Point",
+    "takeaway": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 597955867,
+  "center": {
+    "lat": 18.7612656,
+    "lon": 79.5075222
+  },
+  "nodes": [
+    5692118710,
+    5692118709,
+    5692118708,
+    5692118707,
+    5692118710
+  ],
+  "tags": {
+    "amenity": "police",
+    "building": "yes",
+    "name": "Traffic police station"
+  }
+},
+{
+  "type": "way",
+  "id": 597955869,
+  "center": {
+    "lat": 18.7614556,
+    "lon": 79.5077024
+  },
+  "nodes": [
+    5692118718,
+    5692118717,
+    5692118716,
+    5692118715,
+    5692118718
+  ],
+  "tags": {
+    "amenity": "bar",
+    "building": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 597955870,
+  "center": {
+    "lat": 18.7615572,
+    "lon": 79.5077206
+  },
+  "nodes": [
+    5692118722,
+    5692118721,
+    5692118720,
+    5692118719,
+    5692118722
+  ],
+  "tags": {
+    "building": "yes",
+    "shop": "confectionery"
+  }
+},
+{
+  "type": "way",
+  "id": 597970234,
+  "center": {
+    "lat": 18.7573609,
+    "lon": 79.5070013
+  },
+  "nodes": [
+    5692219880,
+    5692219879,
+    5692219878,
+    5692219877,
+    5692219875,
+    5692219876,
+    5692219880
+  ],
+  "tags": {
+    "building": "yes",
+    "shop": "tea"
+  }
+},
+{
+  "type": "way",
+  "id": 598714340,
+  "center": {
+    "lat": 18.7467552,
+    "lon": 79.5151553
+  },
+  "nodes": [
+    5698357346,
+    5698357345,
+    5698357344,
+    5698357343,
+    5698357346
+  ],
+  "tags": {
+    "building": "yes",
+    "shop": "furniture"
+  }
+},
+{
+  "type": "way",
+  "id": 680564100,
+  "center": {
+    "lat": 18.7576985,
+    "lon": 79.5060030
+  },
+  "nodes": [
+    5690454506,
+    5690454505,
+    5690454504,
+    5690454503,
+    5690454506
+  ],
+  "tags": {
+    "addr:city": "godavarikhnai",
+    "addr:postcode": "505209",
+    "amenity": "theatre",
+    "building": "yes",
+    "name": "rajesh theatre"
+  }
+},
+{
+  "type": "way",
+  "id": 758966869,
+  "center": {
+    "lat": 18.7581879,
+    "lon": 79.5074579
+  },
+  "nodes": [
+    7088801217,
+    7088801218,
+    7088801219,
+    7088801220,
+    7088801221,
+    7088801217
+  ],
+  "tags": {
+    "amenity": "college",
+    "name": "Exhibition ground"
+  }
+},
+{
+  "type": "way",
+  "id": 776416475,
+  "center": {
+    "lat": 18.7548656,
+    "lon": 79.5187825
+  },
+  "nodes": [
+    7244171735,
+    7244171736,
+    7244171737,
+    7244171738,
+    7244171739,
+    7244171740,
+    7244171735
+  ],
+  "tags": {
+    "amenity": "conference_centre",
+    "building": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 776430498,
+  "center": {
+    "lat": 18.7441784,
+    "lon": 79.5215157
+  },
+  "nodes": [
+    7244283185,
+    7244283186,
+    7244283187,
+    7244283188,
+    7244283185
+  ],
+  "tags": {
+    "building": "yes",
+    "shop": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 798226608,
+  "center": {
+    "lat": 18.7568889,
+    "lon": 79.5082280
+  },
+  "nodes": [
+    7465709743,
+    7465709744,
+    7465709745,
+    7465709746,
+    7465709743
+  ],
+  "tags": {
+    "amenity": "office",
+    "building": "yes",
+    "name": "MLA Camp Offie"
+  }
+},
+{
+  "type": "way",
+  "id": 1069924901,
+  "center": {
+    "lat": 18.7430867,
+    "lon": 79.5178439
+  },
+  "nodes": [
+    9819830061,
+    9819830062,
+    9819830063,
+    9819830064,
+    9819830065,
+    9819830066,
+    9819830067,
+    9819830068,
+    9819830061
+  ],
+  "tags": {
+    "amenity": "place_of_worship",
+    "building": "yes",
+    "religion": "hindu"
+  }
+},
+{
+  "type": "way",
+  "id": 1070120421,
+  "center": {
+    "lat": 18.7422344,
+    "lon": 79.5187411
+  },
+  "nodes": [
+    9821548984,
+    9821548985,
+    9821548986,
+    9821548987,
+    9821548984
+  ],
+  "tags": {
+    "building": "shed",
+    "name": "lachanna mutton shop",
+    "shop": "yes"
+  }
+}
+
+  ]
+}
