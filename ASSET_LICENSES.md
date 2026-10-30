@@ -482,3 +482,96 @@ Includes `electrical_pylon.glb`, `metal_crash_barrier.glb`, `sign_slippery_road.
 - **Category:** Custom import via automated asset pipeline
 - **License / Terms:** User-provided download (Standard offline personal/dev license; verified safe for local Godot game use)
 - **Destination:** `assets/models/.../broken_bricks.glb`
+
+
+## Batch Vehicle Collection (26 Vehicles)
+- **Origin:** Local WhatsApp Inbox 3D Vehicle Collection
+- **Processing:** Headless Blender 5.2.3 optimization, ground origin alignment, light/camera purging, triangle decimation to <= 50,000 for mobile/M1 budgets.
+- `lamborghini_aventador_svj`: 2019 Lamborghini Aventador SVJ (2019_Lamborghini_Aventador_SVJ.fbx) -> `Hotel Sai Leela Portico`
+- `bmw_i8`: 2015 BMW i8 Hybrid (2015_BMW_i8_LOW.fbx) -> `Hotel Sai Leela Portico`
+- `mercedes_amg_gt63`: Mercedes-Benz AMG GT 63 (Mercedes-Benz AMG GT 63.FBX) -> `Hotel Sai Leela Portico`
+- `porsche_cayenne_s`: 2019 Porsche Cayenne S (Porsche Cayenne S 2019 VRAY.FBX) -> `Hotel Sai Leela Courtyard`
+- `porsche_boxster`: Porsche Boxster Roadster (Porsche Boxster_vray.FBX) -> `Hotel Sai Leela Courtyard`
+- `tesla_model_x`: Tesla Model X (Tesla Model X.FBX) -> `Hotel Sai Leela Courtyard`
+- `toyota_supra_gr`: Toyota Supra GR (Toyota_Supra_GR_.obj) -> `Godavari River Bridge Highway`
+- `bmw_x4`: 2015 BMW X4 (2015_BMW_X4_LOW.FBX) -> `Godavari River Bridge Highway`
+- `hydrospace_benelli_s4`: Hydrospace Benelli S4 Watercraft (HSR Benelli S4.obj) -> `Godavari River Pier`
+- `bmw_x5`: 2014 BMW X5 (2014_BMW_X5_LOW.fbx) -> `Vidyanagar Residential Quarter`
+- `bmw_x6`: BMW X6 xDrive50i (BMW X6 xDrive50i 03.obj) -> `Vidyanagar Residential Quarter`
+- `mini_cooper_s`: 2015 Mini Cooper S (2015_Mini_Cooper_S_LOW.fbx) -> `Vidyanagar Residential Quarter`
+- `mazda_cx5`: Mazda CX-5 (MazdaCX5.obj) -> `Vidyanagar Residential Quarter`
+- `volvo_xc40`: Volvo XC40 (Volvo XC40_vray.FBX) -> `Vidyanagar Residential Quarter`
+- `audi_q8`: Audi Q8 2019 (AudiQ8.obj) -> `Vidyanagar Residential Quarter`
+- `volkswagen_id`: Volkswagen I.D. (Volkswagen_I_D.FBX) -> `Vidyanagar Residential Quarter`
+- `mercedes_sedan`: Mercedes-Benz Luxury Sedan (mercedes Obj.obj) -> `Vidyanagar Residential Quarter`
+- `scania_haul_truck`: Scania 2013 Commercial Truck (scania_2013__vray.fbx) -> `Singareni Collieries OCP 5 Incline`
+- `ford_transit_camion`: Ford Transit Utility Van/Truck (FordTransitCamion.obj) -> `Singareni Collieries OCP 5 Incline`
+- `can_am_maverick`: Can-Am Maverick Buggy 2019 (can-am maverick.FBX) -> `Singareni Collieries OCP 5 Incline`
+- `range_rover_evoque`: Range Rover Evoque 2019 (Range Rover Evoque 2019.FBX) -> `Chowrastha Urban Crossroads`
+- `audi_q3_sportback`: Audi Q3 Sportback (AUDI Q3 SPORTBACK.FBX) -> `Chowrastha Urban Crossroads`
+- `mercedes_gla`: Mercedes-Benz GLA (Mercedes-Benz GLA_VRAY.FBX) -> `Chowrastha Urban Crossroads`
+- `mercedes_amg_gla35`: Mercedes-AMG GLA 35 4MATIC (Mercedes-AMG GLA 35 4MATIC.fbx) -> `Chowrastha Urban Crossroads`
+- `range_rover_classic`: Land Rover Range Rover (Range Rover FBX.FBX) -> `Saturday Market & Commercial Strip`
+- `audi_q8_custom`: Audi Q8 Custom (audi_q8.obj) -> `Saturday Market & Commercial Strip`
+
+
+## Batch Vehicle Collection (26 Vehicles)
+- **Origin:** Local WhatsApp Inbox 3D Vehicle Collection
+- **Processing:** Headless Blender 5.2.3 optimization, ground origin alignment, light/camera purging, triangle decimation to <= 50,000 for mobile/M1 budgets.
+- `lamborghini_aventador_svj`: 2019 Lamborghini Aventador SVJ (2019_Lamborghini_Aventador_SVJ.fbx) -> `Hotel Sai Leela Portico`
+- `bmw_i8`: 2015 BMW i8 Hybrid (2015_BMW_i8_LOW.fbx) -> `Hotel Sai Leela Portico`
+- `mercedes_amg_gt63`: Mercedes-Benz AMG GT 63 (Mercedes-Benz AMG GT 63.FBX) -> `Hotel Sai Leela Portico`
+- `porsche_cayenne_s`: 2019 Porsche Cayenne S (Porsche Cayenne S 2019 VRAY.FBX) -> `Hotel Sai Leela Courtyard`
+- `porsche_boxster`: Porsche Boxster Roadster (Porsche Boxster_vray.FBX) -> `Hotel Sai Leela Courtyard`
+- `tesla_model_x`: Tesla Model X (Tesla Model X.FBX) -> `Hotel Sai Leela Courtyard`
+- `toyota_supra_gr`: Toyota Supra GR (Toyota_Supra_GR_.obj) -> `Godavari River Bridge Highway`
+- `bmw_x4`: 2015 BMW X4 (2015_BMW_X4_LOW.FBX) -> `Godavari River Bridge Highway`
+- `hydrospace_benelli_s4`: Hydrospace Benelli S4 Watercraft (HSR Benelli S4.obj) -> `Godavari River Pier`
+- `bmw_x5`: 2014 BMW X5 (2014_BMW_X5_LOW.fbx) -> `Vidyanagar Residential Quarter`
+- `bmw_x6`: BMW X6 xDrive50i (BMW X6 xDrive50i 03.obj) -> `Vidyanagar Residential Quarter`
+- `mini_cooper_s`: 2015 Mini Cooper S (2015_Mini_Cooper_S_LOW.fbx) -> `Vidyanagar Residential Quarter`
+- `mazda_cx5`: Mazda CX-5 (MazdaCX5.obj) -> `Vidyanagar Residential Quarter`
+- `volvo_xc40`: Volvo XC40 (Volvo XC40_vray.FBX) -> `Vidyanagar Residential Quarter`
+- `audi_q8`: Audi Q8 2019 (AudiQ8.obj) -> `Vidyanagar Residential Quarter`
+- `volkswagen_id`: Volkswagen I.D. (Volkswagen_I_D.FBX) -> `Vidyanagar Residential Quarter`
+- `mercedes_sedan`: Mercedes-Benz Luxury Sedan (mercedes Obj.obj) -> `Vidyanagar Residential Quarter`
+- `scania_haul_truck`: Scania 2013 Commercial Truck (scania_2013__vray.fbx) -> `Singareni Collieries OCP 5 Incline`
+- `ford_transit_camion`: Ford Transit Utility Van/Truck (FordTransitCamion.obj) -> `Singareni Collieries OCP 5 Incline`
+- `can_am_maverick`: Can-Am Maverick Buggy 2019 (can-am maverick.FBX) -> `Singareni Collieries OCP 5 Incline`
+- `range_rover_evoque`: Range Rover Evoque 2019 (Range Rover Evoque 2019.FBX) -> `Chowrastha Urban Crossroads`
+- `audi_q3_sportback`: Audi Q3 Sportback (AUDI Q3 SPORTBACK.FBX) -> `Chowrastha Urban Crossroads`
+- `mercedes_gla`: Mercedes-Benz GLA (Mercedes-Benz GLA_VRAY.FBX) -> `Chowrastha Urban Crossroads`
+- `mercedes_amg_gla35`: Mercedes-AMG GLA 35 4MATIC (Mercedes-AMG GLA 35 4MATIC.fbx) -> `Chowrastha Urban Crossroads`
+- `range_rover_classic`: Land Rover Range Rover (Range Rover FBX.FBX) -> `Saturday Market & Commercial Strip`
+- `audi_q8_custom`: Audi Q8 Custom (audi_q8.obj) -> `Saturday Market & Commercial Strip`
+
+
+## Newly Downloaded Vehicle Collection (3 Ford Vehicles)
+- **Origin:** Local WhatsApp Inbox Downloads (RAR archives)
+- **Processing:** Headless Blender 5.2.3 optimization, ground origin alignment, light/camera purging, triangle decimation to <= 50,000 for mobile/M1 budgets.
+- `ford_mustang_mach_40`: Ford Mustang Mach 40 Custom (Mach_40.obj) -> `Godavari River Bridge Highway`
+- `ford_f150_lightning`: Ford F-150 Lightning Electric (Ford F-150 Lightning.FBX) -> `Hotel Sai Leela Courtyard`
+- `ford_f150_raptor_2021`: 2021 Ford F-150 Raptor SuperCrew (Ford F150 Raptor 2021.FBX) -> `Singareni Collieries OCP 5 Incline`
+
+
+## New Downloads Vehicle & Helicopter Collection (8 Models)
+- **Origin:** User downloads in ~/Downloads (Free/Standard 3D models)
+- **Processing:** Headless Blender 5.2.3 optimization, ground origin alignment, light/camera purging, triangle decimation to <= 50,000 (60,000 for helicopter) for mobile/M1 budgets.
+- `royal_enfield_bullet`: Royal Enfield Bullet 350 Classic (Bike_RE.fbx) -> `Vidyanagar Residential Quarter`
+- `bajaj_avenger_cruise`: Bajaj Avenger Cruise 220 (Avenger 2.fbx) -> `Saturday Market & Commercial Strip`
+- `indian_tgsrtc_bus`: TGSRTC Super Luxury Express Bus (indian gsrtc bus.fbx) -> `TGSRTC Bus Station Depot`
+- `dodge_charger_f8`: Dodge Charger Fast & Furious Edition (998.glb) -> `Hotel Sai Leela Courtyard`
+- `ferrari_250_testa_rossa`: Ferrari 250 Testa Rossa Vintage (Sketchfab_2026_10_23_12_47_42.glb) -> `Hotel Sai Leela Portico`
+- `alfa_romeo_155_v6`: Alfa Romeo 155 V6 TI DTM (Alfa_Romeo_155_V6.fbx) -> `Godavari River Bridge Highway`
+- `lamborghini_diablo_sv`: 1997 Lamborghini Diablo SV Coupe (FINAL_MODEL_SV97.fbx) -> `Godavari River Bridge Highway`
+- `sa342m_gazelle_helicopter`: SA342M Gazelle Light Utility Helicopter (sa342m_dcs_world.glb) -> `Singareni Collieries OCP 5 Incline`
+
+
+## Batch 2 Downloads Vehicles & Helicopter (5 Models)
+- **Origin:** User downloads in ~/Downloads
+- **Processing:** Headless Blender 5.2.3 optimization, hierarchy unparenting, ground origin alignment, light/camera purging, triangle decimation to <= 50,000 (60,000 for helicopter) for mobile/M1 budgets.
+- `roush_mustang_96`: 1996 Ford Mustang GT Jack Roush Stage 3 (FINAL_MODEL_96.fbx) -> `Godavari River Bridge Highway`
+- `shelby_patrol_13`: 2013 Ford Shelby GT500 Highway Patrol (FINAL_MOPDEL_COP13.fbx) -> `Singareni Collieries OCP 5 Incline`
+- `shelby_cobra_68`: 1968 Ford Mustang Shelby Cobra GT500 Fastback (FINAL_MODEL_GT50067.fbx) -> `Hotel Sai Leela VIP Courtyard`
+- `little_bird_mh6`: MH-6 Little Bird Light Observation Helicopter (MH-6 Little Bird.obj) -> `Singareni Collieries OCP 5 Incline`
+- `city_transit_bus`: RoAZ 5236 Low-Floor City Transit Bus (RoAZ_5236.fbx) -> `TGSRTC Bus Station Depot`

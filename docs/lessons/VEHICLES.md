@@ -45,3 +45,9 @@ Code: `scripts/vehicle/` (`vehicle_entry.gd` for getting in and out and the seat
 - **Symptom:** Driving at 130 km/h (36 m/s) in the Porsche 911 or Thar 4x4 caused stutter and dropped frames as new sectors and building chunks were entered.
 - **Rule:** Streaming focus (`player_focus`) projects ahead along vehicle linear velocity ($t_{\text{lead}} \le 2.5\text{s}$, up to 100m) so chunks ahead begin generation before the car arrives. Chunk creation is throttled to $\le 1200\mu\text{s}$ per frame with an LRU cache of 50 chunks for zero-latency turnarounds.
 - **Check:** `tests/movement_regression.gd`, verify high-speed vehicle translation and lookahead.
+
+### Batch vehicle placement collision clearance & spawn isolation (2026-10-31)
+- **Symptom:** In `tests/movement_regression.gd`, `Tuk Tuk` was knocked away from interaction range or launched into the void on startup.
+- **Cause:** Two causes: (1) Un-transformed FBX mesh AABBs generated multi-kilometer box colliders, enveloping player spawn; (2) Placing decorative custom vehicles directly inside the 30 m `SPAWN_CENTER` radius collided with `roadside_spots()` vehicle search during settlement.
+- **Rule:** Keep custom vehicle placements at least 50 m away from `(0, 0)` Chowrastha spawn point. Distribute authentic collections across actual regional hubs (Hotel Sai Leela, Vidyanagar Road 2, Coal Mine OCP 5 Incline, Godavari Bridge, TGSRTC Bus Station). Use verified metric dimensions for static box colliders with ground origin $Y=0$.
+- **Check:** `tests/movement_regression.gd` and `tests/test_custom_asset_placements.gd`.

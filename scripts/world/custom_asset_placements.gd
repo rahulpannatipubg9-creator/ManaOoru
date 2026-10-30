@@ -114,14 +114,27 @@ func _setup_collision(root: Node3D, collision_type: String, data: Dictionary) ->
 			if m and m.mesh:
 				m.create_trimesh_collision()
 	elif collision_type == "box":
-		var aabb := _calculate_aabb(root)
+		var box_size := Vector3.ZERO
+		var box_center := Vector3.ZERO
+		var dims: Dictionary = data.get("metadata", {}).get("dimensions", {})
+		var sx: float = float(dims.get("width_x", 0.0))
+		var sy: float = float(dims.get("height_z", 0.0))
+		var sz: float = float(dims.get("depth_y", 0.0))
+		if sx > 0.1 and sx < 30.0 and sy > 0.1 and sy < 30.0 and sz > 0.1 and sz < 30.0:
+			box_size = Vector3(sx, sy, sz)
+			box_center = Vector3(0.0, sy * 0.5, 0.0)
+		else:
+			var aabb := _calculate_aabb(root)
+			box_size = aabb.size
+			box_center = aabb.get_center()
+
 		var body := StaticBody3D.new()
 		body.name = "AutoBoxCollider"
 		var col := CollisionShape3D.new()
 		var box := BoxShape3D.new()
-		box.size = aabb.size
+		box.size = box_size
 		col.shape = box
-		col.position = aabb.get_center()
+		col.position = box_center
 		body.add_child(col)
 		root.add_child(body)
 	elif collision_type == "cylinder":
@@ -130,8 +143,8 @@ func _setup_collision(root: Node3D, collision_type: String, data: Dictionary) ->
 		body.name = "AutoCylinderCollider"
 		var col := CollisionShape3D.new()
 		var cyl := CylinderShape3D.new()
-		cyl.radius = maxf(aabb.size.x, aabb.size.z) * 0.4
-		cyl.height = maxf(aabb.size.y, 0.5)
+		cyl.radius = clampf(maxf(aabb.size.x, aabb.size.z) * 0.4, 0.2, 15.0)
+		cyl.height = clampf(maxf(aabb.size.y, 0.5), 0.5, 30.0)
 		col.shape = cyl
 		col.position = aabb.get_center()
 		body.add_child(col)
@@ -144,12 +157,21 @@ func _calculate_aabb(root: Node3D) -> AABB:
 		var mesh := node as MeshInstance3D
 		if mesh and mesh.mesh:
 			var box := mesh.get_aabb()
+			var t := Transform3D.IDENTITY
+			var curr: Node3D = mesh
+			while curr != null and curr != root:
+				t = curr.transform * t
+				curr = curr.get_parent() as Node3D
+			var transformed_box := t * box
 			if first:
-				total_aabb = box
+				total_aabb = transformed_box
 				first = false
 			else:
-				total_aabb = total_aabb.merge(box)
+				total_aabb = total_aabb.merge(transformed_box)
 	if first:
-		# Fallback if no meshes found
 		return AABB(Vector3(-0.5, 0, -0.5), Vector3(1, 1, 1))
+	# Clamp rogue scales to sane bounds
+	total_aabb.size.x = clampf(total_aabb.size.x, 0.2, 30.0)
+	total_aabb.size.y = clampf(total_aabb.size.y, 0.2, 30.0)
+	total_aabb.size.z = clampf(total_aabb.size.z, 0.2, 30.0)
 	return total_aabb

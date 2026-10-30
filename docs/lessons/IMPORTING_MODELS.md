@@ -93,6 +93,19 @@ Custom assets are recorded in [`data/world/custom_placements.json`](file:///User
 - **Rule:** When downloading new assets to `~/Downloads`, run `python3 tools/asset_pipeline/pipeline.py` or tell the agent "setup this in our game". It purges lights/cameras, aligns ground origin ($Z=0$), enforces triangle budgets, reasons about authentic Godavarikhani district placement, logs to `ASSET_LICENSES.md`, and runs headless Godot verification.
 - **Check:** `tests/test_custom_asset_placements.gd` and `tests/movement_regression.gd`.
 
+### Unparenting hierarchies & clearing transforms before scale normalization (2026-10-31)
+- **Problem:** In complex FBX models (e.g. Diablo SV, Ford Roush Mustang, Bajaj Avenger), mesh parts were parented to Armatures or Empties with fractional local transforms (`scale=(0.01, 0.01, 0.01)` or `(20, 20, 20)`). Applying transforms or scaling parent and child nodes simultaneously caused cascading exponential scale errors (producing 65-meter supercars).
+- **Solution:** In Blender headless pipeline, execute `bpy.ops.object.parent_clear(type="CLEAR_KEEP_TRANSFORM")` on all objects first, delete all non-mesh nodes (Armatures, Empties, Lights, Cameras), then execute `transform_apply(location=True, rotation=True, scale=True)`. Then compute world bounds, calculate true metric scaling factor, ground $Z=0$, and decimate.
+- **Rule:** Never scale objects while nested under parent transforms or armatures. Always clear parent while preserving world transforms before measuring bounds or applying scale normalization.
+
+### Pruning basement/staging accessory clusters (2026-10-31)
+- **Problem:** The Bajaj Avenger Cruise FBX had 84 spare/duplicate parts staged in an extra empty (`B_Extra`) located at $Z=-6.0\text{ m}$ below the ground, expanding model bounding box from 1.4 m to 7.4 m height.
+- **Solution:** Automated filter detects and prunes meshes whose vertices reside $>2.0\text{ m}$ below the lowest primary contact plane, isolating the authentic vehicle hull.
+
+### Multi-level archive intake & .gdignore in staging (2026-10-31)
+- **Problem:** Sketchfab downloads wrap models inside nested zip archives (up to 3 levels: `outer.zip` -> `source/inner.zip` -> `model.zip`), occasionally containing bundled `.exe` binaries. Furthermore, extracting large raw staging files directly into `work/staging/` caused the Godot Editor to freeze for minutes attempting to import 90MB uncompressed raw source models.
+- **Solution:** Multi-tier zip extraction unzips only pure 3D formats (`.fbx`, `.obj`, `.glb`, `.gltf`) while rejecting binaries (`.exe`). Added `.gdignore` inside `work/` to completely exclude raw staging folders from Godot project import scans, ensuring only optimized game assets under `assets/models/` are processed.
+
 ### Blender lamps in a .glb turned the game white (2026-10-29)
 - See [BUILDINGS.md](BUILDINGS.md). Untick lights in the exporter, and strip `Light3D` nodes in the loader anyway.
 
@@ -102,3 +115,9 @@ Custom assets are recorded in [`data/world/custom_placements.json`](file:///User
 
 ### Ripped content rejected (2026-10-25)
 - McLaren F1 (built from NFS/Forza assets) and the "Chubby magic girl" (Daz and Unreal parts) were rejected. A model's own files (info.txt, metadata, action names) often reveal where it came from: read them.
+
+### Transformed/Centimeter FBX AABBs causing gigantic world-spanning colliders (2026-10-31)
+- **Symptom:** In `tests/movement_regression.gd`, the player and tuk-tuk were launched into the void with assertion failure: `Player Tuk Tuk must start within interaction range`.
+- **Cause:** Raw FBX models exported from 3ds Max/V-Ray often retain 0.001 scale transforms or centimeter mesh bounding boxes (e.g. 4,357 mm). When `custom_asset_placements.gd` calculated bounding boxes using raw un-transformed `mesh.get_aabb()`, the resulting BoxShape3D was 4,357 meters wide—spanning across the entire city and swallowing the spawn point.
+- **Rule:** `_setup_collision` in `custom_asset_placements.gd` must prioritize verified real-world metric dimensions from `data.metadata.dimensions` (width_x, depth_y, height_z). When calculating AABB from child meshes, it must transform by the relative hierarchy transform to root (`t * box`) and clamp sizes to sane physical bounds ($\le 30\text{ m}$).
+- **Check:** `tests/test_custom_asset_placements.gd` and `tests/movement_regression.gd`.

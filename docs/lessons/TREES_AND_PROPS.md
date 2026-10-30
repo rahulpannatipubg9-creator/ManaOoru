@@ -26,3 +26,9 @@ Anything placed on the ground: trees, stalls, carts, pickups, poles, drains, cov
 ### Drainage kept running after it was asked to stop (2026-10)
 - **Cause:** `world_generator.gd` still builds `RoadsideDrainage` unless launched with `--no-drainage`.
 - **Rule:** when the owner asks for a system to stop, switch it off in the default start-up, not behind a flag.
+
+### Vidya Nagar street vegetation instanced individual node scenes causing draw call bloat (2026-10-30)
+- **Symptom:** Every street tree and banana tree created individual `MeshInstance3D` or `Node3D` scenes with separate `StaticBody3D` nodes, causing high draw calls and node overhead on mobile.
+- **Cause:** Repeated trees and banana plants were instantiated per spot rather than batched.
+- **Rule:** Batch repeated street foliage using `MultiMeshInstance3D` (one instance for setback trees, one for banana plants) with a unified `StaticBody3D` containing the trunk shapes, reducing draw calls from N down to 1.
+- **Check:** `tests/movement_regression.gd`, verify tree counts and trunk collisions remain active and regression tests pass.
