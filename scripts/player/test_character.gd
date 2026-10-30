@@ -8,6 +8,9 @@ extends Node3D
 ## and a seated driving pose with hands on the wheel following the steering.
 ## Without the file it does nothing, so the shipped game keeps the block figure.
 
+## A foot came down: `side` 0 left, 1 right; `speed` in m/s. Fired by the stride, so sound keeps time with the feet.
+signal foot_planted(side: int, speed: float)
+
 ## Rahul, the player's own likeness (see ASSET_LICENSES.md), is the default playable
 ## look everywhere; the test-only lady stays selectable on desktop checkouts.
 const MODEL_PATH := "res://assets/test_only/magic_girl/magic_girl.glb"
@@ -26,6 +29,32 @@ const FINGER_CURL := 0.3
 const WRIST_IN := 0.35
 const FINGERS := ["f_index", "f_middle", "f_ring", "f_pinky"]
 const POSE_SMOOTHING := 10.0
+## Going down onto the chest takes longer than a crouch.
+const PRONE_SMOOTHING := 6.0
+## Stride phase at which the [left, right] foot takes the weight, measured from the gait clips.
+const FOOT_PLANT_PHASES: Array[float] = [0.0, 0.5]
+## Below this speed (m/s) a footstep is not worth a sound.
+const FOOT_PLANT_MIN_SPEED := 0.6
+## Turning on the spot: above TURN_STEP_FROM rad/s the feet shuffle, at the speed of a foot on a circle this wide,
+## so the body does not spin on planted soles.
+const TURN_STEP_FROM := 0.6
+const TURN_STEP_RADIUS := 0.28
+const TURN_STEP_SPEED := 1.17
+## Landing: the knees take the drop. Seconds in the air before it shows, crouch per second of fall, recovery time.
+const LAND_MIN_AIR := 0.18
+const LAND_PER_SECOND := 0.9
+const LAND_SECONDS := 0.32
+## The upper body follows the aim up and down: share of the pitch taken by each bone, and the most it will follow.
+const AIM_PITCH_BONES := {"CC_Base_Spine01": 0.3, "CC_Base_Spine02": 0.35, "CC_Base_Head": 0.35}
+const AIM_PITCH_LIMIT := 0.7
+## Reload: where the left hand goes, as a share of the reload. Handguard, magazine, pouch, magazine, handguard.
+const RELOAD_TO_MAG := 0.12
+const RELOAD_TO_POUCH := 0.36
+const RELOAD_BACK_TO_MAG := 0.60
+const RELOAD_LEAVE_MAG := 0.80
+## The magazine well in the rifle holder's space, and the pouch from the pelvis (+x is the character's left).
+const RELOAD_MAG := Vector3(0.097, -0.10, 0.13)
+const RELOAD_POUCH := Vector3(0.22, -0.02, 0.08)
 ## The realistic male plays the Walk_Cycle / Run_Cycle clips authored in tools/character_actions.py,
 ## stepped by distance travelled so the feet keep pace with the body. Metres per full cycle (two
 ## steps) while walking and while running; the player walks at 4.2 m/s and runs at 7 m/s.
@@ -74,7 +103,9 @@ var _crawl_phase := 0.0
 
 ## Hit and death reactions. A hit jolts the chest and head away from the shot for a moment; a death drops the
 ## body over in the direction the shot was travelling.
-const HIT_SECONDS := 0.3
+const HIT_SECONDS := 0.38
+## Share of the reaction spent reaching its peak: the jolt is quick, the recovery is not.
+const HIT_ATTACK := 0.12
 const DEATH_SECONDS := 0.7
 var _hit_time := 0.0
 var _hit_direction := Vector3.FORWARD
@@ -168,6 +199,11 @@ var _male_phase := 0.0
 var _clip_weight := 0.0
 var _idle_weight := 0.0
 var _idle_time := 0.0
+var _last_yaw := 0.0
+var _turn_rate := 0.0
+var _land_crouch := 0.0
+var _step_offset := 0.0
+var _aim_pitch := 0.0
 
 ## Set before the node enters the tree. Remote players in a match use only the realistic character, which is
 ## the one that ships on the tablet and phone; the desktop-only test model is skipped.
@@ -330,17 +366,28 @@ func _process(delta: float) -> void:
 	_gait = lerpf(_gait, clampf(speed / 6.0, 0.0, 1.0), blend)
 	_air = lerpf(_air, 0.0 if on_floor else 1.0, blend)
 	_crouch = lerpf(_crouch, 1.0 if crouching and not scripted else 0.0, blend)
-	_prone = lerpf(_prone, 1.0 if prone and not scripted else 0.0, blend)
+	_prone = lerpf(_prone, 1.0 if prone and not scripted else 0.0, 1.0 - exp(-PRONE_SMOOTHING * delta))
 	var peek_val: float = float(body.get("peek_input")) if body.get("peek_input") != null else 0.0
 	_peek = lerpf(_peek, peek_val, blend)
 	# Rifle stance (the local and remote players both expose is_weapon_equipped() and their own _aim_blend).
 	var armed: bool = body.has_method("is_weapon_equipped") and body.is_weapon_equipped()
 	_armed = lerpf(_armed, 1.0 if armed and not scripted else 0.0, blend)
 	_aim = clampf(float(body.get("_aim_blend")), 0.0, 1.0) if armed and body.get("_aim_blend") != null else 0.0
+	if on_floor and _air_time > LAND_MIN_AIR:
+		_land_crouch = clampf(_air_time * LAND_PER_SECOND, 0.25, 0.75)
+	_land_crouch = move_toward(_land_crouch, 0.0, delta / LAND_SECONDS)
 	_air_time = 0.0 if on_floor else _air_time + delta
+	var step_lift: Variant = body.get("step_visual_offset")
+	_step_offset = float(step_lift) if step_lift != null else 0.0
 	_rifle_time += delta
 	_seat = move_toward(_seat, 1.0 if seated else 0.0, delta / 0.45)
 	_wheel = lerpf(_wheel, clampf(steering, -1.0, 1.0) if seated else 0.0, blend)
+	# Turning on the spot steps the feet round (see TURN_STEP_FROM); the velocity itself stays zero.
+	var yaw := body.global_rotation.y
+	_turn_rate = lerpf(_turn_rate, angle_difference(_last_yaw, yaw) / maxf(delta, 0.0001), 1.0 - exp(-12.0 * delta))
+	_last_yaw = yaw
+	if on_floor and not scripted and not prone:
+		speed = maxf(speed, minf(maxf(absf(_turn_rate) - TURN_STEP_FROM, 0.0) * TURN_STEP_RADIUS, TURN_STEP_SPEED))
 	_phase = fmod(_phase + speed * delta / STRIDE_LENGTH * TAU, TAU)
 	var run_mix := smoothstep(MALE_RUN_BLEND.x, MALE_RUN_BLEND.y, speed)
 	var stride := _gait_stride(speed) if not _gait_clips.is_empty() else lerpf(MALE_WALK_STRIDE, MALE_RUN_STRIDE, run_mix)
@@ -352,9 +399,13 @@ func _process(delta: float) -> void:
 	var backward := absf(raw_heading) > BACKWARD_ANGLE
 	var target_heading := raw_heading - signf(raw_heading) * PI if backward else raw_heading
 	_heading = lerp_angle(_heading, target_heading, 1.0 - exp(-12.0 * delta))
-	_male_phase = fposmod(_male_phase + (-1.0 if backward else 1.0) * speed * delta / stride, 1.0)
+	var gait_step := (-1.0 if backward else 1.0) * speed * delta / stride
+	var crouch_step := (-1.0 if backward else 1.0) * speed * delta / CROUCH_STRIDE
+	if on_floor and not scripted and not _dead and speed > FOOT_PLANT_MIN_SPEED:
+		_emit_foot_plants(_crouch_phase if crouching else _male_phase, crouch_step if crouching else gait_step, speed)
+	_male_phase = fposmod(_male_phase + gait_step, 1.0)
 	_moving_backward = backward
-	_crouch_phase = fposmod(_crouch_phase + (-1.0 if backward else 1.0) * speed * delta / CROUCH_STRIDE, 1.0)
+	_crouch_phase = fposmod(_crouch_phase + crouch_step, 1.0)
 	_crawl_phase = fposmod(_crawl_phase + speed * delta / CRAWL_STRIDE, 1.0)
 	if _crouch_idle:
 		_crouch_idle_time = fmod(_crouch_idle_time + delta, _crouch_idle.length)
@@ -450,6 +501,16 @@ func _orient_hand(side: String, finger_direction: Vector3, palm_direction: Vecto
 	var parent_basis := male_skeleton.get_bone_global_pose(parent).basis.orthonormalized()
 	male_skeleton.set_bone_pose_rotation(hand, (parent_basis.inverse() * (target_frame * local_frame.inverse())).get_rotation_quaternion())
 
+## Fires foot_planted for each foot whose plant phase lies within this frame's step of the stride.
+func _emit_foot_plants(before: float, step: float, speed: float) -> void:
+	for side in FOOT_PLANT_PHASES.size():
+		if fposmod((FOOT_PLANT_PHASES[side] - before) * signf(step), 1.0) < absf(step):
+			foot_planted.emit(side, speed)
+
+## 0..1 through the stride in use, for anything that keeps time with the feet (the camera's bob).
+func stride_phase() -> float:
+	return _crouch_phase if _crouch > 0.5 else _male_phase
+
 ## Strafing and diagonal movement: the hips, and so the legs, turn toward the travel direction and the torso
 ## and head twist back so the character still faces its aim. The gait clips only step forward, so this is
 ## what makes them work in every direction.
@@ -526,7 +587,8 @@ func _pose_hit_and_head(delta: float) -> void:
 		# Lying on the chest, the head lifts to look ahead.
 		_rotate_bone_about("CC_Base_Head", male_model.global_basis.x, PRONE_HEAD_LIFT * _prone)
 	if _hit_time > 0.0:
-		var strength := _hit_time / HIT_SECONDS
+		var through := 1.0 - _hit_time / HIT_SECONDS
+		var strength := minf(through / HIT_ATTACK, 1.0) * (1.0 - through) * (1.0 - through)
 		var axis := Vector3.UP.cross(_hit_direction)
 		_rotate_bone_about("CC_Base_Spine02", axis, 0.28 * strength)
 		_rotate_bone_about("CC_Base_Head", axis, 0.22 * strength)
@@ -558,7 +620,9 @@ func _cache_crouch_clips(clips: Dictionary) -> void:
 
 ## The crouched stance, blended into the crouch walk as the body moves, weighted by how crouched it is.
 func _apply_crouch_clips(speed: float) -> void:
-	var weight := _crouch * (1.0 - _prone) * (0.0 if _dead else 1.0)
+	# A landing borrows the crouch for a moment; less of it at a run, where the legs carry on stepping.
+	var landing := _land_crouch * (1.0 - 0.6 * clampf(speed / 7.0, 0.0, 1.0))
+	var weight := maxf(_crouch, landing) * (1.0 - _prone) * (0.0 if _dead else 1.0)
 	if _crouch_walk == null or weight < 0.001 or seated:
 		return
 	var move := clampf(speed / 1.0, 0.0, 1.0)
@@ -682,6 +746,12 @@ func _pose_armed(body: CharacterBody3D) -> void:
 	# point well off the body's front and the full turn is needed to reach it.
 	var faces_aim: bool = body.get("combat_mode") != false
 	var blade := 1.0 - (1.0 - RIFLE_CLIP_BLADE) * _rifle_body if faces_aim else 1.0
+	# The chest and head look where the rifle points, up or down. Looking up is a negative turn about +x.
+	var look: float = clampf(body.aim_pitch(), -AIM_PITCH_LIMIT, AIM_PITCH_LIMIT) if faces_aim and body.has_method("aim_pitch") else 0.0
+	_aim_pitch = lerpf(_aim_pitch, look * (1.0 - _prone), 1.0 - exp(-18.0 * get_process_delta_time()))
+	if absf(_aim_pitch) > 0.005:
+		for bone_name: String in AIM_PITCH_BONES:
+			_rotate_bone_about(bone_name, male_model.global_basis.x, -_aim_pitch * float(AIM_PITCH_BONES[bone_name]))
 	_twist_bone("CC_Base_Spine01", BLADE_SPINE_01 * blade)
 	_twist_bone("CC_Base_Spine02", BLADE_SPINE_02 * blade)
 	_twist_bone("CC_Base_Head", BLADE_HEAD * blade)
@@ -694,7 +764,7 @@ func _pose_armed(body: CharacterBody3D) -> void:
 	for side: String in ["L", "R"]:
 		var wrist: Vector3 = weapon.to_global(grips[side]) - weapon_basis * fingers[side] * WRIST_TO_PALM
 		if side == "L":
-			left_grip_target = to_local(wrist)
+			left_grip_target = _reload_hand(body, to_local(wrist))
 		else:
 			right_grip_target = to_local(wrist)
 	_pose_vehicle_grips()
@@ -703,6 +773,21 @@ func _pose_armed(body: CharacterBody3D) -> void:
 		_orient_hand(side, rig_basis * (weapon_basis * fingers[side]), rig_basis * (weapon_basis * palms[side]))
 		_pose_male_fingers(side, GRIP_CURL_RIGHT if side == "R" else -GRIP_CURL_LEFT)
 	male_skeleton.force_update_all_bone_transforms()
+
+## Where the left hand is during a reload: down to the magazine, away to the pouch, back, and up to the handguard.
+func _reload_hand(body: CharacterBody3D, handguard: Vector3) -> Vector3:
+	var progress: float = body.reload_progress() if body.has_method("reload_progress") else -1.0
+	if progress < 0.0:
+		return handguard
+	var magazine := to_local((body.weapon as Node3D).to_global(RELOAD_MAG))
+	var pouch := _male_hip_local() + RELOAD_POUCH
+	if progress < RELOAD_TO_MAG:
+		return handguard.lerp(magazine, smoothstep(0.0, RELOAD_TO_MAG, progress))
+	if progress < RELOAD_TO_POUCH:
+		return magazine.lerp(pouch, smoothstep(RELOAD_TO_MAG, RELOAD_TO_POUCH, progress))
+	if progress < RELOAD_BACK_TO_MAG:
+		return pouch.lerp(magazine, smoothstep(RELOAD_TO_POUCH, RELOAD_BACK_TO_MAG, progress))
+	return magazine.lerp(handguard, smoothstep(RELOAD_LEAVE_MAG, 1.0, progress))
 
 ## The supplied lady rig has eye, jaw and head bones but no eyelid/lip shapes.
 ## Give those available controls a restrained, human idle performance instead
@@ -742,7 +827,7 @@ func _pose_static_male(speed: float, moving: bool) -> void:
 	# The gait clips carry their own pelvis bob and forward lean.
 	var bob := absf(sin(_phase)) * 0.045 * gait * (1.0 - _clip_weight)
 	# Prone lowers the body to the ground (the smoothing is in _prone itself).
-	male_model.position.y = _male_base_height + bob * (1.0 - _prone) - PRONE_DROP * _prone
+	male_model.position.y = _male_base_height + bob * (1.0 - _prone) - PRONE_DROP * _prone + _step_offset
 	# The crouch clips carry their own lean; only the procedural fallback tips the whole model.
 	var crouch_tilt := 0.0 if _crouch_walk != null else 0.16
 	# Prone pitches the whole body forward onto the chest; peeking leans it sideways.
