@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Team AI Workflow Guide
+    url: https://github.com/rahulpannatipubg9-creator/ManaOoru/blob/main/docs/TEAM_WORKFLOW.md
+    about: Read how our prompt-first AI workflow, auto-sync, and auto-ship scripts work.

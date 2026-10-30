@@ -1,0 +1,43 @@
+name: 🎨 3D Asset or Prop Submission
+description: Propose or submit a new 3D model, texture, or audio asset for Godavarikhani
+title: "[Asset]: "
+labels: ["type:asset", "status:needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template when adding new 3D models, PBR textures, or sound effects. All external assets must have clear legal distribution rights.
+  - type: input
+    id: asset-name
+    attributes:
+      label: Asset Name & Category
+      placeholder: e.g. RTC Bus Stop Shelter (Prop) / Auto-Rickshaw (Vehicle)
+    validations:
+      required: true
+  - type: textarea
+    id: source-and-license
+    attributes:
+      label: Provenance & Licensing Information
+      description: Where did this model or audio come from? What license is it under?
+      placeholder: e.g. Modeled from scratch in Blender / CC0 from ambientCG / CC-BY 4.0 with link to author.
+    validations:
+      required: true
+  - type: input
+    id: polycount
+    attributes:
+      label: Polygon / Triangle Count & Texture Resolution
+      placeholder: e.g. 2,400 triangles, 1024x1024 PBR textures (Albedo, Normal, Roughness)
+    validations:
+      required: true
+  - type: checkboxes
+    id: asset-rules
+    attributes:
+      label: Asset Policy Compliance
+      description: Verify compliance with MANA OORU asset rules
+      options:
+        - label: This asset is NOT ripped or copyrighted from GTA or any commercial game.
+          required: true
+        - label: File size is optimized and strictly under 50 MB.
+          required: true
+        - label: Added entry to ASSET_LICENSES.md documenting author, URL, and license.
+          required: true

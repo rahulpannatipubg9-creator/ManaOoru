@@ -1,5 +1,12 @@
 # MANA OORU
 
+[![Engine: Godot 4.x](https://img.shields.io/badge/Engine-Godot%204.7-478cbf?logo=godotengine&logoColor=white)](https://godotengine.org)
+[![Platform: Desktop & Android](https://img.shields.io/badge/Platform-macOS%20%7C%20Windows%20%7C%20Android-green)](docs/PLATFORM_COMPATIBILITY_MATRIX.md)
+[![License: MIT & CC-BY-NC 4.0](https://img.shields.io/badge/License-MIT%20%2F%20CC--BY--NC%204.0-blue.svg)](LICENSE)
+[![Tests: Passing](https://img.shields.io/badge/Quality%20Gate-Regression%20Passing-success)](tests/movement_regression.gd)
+[![Offline: 100%](https://img.shields.io/badge/Runtime-100%25%20Offline-brightgreen)](AGENTS.md)
+[![Contributing: Guide](https://img.shields.io/badge/Team-AI%20Workflow-orange)](docs/TEAM_WORKFLOW.md)
+
 ## Godavarikhani Open World
 
 MANA OORU is an offline, single-player, third-person exploration game set in a

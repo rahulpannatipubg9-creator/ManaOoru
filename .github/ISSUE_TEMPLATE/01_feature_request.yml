@@ -1,0 +1,50 @@
+name: 🚀 Feature Request
+description: Propose a new gameplay mechanic, landmark, vehicle, or feature for Mana Ooru
+title: "[Feature]: "
+labels: ["type:feature", "status:needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for proposing a new feature for **Mana Ooru**! Please fill out the details below so our team and AI agents can design and implement it cleanly.
+  - type: input
+    id: feature-title
+    attributes:
+      label: Feature Summary
+      description: Brief one-line description of the feature
+      placeholder: e.g. Add RTC Express Bus vehicle with boarding animation
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Detailed Description
+      description: Explain what this feature adds to the Godavarikhani open-world experience
+      placeholder: Describe the mechanic, asset, or landmark in detail...
+    validations:
+      required: true
+  - type: dropdown
+    id: component
+    attributes:
+      label: Target Component
+      options:
+        - Props & Environment (Chai stall, signs, street lights)
+        - Vehicles & Driving (Auto-rickshaw, RTC bus, bike)
+        - Core Gameplay & Movement (Parkour, climbing, camera)
+        - Audio & Sound FX (Temple bells, street ambience, vehicle audio)
+        - Map & POIs (Godavari Bridge, landmarks, roads)
+        - UI & Controls (Minimap, HUD, touch controls)
+    validations:
+      required: true
+  - type: checkboxes
+    id: guidelines
+    attributes:
+      label: Design Constraints Verification
+      description: Please verify compliance with Mana Ooru project rules
+      options:
+        - label: This feature works 100% offline without external server dependencies.
+          required: true
+        - label: Will be built as a modular sub-scene rather than editing monolithic main.tscn directly.
+          required: true
+        - label: Compatible with Apple Silicon M1 (8GB) and mobile performance budgets.
+          required: true

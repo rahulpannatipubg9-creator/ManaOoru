@@ -1,0 +1,56 @@
+name: 🐛 Bug Report
+description: Report a movement glitch, collision clipping, visual error, or crash
+title: "[Bug]: "
+labels: ["type:bug", "status:needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting an issue! Accurate bug reports help keep Godavarikhani stable and glitch-free.
+  - type: input
+    id: summary
+    attributes:
+      label: Bug Summary
+      description: A clear and concise description of what the bug is
+      placeholder: e.g. Character falls through Godavari Bridge road deck near pillar 4
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: Exact steps to trigger the bug
+      placeholder: |
+        1. Spawn at Vidyanagar.
+        2. Drive or run onto Godavari River Bridge.
+        3. Jump towards the right railing.
+        4. Observe character falling into the void.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What should have happened instead
+      placeholder: Character should collide with the deck/railing and not fall through.
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Tested Environment
+      options:
+        - macOS (Apple Silicon M1/M2/M3)
+        - macOS (Intel)
+        - Windows 10/11
+        - Linux (Ubuntu/Debian)
+        - Android Device
+    validations:
+      required: true
+  - type: checkboxes
+    id: regression-check
+    attributes:
+      label: Automated Quality Check
+      options:
+        - label: I ran `godot --headless --path . --script tests/movement_regression.gd` to test for regressions.
+          required: false

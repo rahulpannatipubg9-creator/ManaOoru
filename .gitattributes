@@ -1,0 +1,50 @@
+# Mana Ooru — Git Attributes Configuration
+# Standardizes line endings and ensures 3D models, textures, and audio are treated as binary.
+
+# Default line endings
+* text=auto eol=lf
+
+# Godot & GDScript source text files
+*.gd text eol=lf
+*.tscn text eol=lf
+*.tres text eol=lf
+*.godot text eol=lf
+*.cfg text eol=lf
+*.json text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+*.md text eol=lf
+*.sh text eol=lf
+*.txt text eol=lf
+*.svg text eol=lf
+
+# 3D models & assets (binary, never alter line endings)
+*.glb binary
+*.gltf binary
+*.obj binary
+*.fbx binary
+*.blend binary
+*.dae binary
+
+# Textures & Images (binary)
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.hdr binary
+*.exr binary
+
+# Audio files (binary)
+*.wav binary
+*.ogg binary
+*.mp3 binary
+
+# Fonts (binary)
+*.ttf binary
+*.otf binary
+*.woff binary
+*.woff2 binary
+
+# Compiled Godot binary resources
+*.res binary
+*.scn binary
