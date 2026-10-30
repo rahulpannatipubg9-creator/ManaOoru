@@ -105,6 +105,8 @@ var position_provider: Callable
 var minimap_provider: Callable
 ## func() -> float: the y the player status must stay above (the touch item bar sits below it).
 var status_floor_provider: Callable
+## func() -> Array of Rect2: the on-screen touch buttons, which the kill feed must not cover.
+var touch_rects_provider: Callable
 ## True on phones and tablets: small on-screen buttons replace the Tab, T and Esc keys.
 var touch_mode := false:
 	set(value):
@@ -433,6 +435,12 @@ func _layout() -> void:
 	var feed_right := safe.end.x - SPACE_SMALL
 	if map_on_top and map_on_right:
 		feed_right = minimap.position.x - SPACE_SMALL
+	# Right-hand claw buttons can sit under the minimap; the feed slides left of any it would cover.
+	if touch_rects_provider.is_valid() and _feed.get_child_count() > 0:
+		_feed.reset_size()
+		for rect: Rect2 in touch_rects_provider.call():
+			if rect.intersects(Rect2(feed_right - FEED_WIDTH, below_score, FEED_WIDTH, _feed.size.y)):
+				feed_right = rect.position.x - SPACE_SMALL
 	_feed.position = Vector2(feed_right - FEED_WIDTH, below_score)
 
 	_chat_log.reset_size()
@@ -838,20 +846,29 @@ func _build_lobby() -> void:
 		var side := VBoxContainer.new()
 		side.add_theme_constant_override("separation", SPACE_SMALL)
 		teams.add_child(side)
+		# The header shares its line with JOIN, so a full 8v8 room still fits a 720-high screen.
+		var top := HBoxContainer.new()
+		top.add_theme_constant_override("separation", SPACE_SMALL)
+		side.add_child(top)
 		var header := _label("", FONT_LABEL, team_color(team))
-		side.add_child(header)
+		header.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		top.add_child(header)
 		var rows := VBoxContainer.new()
 		rows.custom_minimum_size = Vector2(240.0, ROW_HEIGHT * 2.0)
 		rows.add_theme_constant_override("separation", SPACE_TINY)
 		side.add_child(rows)
 		var join := _button("JOIN %s" % ("RED" if team == 0 else "BLUE"), func() -> void: team_requested.emit(team))
 		join.custom_minimum_size.y = ROW_HEIGHT + SPACE_SMALL
-		side.add_child(join)
+		top.add_child(join)
 		_team_columns.append({"header": header, "join": join, "rows": rows})
+	var notes := HBoxContainer.new()
+	notes.add_theme_constant_override("separation", SPACE_LARGE)
+	column.add_child(notes)
 	_lobby_buttons["hint"] = _label("", FONT_SMALL, TEXT_MUTED)
-	column.add_child(_lobby_buttons.hint)
+	_lobby_buttons.hint.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	notes.add_child(_lobby_buttons.hint)
 	_lobby_buttons["address"] = _label("", FONT_SMALL, TEXT_MUTED)
-	column.add_child(_lobby_buttons.address)
+	notes.add_child(_lobby_buttons.address)
 	var buttons := HBoxContainer.new()
 	buttons.add_theme_constant_override("separation", SPACE_SMALL)
 	column.add_child(buttons)
