@@ -67,6 +67,7 @@ func _ready() -> void:
 	imported_city_buildings.prepare(map_data)
 	var lane_clearance := preload("res://scripts/world/vidya_lane_clearance.gd").new()
 	lane_clearance.prepare(map_data)
+	await _stage(0.3, "Placing buildings")
 	buildings.setup(map_data, func(points: PackedVector2Array) -> bool: return imported_city_buildings.excludes(points) or lane_clearance.excludes(points))
 	print("Vidyanagar 2 road clearance: %d conflicting building footprints omitted from rendering/collision" % lane_clearance.excluded_count)
 	rendered_building_footprints = buildings.footprints
