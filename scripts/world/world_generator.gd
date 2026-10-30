@@ -49,6 +49,7 @@ var cctv: CctvBuilder
 var traffic: TrafficBuilder
 var local_activity: LocalActivityBuilder
 var godavari_bridge: GodavariBridgeBuilder
+var custom_placements: Node3D
 const RoadsideDrainage := preload("res://scripts/world/roadside_drainage_builder.gd")
 var drainage: Node3D
 
@@ -101,6 +102,9 @@ func _ready() -> void:
 	_create_local_activity()
 	_create_traffic()
 	_create_collectibles()
+	custom_placements = preload("res://scripts/world/custom_asset_placements.gd").new()
+	add_child(custom_placements)
+	custom_placements.call("build", self)
 	# Representative scenery is planned after existing assets/spawns so it yields
 	# to gameplay and source-backed placement. No GIS drainage geometry is loaded.
 	if "--representative-drainage" in OS.get_cmdline_user_args() and "--no-drainage" not in OS.get_cmdline_user_args():
