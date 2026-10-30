@@ -1,9 +1,20 @@
+class_name World
 extends Node3D
 
 ## Builds Godavarikhani from the bundled map data. Roads, buildings, parks,
 ## barriers, railways and signage all come from real data (see MapData); the
 ## gameplay pieces (spawn, parked cars, pedestrians, coins) are placed on real
 ## roadsides around the Chowrastha junction at start-up.
+
+## Fraction 0 to 1 of a staged build, with a short label when the work changes.
+signal progress(fraction: float, label: String)
+signal built
+
+## Set before the world enters the tree to build in stages with frames free between them.
+## Off by default: tests and tools expect a finished world when _ready returns.
+static var async_build := false
+## True from the start of a staged build until `built`.
+var building := false
 
 const TERRAIN_CHUNK_CELLS := 32
 ## ESA WorldCover land cover (see tools/import_landcover.py) that picks each spot's ground texture.
@@ -53,13 +64,20 @@ const RoadsideDrainage := preload("res://scripts/world/roadside_drainage_builder
 var drainage: Node3D
 
 func _ready() -> void:
+	if async_build:
+		_begin_staged_build()
+	await _stage(0.01, "Reading the map")
 	map_data = MapData.load_shared()
 	if not map_data.is_valid:
+		_finish_build()
 		return
+	await _stage(0.05, "Shaping the ground")
 	_create_ground()
+	await _stage(0.15, "Laying roads")
 	roads = RoadBuilder.new()
 	add_child(roads)
 	roads.build(map_data)
+	await _stage(0.25, "Placing buildings")
 	buildings = BuildingBuilder.new()
 	add_child(buildings)
 	imported_city_buildings = ImportedCityBuildings.new()
@@ -67,39 +85,58 @@ func _ready() -> void:
 	imported_city_buildings.prepare(map_data)
 	var lane_clearance := preload("res://scripts/world/vidya_lane_clearance.gd").new()
 	lane_clearance.prepare(map_data)
-	await _stage(0.3, "Placing buildings")
+	await _stage(0.3)
 	buildings.setup(map_data, func(points: PackedVector2Array) -> bool: return imported_city_buildings.excludes(points) or lane_clearance.excludes(points))
 	print("Vidyanagar 2 road clearance: %d conflicting building footprints omitted from rendering/collision" % lane_clearance.excluded_count)
 	rendered_building_footprints = buildings.footprints
 	var graphics = preload("res://scripts/performance/graphics_settings.gd").new()
 	graphics.load_from()
 	buildings.stream_radius = graphics.values.distance
+	await _stage(0.35)
 	buildings.build_around(SPAWN_CENTER, minf(300.0, graphics.values.distance))
+	await _stage(0.45, "Putting up signs")
 	signage = SignageBuilder.new()
 	add_child(signage)
 	signage.build(map_data, buildings)
+	await _stage(0.5, "Raising landmarks")
 	imported_city_buildings.build(self)
+	await _stage(0.55)
 	_create_water_infrastructure()
+	await _stage(0.57)
 	_create_bus_station()
+	await _stage(0.59)
 	_create_billboards()
+	await _stage(0.6)
 	_create_cctv()
+	await _stage(0.61)
 	_create_fountain()
+	await _stage(0.62)
 	_create_coal_gallery()
+	await _stage(0.64)
 	_create_godavari_bridge()
+	await _stage(0.68, "Opening the streets")
 	_choose_spawns()
+	await _stage(0.7)
 	street_life = StreetLifeBuilder.new()
 	add_child(street_life)
 	street_life.build(self, map_data)
+	await _stage(0.76)
 	add_child(preload("res://scripts/world/vidya_nagar_one_entrance.gd").build(self))
 	add_child(preload("res://scripts/world/vidya_nagar_one_entrance.gd").build(self, 2, Vector2(79.5163817,18.7549674), Vector2(79.5151192,18.7559943)))
+	await _stage(0.78)
 	var vn2_street := preload("res://scripts/world/vidya_nagar_two_street_builder.gd").new()
 	add_child(vn2_street)
 	vn2_street.build(self, map_data)
+	await _stage(0.82, "Planting trees")
 	_create_trees()
+	await _stage(0.88, "Waking the town")
 	_create_birds()
 	_create_pedestrians()
+	await _stage(0.9)
 	_create_local_activity()
+	await _stage(0.93)
 	_create_traffic()
+	await _stage(0.97)
 	_create_collectibles()
 	# Representative scenery is planned after existing assets/spawns so it yields
 	# to gameplay and source-backed placement. No GIS drainage geometry is loaded.
@@ -115,6 +152,33 @@ func _ready() -> void:
 		roads.topoexport_duplicate_count, rendered_building_footprints.size(),
 		map_data.osm_building_count, map_data.microsoft_building_count, map_data.overture_building_count, signage.board_count, signage.signal_count,
 		roads.drain_segment_count])
+	_finish_build()
+
+## The tree stays paused and the 3D view off, so nothing falls through unbuilt ground and
+## the loading screen is all that draws in the frames between stages.
+func _begin_staged_build() -> void:
+	building = true
+	visible = false
+	get_tree().paused = true
+	get_tree().root.disable_3d = true
+
+## Reports a stage and, in a staged build only, leaves a frame free to draw it. In the
+## synchronous path this returns without suspending, so _ready still finishes in one go.
+func _stage(fraction: float, label := "") -> void:
+	if not building:
+		return
+	progress.emit(fraction, label)
+	await get_tree().process_frame
+
+func _finish_build() -> void:
+	if not building:
+		return
+	building = false
+	visible = true
+	get_tree().paused = false
+	get_tree().root.disable_3d = false
+	progress.emit(1.0, "")
+	built.emit()
 
 ## Real ground relief from the Copernicus DEM: one mesh + trimesh collision per
 ## chunk of terrain cells, covering the whole district.
