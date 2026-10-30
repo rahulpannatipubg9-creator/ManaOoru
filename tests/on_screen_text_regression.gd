@@ -5,23 +5,12 @@ extends SceneTree
 
 const ToastQueue := preload("res://scripts/ui/toast_queue.gd")
 const FirstUseHints := preload("res://scripts/ui/first_use_hints.gd")
-const Gameplay := preload("res://scripts/gameplay/city_gameplay.gd")
 const HINTS_PATH := "user://hints_regression_only.cfg"
 const REMOVED_LABELS: Array[String] = ["\"PATIENT", "\"HOLD O", "PARCEL PICKUP", "POLICE • STOP", "GANG MEMBER", "\"SUSPECT\"", "\"POLICE\"",
 	"FUEL\\n[E]", "[E] Browse •"]
 const STALE_KEYS: Array[String] = ["B Auto/Single", "P Fire mode", "BRIDGE [B]", "Press [B]", "P toggles fire mode", "Hotkey: B"]
 
 var failures := 0
-
-class FakeHud:
-	extends Node
-	var calls: Array = []
-	func set_wanted(level: int) -> void:
-		calls.append(level)
-
-class FakeGame:
-	extends Node
-	var hud: Node
 
 func _init() -> void:
 	call_deferred("_run")
@@ -34,9 +23,10 @@ func _check(ok: bool, message: String) -> void:
 func _run() -> void:
 	_test_queue()
 	_test_hints()
-	_test_hud_guard()
+	_test_no_hud_push()
+	_test_control_hints()
 	_test_sources()
-	print("%s on-screen text: toast queue, first-use hints, HUD guard, word limits, removed labels" % ("PASS" if failures == 0 else "FAIL"))
+	print("%s on-screen text: toast queue, first-use hints, HUD pull, control hints, word limits, removed labels" % ("PASS" if failures == 0 else "FAIL"))
 	quit(1 if failures else 0)
 
 func _test_queue() -> void:
@@ -76,21 +66,18 @@ func _test_hints() -> void:
 	var memory: RefCounted = FirstUseHints.new("")
 	_check(memory.claim("rifle") and not FileAccess.file_exists(HINTS_PATH), "An empty path never touches the disk")
 
-func _test_hud_guard() -> void:
-	var hud := FakeHud.new()
-	var game := FakeGame.new()
-	game.hud = hud
-	var play: Node = Gameplay.new()
-	play.game = game
-	play._send_hud("set_wanted", [2])
-	play._send_hud("set_wanted", [2])
-	play._send_hud("set_wanted", [3])
-	_check(hud.calls == [2, 3], "An unchanged readout is not sent again")
-	play._send_hud("set_missing_readout", [1])
-	_check(not play._hud_sent.has("set_missing_readout"), "A HUD without the method is skipped")
-	play.free()
-	game.free()
-	hud.free()
+## The HUD reads vitals, ammo, wanted, objective and fuel itself; a second push once sent it wrong types.
+func _test_no_hud_push() -> void:
+	for path: String in ["res://scripts/gameplay/city_gameplay.gd", "res://scripts/world/city_life.gd"]:
+		var text := FileAccess.get_file_as_string(path)
+		for pushed: String in ["hud.set_fuel", "_send_hud", "\"set_ammo\"", "\"set_objective\"", "\"set_vitals\""]:
+			_check(not pushed in text, "%s pushes HUD readouts again: %s" % [path, pushed])
+
+## An empty hint used to blank the prompt pill for two seconds; hints now go to the toast queue only.
+func _test_control_hints() -> void:
+	var text := FileAccess.get_file_as_string("res://scripts/main.gd")
+	_check(not "_show_control_hint(\"\")" in text, "main.gd sends an empty control hint")
+	_check(not "_hint_until_msec" in text, "A control hint must not hold back the prompt pill")
 
 func _test_sources() -> void:
 	var toast := RegEx.create_from_string("(?:\\.|^|\\s)toast\\(\"([^\"]*)\"(?:\\s+if\\s.*?\\selse\\s+\"([^\"]*)\")?")

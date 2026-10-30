@@ -59,8 +59,6 @@ var _audio: Dictionary = {}
 var _last_health := 100.0
 var _last_driving := false
 var _vehicle_claims: Dictionary = {}
-## The last values sent to each HUD method, so an unchanged readout is not redrawn every frame.
-var _hud_sent: Dictionary = {}
 ## The objective line for each job's first leg.
 const START_STAGES := {"story": "Collect the parcel", "delivery": "Collect the parcel", "taxi": "Pick up the passenger", "race": "Checkpoint 1",
 	"ambulance": "Reach the patient", "firefighter": "Reach the fire", "vigilante": "Find the suspect", "gang": "Find the gang"}
@@ -100,7 +98,7 @@ func setup(owner_game: Node) -> void:
 	market = preload("res://scripts/gameplay/market_street.gd").new()
 	add_child(market)
 	market.setup(game)
-	_sync_hud()
+	_refresh_crosshair()
 
 func _build_ui() -> void:
 	var layer := CanvasLayer.new()
@@ -227,22 +225,11 @@ func _process(delta: float) -> void:
 			_foot_timer = 0.28 if game.person.is_running else 0.45
 			_audio.step.pitch_scale = randf_range(0.9, 1.1)
 			_audio.step.play()
-	_sync_hud()
+	_refresh_crosshair()
 
-## Hands the readouts to the HUD, which decides when to show them.
-func _sync_hud() -> void:
+## Vitals, ammo, wanted and the objective are read from here by the HUD itself (hud.gd _read_game_state).
+func _refresh_crosshair() -> void:
 	_crosshair.visible = action_mode and game.control_state == game.ControlState.ON_FOOT and not game.is_map_open()
-	_send_hud("set_vitals", [game.person.health, game.person.max_health, armour])
-	_send_hud("set_ammo", [ammo, reserve, action_mode and game.person.is_weapon_equipped()])
-	_send_hud("set_wanted", [wanted_level])
-	_send_hud("set_objective", [str(mission.stage), ceilf(mission.time)] if not mission.is_empty() else ["", 0.0])
-
-## Calls `method` on the HUD when it exists and `values` differ from the last call.
-func _send_hud(method: String, values: Array) -> void:
-	if _hud_sent.get(method) == values or not game.hud.has_method(method):
-		return
-	_hud_sent[method] = values
-	game.hud.callv(method, values)
 
 func _open(title: String) -> VBoxContainer:
 	if life.has_modal() or get_tree().paused or game.is_map_open():

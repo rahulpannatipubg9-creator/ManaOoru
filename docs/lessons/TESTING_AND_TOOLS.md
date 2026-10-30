@@ -18,6 +18,16 @@
 
 ## Entries
 
+### Pushing to a HUD another worker was writing (2026-10-30)
+- **Symptom:** none yet when found: `city_gameplay.gd` `_send_hud` would have failed on every ammo or mission change,
+  and the guarded calls hid it from the compiler. `main.gd` also blanked the prompt pill for 2 s on V or a stray E.
+- **Cause:** `_send_hud` called `set_ammo` with a bool and `set_objective` with a float by `callv`, written against a
+  brief, while `hud.gd` takes Strings and already reads this state itself in `_read_game_state`. An empty
+  `_show_control_hint("")` still started the hint timer.
+- **Rule:** read the other branch's signatures before calling across workers. `has_method` proves a name, not its
+  arguments, and `callv` defers the failure to play. One owner per readout: the HUD pulls, gameplay does not push.
+- **Check:** `tests/on_screen_text_regression.gd` (`_test_no_hud_push`, `_test_control_hints`).
+
 ### Tuk-tuk driver test checks a hidden rig (2026-10-29, open)
 - **Symptom:** `tuk_tuk_driver_pose_regression` fails ("Driver wrist must contact its handlebar grip").
 - **Cause:** written on 2026-10-27 for the old `DEF-` rig (`character.skeleton`). Since Rahul became the default,
