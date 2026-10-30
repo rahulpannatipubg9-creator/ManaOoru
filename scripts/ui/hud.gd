@@ -459,7 +459,7 @@ func _layout_for_viewport() -> void:
 	if minimap:
 		var minimap_size := clampf(short_side * 0.3, 150.0, 230.0)
 		var minimap_bottom := viewport_size.y - margin - 36.0
-		if OS.has_feature("android") or _touch_overlay_enabled:
+		if OS.has_feature("android") or OS.has_feature("ios") or _touch_overlay_enabled:
 			minimap_bottom = joystick_position.y - 12.0
 		minimap.position = Vector2(margin, minimap_bottom - minimap_size)
 		minimap.size = Vector2(minimap_size, minimap_size)

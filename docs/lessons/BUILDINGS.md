@@ -40,3 +40,9 @@ storefront allocation (`docs/STOREFRONT_ALLOCATION_FIX.md`), imported exteriors 
 - **Symptom:** Keeping 18,857 buildings and 1,620 road meshes active simultaneously risked mobile Out-Of-Memory (OOM) and massive draw call overhead.
 - **Rule:** Road and city streaming uses 250m × 250m spatial grid sectors (GTA Sector System), keeping only the active 3×3 grid around the player mounted in the scene tree. Far distance skyline (500m to 2km) is drawn by a unified low-poly single-mesh town silhouette taking only 1 draw call. Copernicus DEM elevation mesh is chunked with distance and frustum culling.
 - **Check:** `movement_regression.gd`, confirm sector streaming mounts roads under player and spawn seamlessly.
+
+### High-speed vehicle driving (130+ km/h) caused streaming hitching and trimesh collision stalls (2026-10-30)
+- **Symptom:** Driving at 130 km/h (36 m/s) in vehicles (Thar 4x4, Porsche 911) caused 42ms–48ms micro-stutter spikes on mobile tablets (Xiaomi Pad 7).
+- **Cause:** At 36 m/s, vehicles crossed 160m chunk boundaries every 4.4 seconds. Static radial focus meant upcoming chunks were only requested after entering the boundary; building trimesh `ConcavePolygonShape3D` generation and OpenGL buffer uploads choked the main thread. Additionally, unloaded chunks were immediately freed (`queue_free`), causing expensive mathematical re-extrusions on U-turns.
+- **Rule:** Streaming focus must be velocity-aware: project focus ahead along the linear velocity vector ($t_{\text{lead}} \le 2.5\text{s}$, up to 100m) so upcoming chunks build in advance. Unloaded chunks are cached in a 50-chunk LRU pool (instantaneous 0.01ms re-attachment via `add_child`), and chunk builds are throttled to at most 1 chunk per frame ($\le 1200\mu\text{s}$).
+- **Check:** `tests/movement_regression.gd`, verify streaming lookahead and high-speed driving stability.

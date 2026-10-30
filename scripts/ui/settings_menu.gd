@@ -293,10 +293,17 @@ func _build_graphics(tabs: TabContainer) -> void:
 	graphics_controls.shadows = shadows
 	shadows.toggled.connect(func(value: bool) -> void:
 		if not _graphics_sync: _graphics_change("shadows", value))
-	var fps := _options(page, "Frame-rate target", ["30 FPS", "60 FPS"])
+	var fps := _options(page, "Frame-rate target", ["30 FPS", "60 FPS", "90 FPS", "120 FPS", "Max / V-Sync"])
 	graphics_controls.fps = fps
 	fps.item_selected.connect(func(index: int) -> void:
-		if not _graphics_sync: _graphics_change("fps", 30 if index == 0 else 60))
+		var target := 60
+		match index:
+			0: target = 30
+			1: target = 60
+			2: target = 90
+			3: target = 120
+			4: target = 0
+		if not _graphics_sync: _graphics_change("fps", target))
 
 func _graphics_change(key: String, value: Variant) -> void:
 	var controller = hud._game.performance_controller
@@ -316,5 +323,13 @@ func _refresh_graphics() -> void:
 			control.value = settings.values[key]
 			control.value_changed.emit(control.value)
 		elif control is CheckButton: control.button_pressed = settings.values[key]
-		elif control is OptionButton: control.select(0 if settings.values.fps == 30 else 1)
+		elif control is OptionButton:
+			var target_index := 1
+			match int(settings.values.fps):
+				30: target_index = 0
+				60: target_index = 1
+				90: target_index = 2
+				120: target_index = 3
+				0: target_index = 4
+			control.select(target_index)
 	_graphics_sync = false

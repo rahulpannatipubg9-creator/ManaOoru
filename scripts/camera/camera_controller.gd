@@ -94,11 +94,13 @@ func _process(delta: float) -> void:
 	_update_peek(delta)
 	_update_bob(delta)
 	_update_recoil_recovery(delta)
+	_apply_orbit_rotation()
 
 static func clamp_pitch_value(value: float, lower: float, upper: float) -> float:
 	return clampf(value, lower, upper)
 
 func _ready() -> void:
+	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
 	_third_person_position = position
 	_set_level_mount(view_mode == ViewMode.THIRD_PERSON)
 	var spring_arm := get_node_or_null("SpringArm3D") as SpringArm3D
@@ -130,18 +132,19 @@ func _unhandled_input(event: InputEvent) -> void:
 		_captured = false
 	elif event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		_look(event.relative * mouse_sensitivity * (ads_sensitivity if is_aiming else look_sensitivity))
+		_apply_orbit_rotation()
 	elif event is InputEventScreenTouch:
 		if event.canceled or not event.pressed:
 			if event.index == _look_touch_index: _look_touch_index = -1
 			if event.index == _look_candidate_index: _look_candidate_index = -1
 		elif event.pressed and _is_look_zone(event.position):
 			_look_candidate_index = event.index
-	elif event is InputEventScreenDrag:
-		if event.index == _look_candidate_index and event.relative.length_squared() > 16.0:
 			_look_touch_index = event.index
-		if event.index != _look_touch_index:
-			return
-		_look(event.relative * mouse_sensitivity * 1.7 * (ads_sensitivity if is_aiming else look_sensitivity))
+	elif event is InputEventScreenDrag:
+		if event.index == _look_candidate_index or event.index == _look_touch_index:
+			_look_touch_index = event.index
+			_look(event.relative * mouse_sensitivity * 1.7 * (ads_sensitivity if is_aiming else look_sensitivity))
+			_apply_orbit_rotation()
 
 func _look(amount: Vector2) -> void:
 	_since_look = 0.0

@@ -40,3 +40,8 @@ Code: `scripts/vehicle/` (`vehicle_entry.gd` for getting in and out and the seat
 - **Symptom:** Running 4 suspension raycasts and Pacejka tyre friction calculations per car on every parked Thar, Tuk Tuk, and Porsche drained CPU on mobile.
 - **Rule:** Parked vehicles sleep on their simple box collider with zero raycasts running. Full suspension, drivetrain and tyre calculations wake up only when `driving_enabled` is handed to the car by `main.gd`. Tire raycasts strictly query Layer 1 (Roads/Terrain), ignoring buildings, pedestrians and props. Engine audio is strictly voice-capped: only the active driven vehicle plays engine audio, while parked cars are completely muted.
 - **Check:** `movement_regression.gd`, verify parked cars sleep at rest, zero audio playback when parked, and wake up smoothly on entry.
+
+### High-speed driving (130+ km/h) outrunning world streaming (2026-10-30)
+- **Symptom:** Driving at 130 km/h (36 m/s) in the Porsche 911 or Thar 4x4 caused stutter and dropped frames as new sectors and building chunks were entered.
+- **Rule:** Streaming focus (`player_focus`) projects ahead along vehicle linear velocity ($t_{\text{lead}} \le 2.5\text{s}$, up to 100m) so chunks ahead begin generation before the car arrives. Chunk creation is throttled to $\le 1200\mu\text{s}$ per frame with an LRU cache of 50 chunks for zero-latency turnarounds.
+- **Check:** `tests/movement_regression.gd`, verify high-speed vehicle translation and lookahead.

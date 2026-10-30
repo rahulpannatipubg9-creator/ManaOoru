@@ -33,13 +33,18 @@ const TIER_1_SOC_PATTERNS := [
 
 ## Keywords identifying Tier 3: Upper Mid-Range & Flagship Killers (OnePlus 10R/11R, Poco X6 Pro, Snapdragon 8+ Gen 1, Dimensity 8300)
 const TIER_3_GPU_PATTERNS := [
-	"adreno (tm) 660", "adreno 660", "adreno (tm) 730", "adreno 730",
-	"adreno (tm) 740", "adreno 740", "adreno (tm) 750", "adreno 750",
-	"mali-g610", "mali-g615", "mali-g710", "mali-g715", "mali-g720", "immortalis"
+	"adreno (tm) 660", "adreno 660", "adreno (tm) 710", "adreno 710",
+	"adreno (tm) 720", "adreno 720", "adreno (tm) 725", "adreno 725",
+	"adreno (tm) 730", "adreno 730", "adreno (tm) 732", "adreno 732",
+	"adreno (tm) 735", "adreno 735", "adreno (tm) 740", "adreno 740",
+	"adreno (tm) 750", "adreno 750",
+	"mali-g610", "mali-g615", "mali-g710", "mali-g715", "mali-g720", "immortalis",
+	"apple gpu"
 ]
 
 const TIER_3_SOC_PATTERNS := [
-	"snapdragon 8 gen", "snapdragon 8+ gen", "sm8475", "sm8550", "sm8650",
+	"snapdragon 8 gen", "snapdragon 8+ gen", "snapdragon 7+ gen", "snapdragon 7 gen",
+	"sm8475", "sm8550", "sm8650", "sm7675",
 	"dimensity 8300", "dimensity 9000", "dimensity 9200", "dimensity 9300",
 	"oneplus 10r", "oneplus 11r", "poco x6 pro", "apple a16", "apple a17", "apple a18"
 ]
@@ -261,24 +266,40 @@ static func get_profile_for_tier(tier: int, hw: Dictionary) -> Dictionary:
 			}
 
 		DeviceTier.TIER_4_PRO_TABLET_DESKTOP, _:
-			var target_fps := 120 if refresh_rate >= 119.0 else 60
-			# Cap at 0.75 on 3K+ tablets to prevent thermal throttling; 1.0 (Native) on Desktop/M1 Mac
-			var scale := 0.75 if (is_high_res_tablet and not is_desktop) else 1.0
 			var tablet_inset := (is_tablet or aspect_ratio <= 1.65)
-			return {
-				"tier": DeviceTier.TIER_4_PRO_TABLET_DESKTOP,
-				"tier_name": "Tier 4: Tablets, Pro Flagships & Laptops",
-				"target_fps": target_fps,
-				"scaling_3d_scale": scale,
-				"shadow_enabled": true,
-				"directional_shadow_mode": DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS,
-				"directional_shadow_max_distance": 100.0,
-				"view_distance": 900.0,
-				"simulation_distance": 400.0,
-				"actors": 55,
-				"effects": 1.0,
-				"tablet_hud_inset": tablet_inset
-			}
+			if not is_desktop:
+				# Mobile tablet (e.g. Xiaomi Pad 7, iPad Pro): mobile thermal envelope & GLES3 forward renderer
+				var scale := 0.55 if is_high_res_tablet else 0.75
+				return {
+					"tier": DeviceTier.TIER_4_PRO_TABLET_DESKTOP,
+					"tier_name": "Tier 4: Tablet Pro (60 FPS)",
+					"target_fps": 60,
+					"scaling_3d_scale": scale,
+					"shadow_enabled": true,
+					"directional_shadow_mode": DirectionalLight3D.SHADOW_ORTHOGONAL,
+					"directional_shadow_max_distance": 35.0,
+					"view_distance": 550.0,
+					"simulation_distance": 220.0,
+					"actors": 28,
+					"effects": 0.6,
+					"tablet_hud_inset": tablet_inset
+				}
+			else:
+				var target_fps := 120 if refresh_rate >= 119.0 else 60
+				return {
+					"tier": DeviceTier.TIER_4_PRO_TABLET_DESKTOP,
+					"tier_name": "Tier 4: Tablets, Pro Flagships & Laptops",
+					"target_fps": target_fps,
+					"scaling_3d_scale": 1.0,
+					"shadow_enabled": true,
+					"directional_shadow_mode": DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS,
+					"directional_shadow_max_distance": 100.0,
+					"view_distance": 900.0,
+					"simulation_distance": 400.0,
+					"actors": 55,
+					"effects": 1.0,
+					"tablet_hud_inset": tablet_inset
+				}
 
 ## Apply profile settings to engine, viewport, directional lights, and controllers.
 func apply_profile(target_game: Node, profile: Dictionary) -> void:

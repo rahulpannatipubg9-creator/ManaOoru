@@ -102,7 +102,26 @@ func _ready() -> void:
 	navigator.process_mode = Node.PROCESS_MODE_PAUSABLE
 	navigator.setup(road_network, _navigation_state)
 	add_child(navigator)
-	var player_focus := func() -> Vector2: return GeoProjection.world_to_map(tracked_body().global_position)
+	var player_focus := func() -> Vector2:
+		var body := tracked_body()
+		if not is_instance_valid(body):
+			return Vector2.ZERO
+		var pos := GeoProjection.world_to_map(body.global_position)
+		var vel := Vector3.ZERO
+		if body is RigidBody3D:
+			vel = (body as RigidBody3D).linear_velocity
+		elif body is CharacterBody3D:
+			vel = (body as CharacterBody3D).velocity
+		var speed := vel.length()
+		# Velocity-Aware Lookahead Streaming (e.g. driving at 130 km/h = 36 m/s):
+		# Pre-lead streaming focus ahead along the velocity vector so upcoming chunks build before arrival.
+		if speed > 3.0:
+			var lead_sec := clampf(1.0 + (speed / 36.1) * 1.5, 1.0, 2.5)
+			var lead_vec := Vector2(vel.x, vel.z) * lead_sec
+			if lead_vec.length() > 100.0:
+				lead_vec = lead_vec.normalized() * 100.0
+			return pos + lead_vec
+		return pos
 	world.buildings.focus = player_focus
 	if world.roads:
 		world.roads.focus = player_focus
@@ -369,7 +388,7 @@ func _set_menu_paused(value: bool) -> void:
 	_update_mouse_mode()
 
 func _update_mouse_mode() -> void:
-	if OS.has_feature("android"):
+	if OS.has_feature("android") or OS.has_feature("ios") or OS.has_feature("mobile"):
 		return
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if get_tree().paused else Input.MOUSE_MODE_CAPTURED
 	_clear_control_inputs()
