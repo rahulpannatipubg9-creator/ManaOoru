@@ -123,6 +123,8 @@ func _audit(size: Vector2i) -> void:
 	# The wheel button claims its finger itself: a tap there must open the wheel.
 	hud.action_wheel.close()
 	await _audit_wheel(tag, viewport, hud)
+	# The tap audit above already latched run once; this one starts from off.
+	hud._run_latched = false
 	await _audit_run_toggle(tag, viewport, player, buttons[&"Run"])
 	await _audit_two_fingers(tag, viewport, hud, player, buttons[&"Crouch"])
 	viewport.queue_free()

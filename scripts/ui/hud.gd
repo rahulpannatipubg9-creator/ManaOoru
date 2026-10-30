@@ -711,7 +711,8 @@ func _wheel_items() -> Array[Dictionary]:
 		items.append({"id": &"medkit", "icon": &"medkit", "label": "Medkit", "count": play.medkits, "enabled": play.medkits > 0})
 		items.append({"id": &"grenade", "icon": &"grenade", "label": "Grenade", "count": play.grenades,
 			"enabled": play.grenades > 0 and action})
-		if int(play.get("wanted_level")) > 0:
+		var wanted: Variant = play.get("wanted_level")
+		if wanted != null and wanted > 0:
 			items.append({"id": &"surrender", "icon": &"surrender", "label": "Give up"})
 	if armed:
 		items.append({"id": &"fire_mode", "icon": &"fire_auto" if play.fire_mode == 0 else &"fire_single",
