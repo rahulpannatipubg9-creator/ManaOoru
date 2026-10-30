@@ -18,8 +18,8 @@ extends Resource
 
 @export_group("Flow")
 @export var countdown_seconds := 5.0
-@export var respawn_seconds := 5.0
-@export var spawn_protection_seconds := 3.0
+@export var respawn_seconds := 3.0
+@export var spawn_protection_seconds := 2.0
 @export var sudden_death_seconds := 60.0
 ## A team with nobody connected for this long forfeits.
 @export var forfeit_seconds := 30.0

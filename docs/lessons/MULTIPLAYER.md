@@ -4,6 +4,18 @@ Code: `scripts/network/` (squad, sync), `scripts/tactical/` (Team Deathmatch). D
 
 ## Entries
 
+### The floating stick ate taps on match panels (2026-10-30)
+- **Symptom:** on touch, lobby and menu buttons on the left of the screen did nothing.
+- **Cause:** `hud.gd` `_handle_screen_touch()` claims any touch in the stick zone in `_input`, before panels see it. It
+  only knows free-roam modals, not `tdm_hud.gd` panels.
+- **Rule:** `tdm_local.gd` `_show_touch_controls()` hides the claw whenever `needs_cursor()` is true.
+- **Check:** `tdm_hud_regression` ("a finger on JOIN changes team").
+
+### Settings ignored fingers in a match (2026-10-30)
+- **Cause:** `menu_touch_bridge.gd` only turned on while the tree was paused, and a match never pauses.
+- **Rule:** the match sets the bridge's `runs_unpaused`. `can_fire()` stops the rifle behind the menu instead of a pause.
+- **Check:** `tdm_hud_regression`.
+
 ### Free-roam widgets leaked onto the match screen (2026-10-30)
 - **Symptom:** the desktop SETTINGS button sat on the score bar and "Action mode enabled" floated over the lobby.
 - **Cause:** `settings_menu.gd` builds its entry button locally, and `city_life.gd` shows its toast every frame.

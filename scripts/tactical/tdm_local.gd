@@ -53,11 +53,14 @@ var _aim_assist_amount := 0.0
 var _aim_assist_wanted := false
 var _aim_assist_timer := 0.0
 ## Killcam: for a few seconds after dying the view follows the killer over their shoulder.
-const KILLCAM_SECONDS := 3.0
+const KILLCAM_SECONDS := 2.5
 var _killcam: Camera3D
 var _killcam_target := 0
 var _killcam_left := 0.0
 var _camera_before: Camera3D
+const STREAK_WINDOW_MSEC := 6000
+var _streak := 0
+var _streak_at := 0
 const MINIMAP_ALLY := Color(0.35, 1.0, 0.45)
 const MINIMAP_ALLY_RING := Color(0.95, 1.0, 0.95)
 const FLINCH_PER_DAMAGE := 0.0012
@@ -104,9 +107,10 @@ func setup(p_game: Node, p_session: Node) -> void:
 	session.damaged.connect(_on_damaged)
 	session.killed.connect(_on_killed)
 	session.hit_confirmed.connect(func(_victim: int, headshot: bool, killed: bool) -> void:
-		hud.flash_hit(headshot)
+		hud.flash_hit(headshot, killed)
 		if killed:
-			_buzz(BUZZ_KILL_MSEC))
+			_buzz(BUZZ_KILL_MSEC)
+			hud.show_streak(_count_streak(Time.get_ticks_msec())))
 	session.ended.connect(_on_ended)
 	session.closed.connect(_on_closed)
 	session.rejected.connect(_on_rejected)
@@ -435,6 +439,7 @@ func _on_killed(killer_id: int, victim_id: int, headshot: bool, _assists: Array)
 	var killer_name: String = session.nickname_of(killer_id) if killer_id != Match.NO_KILLER else ""
 	hud.add_kill(killer_name, session.nickname_of(victim_id), session.team_of(killer_id), headshot)
 	if victim_id == session.local_id():
+		_streak = 0
 		_alive = false
 		_killer_name = killer_name
 		_respawn_left = session.config.respawn_seconds
@@ -448,6 +453,12 @@ func _on_killed(killer_id: int, victim_id: int, headshot: bool, _assists: Array)
 		if killer_id != Match.NO_KILLER and killer_id != session.local_id() and killer_position != Vector3.INF:
 			_start_killcam(killer_id)
 	_refresh_puppets()
+
+## Kills in a row, each within STREAK_WINDOW_MSEC of the last. Dying ends the run.
+func _count_streak(now_msec: int) -> int:
+	_streak = _streak + 1 if _streak > 0 and now_msec - _streak_at <= STREAK_WINDOW_MSEC else 1
+	_streak_at = now_msec
+	return _streak
 
 ## A light tap on phones and tablets; a desktop never sees it.
 func _buzz(msec: int) -> void:

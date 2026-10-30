@@ -63,6 +63,9 @@ func run() -> void:
 	check(absf(absf(Hud.arc_angle(north, Vector2(0, 5)) + PI * 0.5) - PI) < 0.01 or absf(Hud.arc_angle(north, Vector2(0, 5)) - PI * 0.5) < 0.01,
 		"an attacker behind is drawn at the bottom")
 
+	check(Hud.streak_word(1) == "" and Hud.streak_word(2) == "DOUBLE" and Hud.streak_word(9) == "RAMPAGE", "only a run of kills gets a word, and long runs stay on the last one")
+	check(Config.new().respawn_seconds <= 3.0, "respawns are quick")
+
 	var rows := [{"peer_id": 1, "nickname": "A", "team": 1, "kills": 9, "deaths": 0, "assists": 0},
 		{"peer_id": 2, "nickname": "B", "team": 0, "kills": 1, "deaths": 0, "assists": 0},
 		{"peer_id": 3, "nickname": "C", "team": 0, "kills": 5, "deaths": 0, "assists": 0}]

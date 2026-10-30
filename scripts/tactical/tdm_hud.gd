@@ -79,6 +79,10 @@ const SCOREBOARD_SECONDS := 3.0
 const CHAT_LINES := 3
 const CHAT_SECONDS := 6.0
 const HIT_MARKER_SECONDS := 0.18
+const HIT_MARKER_KILL_SECONDS := 0.4
+const HIT_MARKER_KILL_SIZE := 1.6
+const STREAK_WORDS: Array[String] = ["DOUBLE", "TRIPLE", "RAMPAGE"]
+const STREAK_SECONDS := 1.5
 const ARC_SECONDS := 1.2
 
 signal start_pressed
@@ -163,6 +167,7 @@ var _end_rematch: Button
 var _end_shown := false
 var _hit_until := 0.0
 var _hit_color := Color.WHITE
+var _hit_size := 1.0
 var _arcs: Array[Dictionary] = []
 var _practice := false
 
@@ -454,9 +459,22 @@ func _center_line(label: Label, y: float) -> void:
 
 # --- Events pushed in by tdm_local.gd ------------------------------------------
 
-func flash_hit(headshot: bool) -> void:
-	_hit_color = Color(1.0, 0.2, 0.2) if headshot else Color.WHITE
-	_hit_until = Time.get_ticks_msec() / 1000.0 + HIT_MARKER_SECONDS
+## A kill or headshot draws a bigger red marker and holds it longer than a body hit.
+func flash_hit(headshot: bool, killed := false) -> void:
+	_hit_color = Color(1.0, 0.2, 0.2) if headshot or killed else Color.WHITE
+	_hit_size = HIT_MARKER_KILL_SIZE if killed else 1.0
+	_hit_until = Time.get_ticks_msec() / 1000.0 + (HIT_MARKER_KILL_SECONDS if killed else HIT_MARKER_SECONDS)
+
+## The word for a run of kills; one kill needs none.
+static func streak_word(count: int) -> String:
+	if count < 2:
+		return ""
+	return STREAK_WORDS[mini(count, STREAK_WORDS.size() + 1) - 2]
+
+func show_streak(count: int) -> void:
+	var word := streak_word(count)
+	if not word.is_empty():
+		show_message(word, STREAK_SECONDS, ACCENT)
 
 func show_damage_from(attacker_id: int) -> void:
 	_arcs.append({"attacker": attacker_id, "at": Time.get_ticks_msec() / 1000.0})
@@ -638,7 +656,7 @@ func _build_arcs_and_marker() -> void:
 func _draw_hit_marker() -> void:
 	var center := _hit_marker.size * 0.5
 	for direction in [Vector2(1, 1), Vector2(-1, 1), Vector2(1, -1), Vector2(-1, -1)]:
-		_hit_marker.draw_line(center + direction * 8.0, center + direction * 20.0, _hit_color, 3.0)
+		_hit_marker.draw_line(center + direction * 8.0 * _hit_size, center + direction * 20.0 * _hit_size, _hit_color, 3.0 * _hit_size)
 
 ## Screen angle (0 = right, clockwise) of the arc for an attacker at `offset` from the camera, on the
 ## ground plane, with `forward` the camera's ground direction. Straight ahead is the top of the ring.
