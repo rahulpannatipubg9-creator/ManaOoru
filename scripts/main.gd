@@ -101,7 +101,10 @@ func _ready() -> void:
 	navigator.process_mode = Node.PROCESS_MODE_PAUSABLE
 	navigator.setup(road_network, _navigation_state)
 	add_child(navigator)
-	world.buildings.focus = func() -> Vector2: return GeoProjection.world_to_map(tracked_body().global_position)
+	var player_focus := func() -> Vector2: return GeoProjection.world_to_map(tracked_body().global_position)
+	world.buildings.focus = player_focus
+	if world.roads:
+		world.roads.focus = player_focus
 	hud.configure_map(world.map_data, world.rendered_building_footprints, world.map_data.landmarks, navigator)
 	entry = VehicleEntry.new()
 	entry.name = "VehicleEntry"

@@ -146,10 +146,23 @@ func set_running(value: bool) -> void:
 			_playback = null
 			play()
 	else:
-		horn_pressed = false
-		_slip = 0.0
-		if _start_player:
-			_start_player.stop()
+		mute()
+
+## Parked cars are completely muted; stops all stream layers and playback immediately.
+func mute() -> void:
+	engine_running = false
+	horn_pressed = false
+	_slip = 0.0
+	_gain = 0.0
+	_recording_mix = 0.0
+	if _start_player and _start_player.playing:
+		_start_player.stop()
+	for layer in _layers:
+		if layer.playing:
+			layer.stop()
+	if playing:
+		stop()
+		_playback = null
 
 ## The car's gearbox reports the real engine speed and selected gear each physics step.
 func set_engine_rpm(value: float, selected_gear: int) -> void:

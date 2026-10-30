@@ -35,3 +35,8 @@ storefront allocation (`docs/STOREFRONT_ALLOCATION_FIX.md`), imported exteriors 
 - The five placed Godavarikhani exteriors are matched to footprints by containment or nearest centroid within
   45 m and fitted by uniform scaling: positions and orientation still need a visual check. Dolphin shop row,
   Singareni Super Market and the stadium wait for a confirmed location; don't place them by guesswork.
+
+### City-wide road and building streaming & distant skyline (2026-10-30)
+- **Symptom:** Keeping 18,857 buildings and 1,620 road meshes active simultaneously risked mobile Out-Of-Memory (OOM) and massive draw call overhead.
+- **Rule:** Road and city streaming uses 250m × 250m spatial grid sectors (GTA Sector System), keeping only the active 3×3 grid around the player mounted in the scene tree. Far distance skyline (500m to 2km) is drawn by a unified low-poly single-mesh town silhouette taking only 1 draw call. Copernicus DEM elevation mesh is chunked with distance and frustum culling.
+- **Check:** `movement_regression.gd`, confirm sector streaming mounts roads under player and spawn seamlessly.

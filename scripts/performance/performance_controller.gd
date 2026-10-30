@@ -9,6 +9,19 @@ var _shadow_defaults: Dictionary = {}
 var _default_camera_far := 2000.0
 var active_ambient_count := 0
 var active_ai_count := 0
+var current_draw_calls := 0
+var current_vram_mb := 0.0
+
+func sample_hardware_metrics() -> Dictionary:
+	current_draw_calls = RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_TOTAL_DRAW_CALLS_IN_FRAME)
+	current_vram_mb = Performance.get_monitor(Performance.RENDER_VIDEO_MEM_USED) / (1024.0 * 1024.0)
+	return {
+		"draw_calls": current_draw_calls,
+		"vram_mb": current_vram_mb,
+		"fps": Engine.get_frames_per_second(),
+		"max_draw_calls": int(settings.values.get("max_draw_calls", 250)),
+		"vram_budget_mb": 450.0
+	}
 
 func setup(owner_game: Node) -> void:
 	game = owner_game

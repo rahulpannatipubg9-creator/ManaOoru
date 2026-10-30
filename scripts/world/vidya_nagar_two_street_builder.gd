@@ -203,9 +203,9 @@ func _build_segment_2(world: Node, p_start: Vector2, p_end: Vector2) -> void:
 	_build_gate(world, (left_gate_a + left_gate_b) * 0.5, dir, 2.4, 1.1)
 	_build_compound_wall(world, left_gate_b, left_wall_b, 0.95)
 
-	# Parked SUV 4x4 in the quarters driveway
-	var suv_pt: Vector2 = left_house_pt + normal * 1.8
-	_add_parked_suv(world, suv_pt, atan2(dir.x, dir.y) + PI * 0.5)
+	# Parked SUV 4x4 on roadside shoulder in front of the quarters gate
+	var suv_pt: Vector2 = p_start + dir * (length * 0.45) - normal * 3.1
+	_add_parked_suv(world, suv_pt, atan2(dir.x, dir.y))
 
 	# Right side set back: low wall with gate, single-storey quarters
 	var right_house_pt: Vector2 = p_start + dir * (length * 0.50) + normal * 7.5
