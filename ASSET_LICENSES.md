@@ -434,3 +434,12 @@ original work. Nothing is reused from player v2 or the older avatar.
 - **Status:** In development / user supplied.
 - **Components:** 4-wheeled Indian market cart structure with green metal chassis, spoked wheels, axles, and wooden flatbed. Textures packed into `.blend` with licensed project wood texture (`assets/models/utility_pole/gdk_utility_pole_Old_Wood_texture_2_by_Tigg_stock.jpg`). Exported via `tools/export_haathgaadi.py` to `gdk_haathgaadi.glb`.
 
+## CZ Bren 2 rifle (`assets/models/weapons/bren2.glb`)
+
+Converted by `tools/export_bren2.py` from the user-supplied CZ Bren 2 model (`czbren2.glb` from Downloads).
+Scaled to 0.85 m, kept within the 15k-triangle budget, origin at the top of the pistol grip,
+barrel forward along Godot +Z. Includes receiver, tactical foregrip, folding buttstock, bolt handle,
+suppressor, and red-dot sight. Playable weapon in free roam and multiplayer (Weapons.BREN2).
+- **Licence: not confirmed.** User-supplied download. Confirm original author and licence before any public release.
+
+

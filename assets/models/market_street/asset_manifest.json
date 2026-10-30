@@ -1,0 +1,31 @@
+{
+  "license": "CC0-1.0",
+  "author": "Original MANA OORU procedural assets",
+  "assets": {
+    "tea_stall": {
+      "triangles": 1328,
+      "materials": 6,
+      "bytes": 77292
+    },
+    "vegetable_cart": {
+      "triangles": 10268,
+      "materials": 9,
+      "bytes": 694212
+    },
+    "wooden_stool": {
+      "triangles": 60,
+      "materials": 1,
+      "bytes": 5504
+    },
+    "parked_scooter": {
+      "triangles": 260,
+      "materials": 4,
+      "bytes": 20348
+    },
+    "market_shopfront": {
+      "triangles": 1744,
+      "materials": 4,
+      "bytes": 81644
+    }
+  }
+}
