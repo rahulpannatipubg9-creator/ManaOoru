@@ -55,6 +55,11 @@ in `tools/captures/`.
   restored to `save_path`, because `city_gameplay` reads that file itself. When `SAVE_VERSION` rises, add the
   migration to `_read_save` and make `city_gameplay` read through it too.
 - **Check:** `save_and_feedback_regression`.
+### Feel checks that counted frames failed on a busy machine (2026-10-30)
+- **Symptom:** `feel_regression` passed or failed on ADS, landing and reload depending on what else was running.
+- **Cause:** waiting a number of `process_frame`s assumed 60 fps. Headless draws faster when idle and slower under load.
+- **Rule:** wait `physics_frame`s for a fixed time, or measure real seconds and metres per second.
+- **Check:** `feel_regression` while another worker runs Godot.
 
 ### Tuk-tuk driver test checks a hidden rig (2026-10-29, open)
 - **Symptom:** `tuk_tuk_driver_pose_regression` fails ("Driver wrist must contact its handlebar grip").

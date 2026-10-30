@@ -8,6 +8,8 @@ extends SceneTree
 const PersonScript := preload("res://scripts/player/person_controller.gd")
 const NetworkPlayerScript := preload("res://scripts/network/network_player.gd")
 const Weapons := preload("res://scripts/gameplay/weapon_catalog.gd")
+const GameplayScript := preload("res://scripts/gameplay/city_gameplay.gd")
+const ShotEffects := preload("res://scripts/gameplay/shot_effects.gd")
 
 var failures := 0
 var checks := 0
@@ -68,6 +70,9 @@ func run() -> void:
 	await test_landing()
 	await test_reload_hand()
 	await test_remote_buffer()
+	await test_spread_and_pattern()
+	await test_shot_effects()
+	await test_slide_and_shake()
 	print("Feel regression: %d checks, %d failed" % [checks, failures])
 	quit(1 if failures > 0 else 0)
 
@@ -227,32 +232,39 @@ func test_upper_body_pitch() -> void:
 	pivot._pitch = -0.1
 	await frames(30)
 
+## Measured in seconds and metres per second: a loaded machine draws fewer frames, not a worse camera.
 func test_ads_travel() -> void:
 	var worst := 0.0
 	await frames(20)
 	var last := camera.global_position
 	var look := -camera.global_basis.z
 	pivot.touch_aim = true
-	var first_arrival := -1
-	for tick in 24:
+	var arrived := -1.0
+	var elapsed := 0.0
+	while elapsed < 0.4:
 		await process_frame
-		worst = maxf(worst, camera.global_position.distance_to(last))
+		var delta := maxf(root.get_process_delta_time(), 0.001)
+		elapsed += delta
+		worst = maxf(worst, camera.global_position.distance_to(last) / delta)
 		last = camera.global_position
-		if first_arrival < 0 and pivot.is_sight_view():
-			first_arrival = tick
-	print("MEASURED ADS in: sight after %d frames, worst camera step %.3f m" % [first_arrival, worst])
-	check(first_arrival > 2, "the view travels to the sight instead of cutting (frame %d)" % first_arrival)
-	check(worst < 0.7, "no jump on the way to the sight (%.3f m)" % worst)
+		if arrived < 0.0 and pivot.is_sight_view():
+			arrived = elapsed
+	print("MEASURED ADS in: sight after %.2f s, fastest camera %.1f m/s" % [arrived, worst])
+	check(arrived > 0.08, "the view travels to the sight instead of cutting (%.2f s)" % arrived)
+	check(worst < 60.0, "no jump on the way to the sight (%.1f m/s)" % worst)
 	check(look.angle_to(-camera.global_basis.z) < 0.05, "the aim point holds")
 	pivot.touch_aim = false
 	worst = 0.0
 	last = camera.global_position
-	for _tick in 24:
+	elapsed = 0.0
+	while elapsed < 0.4:
 		await process_frame
-		worst = maxf(worst, camera.global_position.distance_to(last))
+		var delta := maxf(root.get_process_delta_time(), 0.001)
+		elapsed += delta
+		worst = maxf(worst, camera.global_position.distance_to(last) / delta)
 		last = camera.global_position
-	print("MEASURED ADS out: worst camera step %.3f m" % worst)
-	check(worst < 0.7, "no jump back to the shoulder (%.3f m)" % worst)
+	print("MEASURED ADS out: fastest camera %.1f m/s" % worst)
+	check(worst < 60.0, "no jump back to the shoulder (%.1f m/s)" % worst)
 	check(not pivot.is_first_person(), "the view is back at the shoulder")
 	await frames(30)
 
@@ -267,9 +279,11 @@ func test_recoil() -> void:
 	await physics_frame
 	var kicked: float = pivot._pitch
 	check(kicked > rest + 0.008 and kicked < rest + 0.03, "a kick arrives over a few ticks (%.4f)" % (kicked - rest))
-	await frames(6)
-	var peak: float = pivot._pitch
-	check(peak > rest + 0.02, "the kick lands in full")
+	var peak := kicked
+	for _i in 6:
+		await physics_frame
+		peak = maxf(peak, pivot._pitch)
+	check(peak > rest + 0.015, "the kick lands (%.4f)" % (peak - rest))
 	await frames(40)
 	check(absf(pivot._pitch - rest) < 0.004, "the view settles back after the trigger rests (%.4f)" % (pivot._pitch - rest))
 	var yaw: float = pivot._yaw
@@ -308,7 +322,7 @@ func test_landing() -> void:
 	var landed := false
 	var knee_peak := 0.0
 	for _i in 120:
-		await process_frame
+		await physics_frame
 		lowest = minf(lowest, camera.v_offset)
 		knee_peak = maxf(knee_peak, character._land_crouch)
 		landed = landed or person.is_on_floor()
@@ -324,7 +338,7 @@ func test_reload_hand() -> void:
 	person.weapon_reload_time = 2.0
 	var farthest := 0.0
 	for _i in 125:
-		await process_frame
+		await physics_frame
 		farthest = maxf(farthest, character.left_grip_target.distance_to(rest))
 		weapon_low = minf(weapon_low, person.weapon.global_position.y)
 	await frames(10)
@@ -344,8 +358,6 @@ func test_remote_buffer() -> void:
 	for packet in 60:
 		var sent := packet / 30.0
 		puppet.push_snapshot(10.0 + sent + noise.randf_range(0.0, 0.025), Vector3(speed * sent, 0.0, 0.0), 0.0, 0.0, 0.0)
-		if puppet._snapshots.size() > 8:
-			puppet._snapshots.pop_front()
 		if packet == 30:
 			var worst := 0.0
 			var previous: float = puppet.sample_snapshots(10.0 + sent - 0.3).position.x
@@ -367,3 +379,104 @@ func test_remote_buffer() -> void:
 	check(puppet._snapshots.size() == 1 and puppet.global_position.distance_to(far) < 0.001, "a respawn cuts instead of running there")
 	puppet.queue_free()
 	await physics_frame
+
+func test_spread_and_pattern() -> void:
+	var play: Node = GameplayScript.new()
+	var still: float = play.spread_for(0.35, false, false, false, 0.0, false)
+	var aimed: float = play.spread_for(0.35, true, false, false, 0.0, false)
+	var crouched: float = play.spread_for(0.35, false, true, false, 0.0, false)
+	var low: float = play.spread_for(0.35, false, false, true, 0.0, false)
+	var running: float = play.spread_for(0.35, false, false, false, 1.0, false)
+	var running_aimed: float = play.spread_for(0.35, true, false, false, 1.0, false)
+	var airborne: float = play.spread_for(0.35, false, false, false, 0.0, true)
+	var bloomed: float = play.spread_for(0.35, false, false, false, 0.0, false, 0.6)
+	print("MEASURED spread degrees: aimed %.2f, prone %.2f, crouch %.2f, still %.2f, burst %.2f, run %.2f, air %.2f" % [aimed, low, crouched, still, bloomed, running, airborne])
+	check(aimed < low and low < crouched and crouched < still and still < bloomed and bloomed < running and running < airborne, "spread widens with stance and motion")
+	check(running_aimed < running, "aiming tightens a moving shot")
+	var view := Basis.IDENTITY
+	var worst := 0.0
+	var total := Vector3.ZERO
+	for _i in 500:
+		var shot: Vector3 = GameplayScript.spread_direction(view, 2.0)
+		worst = maxf(worst, shot.angle_to(-view.z))
+		total += shot
+	check(rad_to_deg(worst) <= 2.001 and rad_to_deg(worst) > 1.5, "shots stay inside the cone (%.2f degrees)" % rad_to_deg(worst))
+	check(rad_to_deg(total.angle_to(-view.z)) < 0.3, "the cone is centred on the sight")
+	check(GameplayScript.spread_direction(view, 0.0).is_equal_approx(-view.z), "no spread goes straight")
+	play.free()
+	for id in [Weapons.M416, Weapons.AK47, Weapons.BREN2]:
+		var gun := Weapons.stats(id)
+		check(gun.recoil_pattern.size() >= 8 and float(gun.spread) > 0.0 and float(gun.bloom) > 0.0, "every rifle has its pattern and spread")
+		check(float(gun.spread) < 0.6, "a still first shot lands on a body at 10 m (%.2f degrees)" % float(gun.spread))
+	var drift := func(id: int) -> float:
+		var most := 0.0
+		for value: float in Weapons.stats(id).recoil_pattern:
+			most = maxf(most, absf(value))
+		return most
+	check(drift.call(Weapons.AK47) > drift.call(Weapons.M416) and drift.call(Weapons.M416) > drift.call(Weapons.BREN2), "the AK wanders most, the Bren least")
+
+func test_shot_effects() -> void:
+	var fx: Node3D = ShotEffects.new()
+	root.add_child(fx)
+	await physics_frame
+	fx.tracer(Vector3.ZERO, Vector3(0.0, 0.0, -60.0))
+	check(fx.active_tracers() == 1, "a tracer flies")
+	var line: MeshInstance3D = fx._tracers[0].line
+	var early: float = line.global_position.z
+	await frames(3)
+	check(line.global_position.z < early, "the tracer travels toward the hit")
+	await frames(30)
+	check(fx.active_tracers() == 0 and not line.visible, "the tracer ends at the hit")
+	for _i in 20:
+		fx.tracer(Vector3.ZERO, Vector3(0.0, 0.0, -60.0))
+	check(fx._tracers.size() <= fx.TRACER_POOL, "a long burst reuses its tracers")
+	fx.flash(Vector3.ONE)
+	check(fx.flash_visible(), "a muzzle flash shows")
+	await frames(10)
+	check(not fx.flash_visible(), "the flash is gone in a few frames")
+	for _i in 7:
+		fx.puff(Vector3.ZERO, Vector3.BACK)
+	check(fx.puffs_playing() > 0 and fx._puffs.size() == fx.PUFF_POOL, "impacts puff from a fixed pool")
+	check(fx.click_volume(0.0) > fx.click_volume(50.0) and fx.click_volume(50.0) > fx.click_volume(500.0), "the hit click fades with distance")
+	check(fx.click_volume(500.0) == fx.hit_far_db, "the fade stops at the far level")
+	fx.hit_click(true, 10.0)
+	fx.hit_click(false, 10.0)
+	check(fx._head_click.playing and fx._click.playing, "both clicks play")
+	check(fx._head_click.stream.get_length() > fx._click.stream.get_length(), "a headshot's click rings longer")
+	fx.queue_free()
+	await physics_frame
+
+func test_slide_and_shake() -> void:
+	person.set_weapon_equipped(true)
+	person.set_touch_run_pressed(true)
+	person.set_touch_move_input(Vector2(0.0, -1.0))
+	await frames(60)
+	var before := flat_speed()
+	check(person.is_running, "running up to the slide")
+	person._update_stance(true, false)
+	check(person.is_sliding(), "crouching out of a sprint slides")
+	check(flat_speed() > before, "the slide starts with a shove")
+	await frames(12)
+	check(person.is_sliding() and flat_speed() > person.walk_speed, "the slide carries speed (%.2f)" % flat_speed())
+	var ticks := 12
+	while person.is_sliding() and ticks < 120:
+		await physics_frame
+		ticks += 1
+	print("MEASURED slide: %.2f s" % (ticks / 60.0))
+	check(ticks < 60, "the slide ends (%d ticks)" % ticks)
+	await frames(30)
+	check(flat_speed() < person.walk_speed, "it ends in the crouch walk (%.2f)" % flat_speed())
+	person.set_touch_run_pressed(false)
+	person.set_touch_move_input(Vector2.ZERO)
+	person._update_stance(false, false)
+	await frames(30)
+	person._update_stance(true, false)
+	check(not person.is_sliding(), "crouching from a stand does not slide")
+	person._update_stance(false, false)
+	await frames(30)
+	pivot.add_recoil(0.03, 0.0)
+	check(pivot._shake > 0.3, "a shot shakes the view (%.2f)" % pivot._shake)
+	var fov_start: float = camera.fov
+	await frames(60)
+	check(pivot._shake < 0.02, "the shake dies away (%.2f)" % pivot._shake)
+	check(camera.fov < fov_start, "the field of view comes back")

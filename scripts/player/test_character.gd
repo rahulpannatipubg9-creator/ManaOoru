@@ -358,6 +358,9 @@ func _process(delta: float) -> void:
 	var body := get_parent() as CharacterBody3D
 	var scripted := scripted_speed >= 0.0 or seated
 	var speed := maxf(scripted_speed, 0.0) if scripted else Vector2(body.velocity.x, body.velocity.z).length()
+	# A slide is carried on the feet, not stepped: the crouch holds still while the ground goes by.
+	if body.has_method("is_sliding") and body.is_sliding():
+		speed = 0.0
 	# A remote player is never moved by physics, so it reports its own grounded state.
 	var on_floor: bool = scripted or (body.puppet_on_floor() if body.has_method("puppet_on_floor") else body.is_on_floor())
 	var crouching: bool = body.get("crouching") == true

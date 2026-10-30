@@ -43,6 +43,13 @@ Code: `scripts/gameplay/weapon_catalog.gd` (every rifle's model, grips, muzzle a
 - **Rule:** while `gameplay.tdm_active`, pickups do nothing and `save_progress` returns false. Pickups fill to
   `gameplay.mag_size`, never a fixed number.
 - **Check:** `tests/match_input_regression.gd`.
+### Shot feedback lived in throwaway nodes and fixed recoil (2026-10-30)
+- **Symptom:** every shot went dead centre, with no impact and no hit sound; recoil was random sideways only.
+- **Cause:** `attack()` built new meshes per shot and had no spread or pattern.
+- **Rule:** per-rifle `spread`, `bloom` and `recoil_pattern` live in `weapon_catalog.gd`; these are local aim only and
+  need no `PROTOCOL_VERSION` bump. Damage and fire rate did not change. Visuals go through the pooled
+  `shot_effects.gd`. Keep a still first shot under 0.6 degrees, so it lands on a body at 10 m.
+- **Check:** `feel_regression` `test_spread_and_pattern`, `test_shot_effects`; `combat_occlusion_regression`.
 
 ### New exported rifle not recognized without editor reimport (2026-10-30)
 - **Symptom:** `No loader found for resource: res://assets/models/weapons/bren2.glb` during regression tests.
