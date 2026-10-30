@@ -48,6 +48,8 @@ func run() -> void:
 	var pause: CanvasLayer = settings.pause_menu
 	var life: Node = _game.city_life
 	life.save_enabled = false
+	var bridge: Node = _game.hud.get_node("MenuTouchBridge")
+	check(bridge.live_menu.is_valid(), "The touch bridge is wired before the pause menu first opens")
 
 	await press(KEY_ESCAPE)
 	check(pause.is_open() and paused, "Esc opens the pause menu and pauses")
@@ -138,11 +140,44 @@ func run() -> void:
 	check(credit_button.visible, "The credits hook shows its button")
 	settings.credits_action = Callable()
 
+	# Arrow keys and Enter reach everything, with no mouse at all.
+	pause.open_menu()
+	await settle()
+	for title: String in ["Map", "Activities", "Squad", "Settings", "Quit"]:
+		await press(KEY_DOWN)
+		check(focused() == pause.buttons[title], "Down reaches %s" % title)
+	await press(KEY_UP)
+	check(focused() == pause.buttons["Settings"], "Up returns to Settings")
+	await press(KEY_ENTER)
+	check(settings.panel.visible, "Enter opens Settings")
+	settings.tabs.current_tab = 0
+	await press(KEY_RIGHT)
+	check(settings.tabs.current_tab == 1, "Right changes the settings tab")
+	await press(KEY_DOWN)
+	check(focused() != settings.tabs.get_tab_bar() and settings.tabs.is_ancestor_of(focused()), "Down enters the settings page")
+	await press(KEY_ESCAPE)
+	check(pause.is_open(), "Esc leaves Settings from inside a page")
+	await press(KEY_ENTER)
+	check(not pause.is_open() and not paused, "Enter on Resume returns to the game")
+	_game.gameplay.open_board()
+	await settle()
+	var first_card := focused()
+	await press(KEY_RIGHT)
+	check(focused() is BaseButton and focused() != first_card, "Right moves between Activities cards")
+	await press(KEY_ESCAPE)
+	life.open_journal()
+	await settle()
+	check(focused() is BaseButton, "The journal starts on a place")
+	await press(KEY_ENTER)
+	check(not life.has_modal() and not paused, "Enter on a journal place leaves for the game")
+
 	# Team Deathmatch never pauses, and the menu still gives a free mouse.
 	_game.tdm_local.in_match = true
+	check(not bridge.menu_active(), "No menu, no touch bridge")
 	pause.open_menu()
 	await settle()
 	check(pause.is_open() and not paused, "The pause menu leaves a live match running")
+	check(bridge.menu_active(), "Touch reaches the menu over a live match")
 	check(Input.mouse_mode == Input.MOUSE_MODE_VISIBLE, "A live match menu has a free mouse")
 	check(not pause.buttons["Activities"].visible, "Activities hides during a match")
 	pause.buttons["Settings"].pressed.emit()
