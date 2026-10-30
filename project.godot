@@ -1,7 +1,7 @@
 [application]
 config/name="MANA OORU"
 config/description="MANA OORU - 3D Exploration Prototype"
-run/main_scene="res://scenes/main.tscn"
+run/main_scene="res://scenes/boot.tscn"
 config/icon="res://assets/mana_ooru_icon.svg"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 
