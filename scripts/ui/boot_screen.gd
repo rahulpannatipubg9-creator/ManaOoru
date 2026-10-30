@@ -13,8 +13,3 @@ func _ready() -> void:
 
 func _exit_tree() -> void:
 	Input.emulate_mouse_from_touch = false
-
-## Quits from anywhere. In the game, main.gd saves when it hears the close request.
-static func quit_game(tree: SceneTree) -> void:
-	tree.root.propagate_notification(NOTIFICATION_WM_CLOSE_REQUEST)
-	tree.quit()

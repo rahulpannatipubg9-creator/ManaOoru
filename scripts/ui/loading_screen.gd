@@ -36,7 +36,6 @@ var _world_label := ""
 var _bar: ColorRect
 var _track: ColorRect
 var _tip: Label
-var _stage: Label
 var _tip_index := 0
 var _tip_left := TIP_SECONDS
 var _game: Node
@@ -58,7 +57,6 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	_shown = move_toward(_shown, _target, delta * 0.5)
 	_bar.size.x = _track.size.x * _shown
-	_stage.text = _world_label
 	_tip_left -= delta
 	if _tip_left <= 0.0:
 		_tip_left = TIP_SECONDS
@@ -97,17 +95,9 @@ func _build() -> void:
 	column.alignment = BoxContainer.ALIGNMENT_END
 	column.add_theme_constant_override("separation", UiTheme.SPACE_S)
 	margin.add_child(column)
-	var row := HBoxContainer.new()
-	column.add_child(row)
 	_tip = Label.new()
 	_tip.add_theme_font_size_override("font_size", UiTheme.FONT_LABEL)
-	_tip.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_child(_tip)
-	_stage = Label.new()
-	_stage.add_theme_font_size_override("font_size", UiTheme.FONT_SMALL)
-	_stage.add_theme_color_override("font_color", UiTheme.TEXT_MUTED)
-	_stage.size_flags_vertical = Control.SIZE_SHRINK_END
-	row.add_child(_stage)
+	column.add_child(_tip)
 	_track = ColorRect.new()
 	_track.color = UiTheme.LINE
 	_track.custom_minimum_size.y = UiTheme.SPACE_XS
@@ -158,7 +148,8 @@ func _enter_game(scene: PackedScene) -> void:
 
 func _on_world_progress(fraction: float, label: String) -> void:
 	_target = maxf(_target, lerpf(FILES_END, WORLD_END, fraction))
-	_world_label = label
+	if label != "":
+		_world_label = label
 
 func _on_world_built() -> void:
 	_target = 1.0

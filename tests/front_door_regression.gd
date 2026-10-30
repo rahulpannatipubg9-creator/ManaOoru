@@ -87,7 +87,8 @@ func _staged_game() -> Array:
 	while world.building:
 		await process_frame
 		frames += 1
-		_check(player.global_position.y == player_y, "the player must not fall while the world builds")
+		# Once built, main.gd rightly moves the player to the spawn.
+		_check(not world.building or player.global_position.y == player_y, "the player must not fall while the world builds")
 	await process_frame
 	_check(frames > 10, "a staged build must leave frames free: %d" % frames)
 	_check(built_count[0] == 1, "built fires once")

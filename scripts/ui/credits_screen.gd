@@ -56,7 +56,7 @@ func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	var dim := ColorRect.new()
 	UiTheme.make_dim(dim)
-	dim.color = UiTheme.SURFACE_SOLID
+	dim.color = Color(UiTheme.SURFACE_SOLID, 1.0)
 	add_child(dim)
 	_scroll = ScrollContainer.new()
 	_scroll.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
