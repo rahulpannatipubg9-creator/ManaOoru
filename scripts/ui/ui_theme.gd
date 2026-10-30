@@ -116,10 +116,42 @@ static func _build() -> Theme:
 	value.set_color("font_selected_color", "TabContainer", ACCENT)
 	value.set_color("font_unselected_color", "TabContainer", TEXT_MUTED)
 	value.set_color("font_hovered_color", "TabContainer", TEXT)
+	value.set_stylebox("tab_focus", "TabContainer", box(Color.TRANSPARENT, RADIUS, ACCENT))
+	_style_ranges(value)
 	return value
 
+## Sliders and scroll bars: a thin track, marigold fill, round grabber.
+static func _style_ranges(value: Theme) -> void:
+	value.set_stylebox("slider", "HSlider", _track(LINE))
+	value.set_stylebox("grabber_area", "HSlider", _track(ACCENT))
+	value.set_stylebox("grabber_area_highlight", "HSlider", _track(ACCENT))
+	value.set_icon("grabber", "HSlider", _dot(ACCENT))
+	value.set_icon("grabber_highlight", "HSlider", _dot(TEXT))
+	value.set_stylebox("scroll", "VScrollBar", _track(Color.TRANSPARENT))
+	value.set_stylebox("grabber", "VScrollBar", _track(LINE))
+	value.set_stylebox("grabber_highlight", "VScrollBar", _track(TEXT_MUTED))
+	value.set_stylebox("grabber_pressed", "VScrollBar", _track(ACCENT))
+
+static func _track(fill: Color) -> StyleBoxFlat:
+	var style := box(fill, RADIUS_PILL)
+	style.set_content_margin_all(3)
+	return style
+
+static func _dot(fill: Color) -> GradientTexture2D:
+	var gradient := Gradient.new()
+	gradient.offsets = PackedFloat32Array([0.0, 0.9, 1.0])
+	gradient.colors = PackedColorArray([fill, fill, Color(fill, 0.0)])
+	var dot := GradientTexture2D.new()
+	dot.gradient = gradient
+	dot.width = 22
+	dot.height = 22
+	dot.fill = GradientTexture2D.FILL_RADIAL
+	dot.fill_from = Vector2(0.5, 0.5)
+	dot.fill_to = Vector2(1.0, 0.5)
+	return dot
+
 static func _style_buttons(value: Theme) -> void:
-	for type_name: String in ["Button", "OptionButton"]:
+	for type_name: String in ["Button", "OptionButton", "CheckButton"]:
 		value.set_stylebox("normal", type_name, box(SURFACE_RAISED))
 		value.set_stylebox("hover", type_name, box(SURFACE_RAISED.lightened(0.08)))
 		value.set_stylebox("pressed", type_name, box(ACCENT.darkened(0.55)))

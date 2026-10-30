@@ -135,20 +135,13 @@ func open_shop(record: Dictionary) -> void:
 	if life.has_modal() or game.control_state != game.ControlState.ON_FOOT:
 		return
 	var column: VBoxContainer = life._new_modal(record.name)
-	var description := Label.new()
-	description.text = "Fresh tea, produce and neighbourhood deliveries.\nDeliver a produce parcel to the chai stall for 12 coins."
-	description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	column.add_child(description)
-	life._button(column, "Tea • 1 coin", func() -> void:
-		life.toast("Tea purchased" if life.purchase("tea") else "Need 1 coin"))
-	life._button(column, "Snack • 2 coins", func() -> void:
-		life.toast("Snack purchased" if life.purchase("snack") else "Need 2 coins"))
-	life._button(column, "Accept produce delivery • 12 coins", func() -> void:
+	var wallet: Label = life._header_chip("")
+	life._refresh_wallet(wallet)
+	life._row(column, "Tea", "1", func() -> void: life._refresh_wallet(wallet, life.purchase("tea")))
+	life._row(column, "Snack", "2", func() -> void: life._refresh_wallet(wallet, life.purchase("snack")))
+	life._row(column, "Produce delivery", "+12", func() -> void:
 		life.close_modal()
 		start_delivery())
-	life._button(column, "Asset credits", func() -> void:
-		description.text = "Tea/cart/scooter/shopfront/stools: original MANA OORU assets (CC0).\nPanipuri Cart: Bongblender, Sketchfab, CC BY 4.0.\nSource and modification details are in ASSET_LICENSES.md.")
-	life._button(column, "Return to market", life.close_modal)
 
 func visit() -> bool:
 	if shops.is_empty():
