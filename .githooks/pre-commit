@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# Mana Ooru — Pre-Commit Safety Hook
+# Checks for oversized files (>50MB) and restricted caches before committing.
+
+MAX_SIZE=52428800 # 50 MB
+BLOCKED=0
+
+for FILE in $(git diff --cached --name-only); do
+    if [ -f "$FILE" ]; then
+        FILE_SIZE=$(wc -c < "$FILE" | tr -d ' ')
+        if [ "$FILE_SIZE" -gt "$MAX_SIZE" ]; then
+            SIZE_MB=$((FILE_SIZE / 1048576))
+            echo "❌ [Git Hook] File '$FILE' is ${SIZE_MB}MB, exceeding the 50MB limit."
+            echo "   GitHub limits large files and slow uplinks will time out."
+            BLOCKED=1
+        fi
+    fi
+done
+
+if [ "$BLOCKED" -eq 1 ]; then
+    echo "🚫 [Git Hook] Commit aborted! Please downscale or ignore oversized files."
+    exit 1
+fi
+
+exit 0

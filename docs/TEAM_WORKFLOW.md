@@ -38,26 +38,28 @@ Your friends need permission to upload their work to your repository:
 When your friends open their AI coding assistant on their computer, they only need to give this single prompt:
 
 > **Friend's Setup Prompt:**
-> *"Clone https://github.com/rahulpannatipubg9-creator/ManaOoru.git to my machine, verify Godot 4 is installed, and run the movement regression tests to ensure the game works."*
+> *"Clone https://github.com/rahulpannatipubg9-creator/ManaOoru.git to my machine, run `./tools/setup_team.sh` to configure safety hooks, and run the movement regression tests to ensure the game works."*
 
-Their AI will clone the project, check Godot, and verify that everything runs!
+Their AI will clone the project, activate the Git safety hooks, check Godot, and verify that everything runs!
 
 ---
 
-## 4. The 3 "Magic Prompts" for Daily Work
+## 4. The 3 "Magic Prompts" for Daily Work (Automated)
 
 Your friends only need to copy and paste these 3 prompts whenever they work:
 
 ### 🟢 Prompt 1: When starting to build something new
-> *"Check out the latest code from main branch, then create a new feature branch called 'feature/[brief description of what I want to add]', and inspect existing architecture before making changes."*
+> *"Run `./tools/sync.sh` to get the latest team updates, then create a new feature branch called 'feature/[what I want to build]', and inspect the existing code before changing anything."*
 >
-> *(Example: "Check out latest code and create a branch called feature/tea-stall-quest to add a dialogue interaction with the tea vendor.")*
+> *(Example: "Run ./tools/sync.sh, create a branch called feature/tea-stall-quest, and add a dialogue interaction with the tea vendor.")*
 
 ### 🟡 Prompt 2: When testing and uploading their work
-> *"Run `godot --headless --path . --script tests/movement_regression.gd`. If it passes, commit my changes with a clear message and push my branch to GitHub so Rahul can review it."*
+> *"Run `./tools/ship.sh 'Add tea stall interaction'` to test everything, commit, and push my branch to GitHub for Rahul to review."*
+>
+> *(The script will automatically run Godot tests. If tests pass, it pushes to GitHub and prints the Pull Request link. If tests fail, it blocks the push and shows the error!)*
 
 ### 🔵 Prompt 3: When updating with the team's latest code
-> *"Sync my local project with the latest updates from origin/main without losing my uncommitted files."*
+> *"Run `./tools/sync.sh` to safely pull the latest updates from main without losing any of my local work."*
 
 ---
 

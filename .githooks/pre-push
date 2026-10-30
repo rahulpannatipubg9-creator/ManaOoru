@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# Mana Ooru — Pre-Push Quality Gate Hook
+# Runs headless Godot movement regression tests before allowing push to GitHub.
+
+REMOTE="$1"
+URL="$2"
+
+CURRENT_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+
+# Prevent accidental direct pushes to main from teammates
+if [ "$CURRENT_BRANCH" = "main" ] && [ "$ALLOW_MAIN_PUSH" != "1" ]; then
+    echo "⚠️  [Git Hook] Notice: Direct push to 'main' is restricted for team safety."
+    echo "   Please create a feature branch: git checkout -b feature/<name>"
+    echo "   (If you are the admin Rahul and intentionally pushing to main: ALLOW_MAIN_PUSH=1 git push)"
+    exit 1
+fi
+
+echo "🧪 [Git Hook] Running automated Godot regression tests before pushing..."
+
+if which godot >/dev/null 2>&1; then
+    GODOT_CMD="godot"
+elif [ -f "/opt/homebrew/bin/godot" ]; then
+    GODOT_CMD="/opt/homebrew/bin/godot"
+else
+    echo "⚠️  [Git Hook] Godot binary not found in PATH. Skipping local regression test."
+    exit 0
+fi
+
+if ! "$GODOT_CMD" --headless --path . --script tests/movement_regression.gd; then
+    echo ""
+    echo "❌ [Git Hook] Push BLOCKED: Movement regression test failed!"
+    echo "   Your changes broke player movement, camera rotation, or physics."
+    echo "   Ask your AI: 'Fix the failing movement regression test before pushing.'"
+    exit 1
+fi
+
+echo "✅ [Git Hook] All tests passed! Proceeding with push to $REMOTE ($URL)."
+exit 0
