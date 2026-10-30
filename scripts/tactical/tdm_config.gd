@@ -23,13 +23,17 @@ extends Resource
 @export var sudden_death_seconds := 60.0
 ## A team with nobody connected for this long forfeits.
 @export var forfeit_seconds := 30.0
+## A player who switched teams in a live match must wait this long to switch again.
+@export var team_switch_cooldown_seconds := 30.0
 ## How long a dropped player's slot is held (they are an untargetable ghost meanwhile).
 @export var reconnect_hold_seconds := 60.0
 
 @export_group("Combat")
 @export var max_health := 100.0
 @export var regen_delay_seconds := 5.0
-@export var regen_per_second := 10.0
+## Fastest refill; it builds up over regen_ramp_seconds, so a full bar takes about 10 s.
+@export var regen_per_second := 11.8
+@export var regen_ramp_seconds := 3.0
 ## The host rejects a hit claiming more than this in one shot.
 @export var max_hit_damage := 100.0
 ## Fastest believable fire interval for the M416 (auto fire is 0.11 s in free-roam).

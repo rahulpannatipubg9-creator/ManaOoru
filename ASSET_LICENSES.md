@@ -448,3 +448,9 @@ suppressor, and red-dot sight. Playable weapon in free roam and multiplayer (Wea
 
 Noto Sans Bold and Noto Sans Telugu Bold by the Noto Project Authors, under the SIL Open Font License 1.1. Copied from
 `tools/signboards/fonts/`.
+
+## Gun sounds (`assets/audio/guns/`)
+
+Original work. Synthesised by `tools/generate_gun_audio.py` with the Python standard library, using no recorded or
+downloaded audio. Rifle shots, distant shots, a passing-round crack, dry fire, reload sounds and hit feedback.
+- **Licence:** project-owned, redistributable with the game.

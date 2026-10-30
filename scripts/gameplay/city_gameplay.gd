@@ -62,6 +62,7 @@ var _crosshair: Label
 var _radio: AudioStreamPlayer
 var _radio_station := 0
 var _audio: Dictionary = {}
+var gun_feel: Node
 var _last_health := 100.0
 var _last_driving := false
 var _vehicle_claims: Dictionary = {}
@@ -85,7 +86,10 @@ func setup(owner_game: Node) -> void:
 	game.person.water_system = water
 	_build_ui()
 	_build_marker()
-	for sound in ["shot", "punch", "step", "explosion", "reload"]:
+	gun_feel = preload("res://scripts/gameplay/gun_feel.gd").new()
+	add_child(gun_feel)
+	gun_feel.setup(game)
+	for sound in ["punch", "step", "explosion"]:
 		var player := AudioStreamPlayer.new()
 		player.stream = load("res://assets/audio/gameplay/%s.wav" % sound)
 		player.volume_db = -16.0
@@ -161,7 +165,9 @@ func _unhandled_input(event: InputEvent) -> void:
 				KEY_F8: cycle_radio()
 				KEY_Y, KEY_R: reload_weapon()
 				KEY_2: switch_weapon()
-				KEY_B: toggle_fire_mode()
+				KEY_X:
+					if game.control_state == game.ControlState.ON_FOOT:
+						toggle_fire_mode()
 				KEY_G: throw_grenade()
 				KEY_J: talk_nearby()
 				KEY_K:
@@ -483,6 +489,8 @@ func end_mission(success: bool, reason := "") -> void:
 
 ## Action mode on or off. Turning it on draws the rifle when you have one.
 func toggle_action() -> void:
+	if tdm_active:
+		return
 	if action_mode:
 		set_action_mode(false)
 		return
@@ -539,6 +547,7 @@ func select_rifle(id: int) -> void:
 	_magazines[game.person.weapon_id] = ammo
 	ammo = mini(int(_magazines.get(id, mag_size)), mag_size)
 	_reload_time = 0.0
+	gun_feel.cancel_reload()
 	game.person.weapon_reload_time = 0.0
 	game.person.set_weapon_model(id)
 	_shot_cooldown = maxf(_shot_cooldown, 0.35)
@@ -555,6 +564,7 @@ func attack() -> bool:
 		return false
 	var armed: bool = game.person.is_weapon_equipped()
 	if armed and ammo == 0:
+		gun_feel.play_dry()
 		reload_weapon()
 		return false
 	var gun := Weapons.stats(game.person.weapon_id)
@@ -607,16 +617,14 @@ func attack() -> bool:
 		ammo -= 1
 		if tdm_active:
 			tdm_local.on_shot_fired()
-		_audio.shot.play()
-		var muzzle_position: Vector3 = game.person.weapon_muzzle_position()
-		_tracer(muzzle_position, endpoint)
-		_shot_flash(muzzle_position)
+		gun_feel.on_shot(game.person.weapon_id, game.person.weapon_muzzle_position(), endpoint, hit, closest != null)
 		game.person.weapon_kick = gun.kick
 		if game.get("network_manager") and game.network_manager.is_active():
 			game.network_manager.notify_local_fired()
 		var stance_mult: float = 0.3 if game.person.get("prone") == true else (0.6 if game.person.get("crouching") == true else 1.0)
 		if game.person.camera_pivot and game.person.camera_pivot.has_method("add_recoil"):
-			game.person.camera_pivot.add_recoil(gun.recoil.x * stance_mult, gun.recoil.y * stance_mult)
+			var kick: Vector2 = gun_feel.recoil_for(gun.recoil * stance_mult)
+			game.person.camera_pivot.add_recoil(kick.x, kick.y)
 	else:
 		_audio.punch.play()
 	var character: Node = game.person.get_node_or_null("TestCharacter")
@@ -624,28 +632,6 @@ func attack() -> bool:
 		character.set_meta("attack_until", Time.get_ticks_msec() + 300)
 	report_crime(8.0 if armed else (12.0 if closest else 0.0))
 	return true
-
-const SHOT_POOL_SIZE := 16
-var _tracer_mesh: CylinderMesh
-var _flash_mesh: SphereMesh
-var _tracers: Array[MeshInstance3D] = []
-var _flashes: Array[MeshInstance3D] = []
-
-func _tracer(from: Vector3, to: Vector3) -> void:
-	var distance := from.distance_to(to)
-	if distance < 0.01: return
-	if _tracer_mesh == null:
-		_tracer_mesh = CylinderMesh.new()
-		_tracer_mesh.top_radius = 0.009
-		_tracer_mesh.bottom_radius = 0.009
-		_tracer_mesh.height = 1.0
-		_tracer_mesh.radial_segments = 4
-		_tracer_mesh.material = _shot_material(Color("ffe29a"))
-	var line := _next_shot_node(_tracers, _tracer_mesh)
-	var axes := Basis(Quaternion(Vector3.UP, (to - from).normalized()))
-	axes.y *= distance
-	line.global_transform = Transform3D(axes, (from + to) * 0.5)
-	get_tree().create_timer(0.10, false).timeout.connect(line.hide)
 
 func try_loot_nearby() -> bool:
 	if game.control_state != game.ControlState.ON_FOOT or not GameplayControls.allows(game.person):
@@ -668,7 +654,7 @@ func reload_weapon() -> void:
 		return
 	_reload_time = reload_seconds
 	game.person.weapon_reload_time = reload_seconds
-	_audio.reload.play()
+	gun_feel.play_reload(reload_seconds)
 
 func throw_grenade() -> bool:
 	if tdm_active:
@@ -1208,31 +1194,3 @@ func _speak(text: String) -> void:
 		return
 	DisplayServer.tts_speak(text, voices[0].id, 60, 1.0, 1.0, 0, true)
 
-func _shot_flash(at: Vector3) -> void:
-	if _flash_mesh == null:
-		_flash_mesh = SphereMesh.new()
-		_flash_mesh.radius = 0.065
-		_flash_mesh.height = 0.13
-		_flash_mesh.material = _shot_material(Color(1.0, 0.78, 0.18))
-	var flash := _next_shot_node(_flashes, _flash_mesh)
-	flash.global_position = at
-	get_tree().create_timer(0.055, false).timeout.connect(flash.hide)
-
-func _shot_material(color: Color) -> StandardMaterial3D:
-	var material := StandardMaterial3D.new()
-	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	material.albedo_color = color
-	return material
-
-## Oldest node of a fixed ring, so sustained fire reuses meshes instead of allocating them.
-func _next_shot_node(pool: Array[MeshInstance3D], mesh: Mesh) -> MeshInstance3D:
-	var node: MeshInstance3D
-	if pool.size() < SHOT_POOL_SIZE:
-		node = MeshInstance3D.new()
-		node.mesh = mesh
-		add_child(node)
-	else:
-		node = pool.pop_front()
-	pool.append(node)
-	node.visible = true
-	return node

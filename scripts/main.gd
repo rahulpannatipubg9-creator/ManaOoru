@@ -217,9 +217,12 @@ func _process(_delta: float) -> void:
 		_activate_only(active_vehicle)
 	elif control_state == ControlState.ON_FOOT:
 		_park_all_vehicles()
+	var in_match := _in_match()
 	var enter_pressed := Input.is_action_pressed("vehicle_enter") or Input.is_key_pressed(KEY_E)
 	var exit_pressed := Input.is_action_pressed("vehicle_exit") or Input.is_key_pressed(KEY_F)
-	if enter_pressed and not _enter_was_pressed and control_state == ControlState.ON_FOOT:
+	# E is also lean right, so a player aiming round a corner never opens a shop.
+	var aiming: bool = person.is_weapon_equipped() and Input.is_action_pressed("aim")
+	if enter_pressed and not _enter_was_pressed and control_state == ControlState.ON_FOOT and not in_match and not aiming:
 		_try_on_foot_interaction()
 	if exit_pressed and not _exit_was_pressed and control_state == ControlState.DRIVING:
 		exit_vehicle()
@@ -227,7 +230,7 @@ func _process(_delta: float) -> void:
 		if active_vehicle and control_state == ControlState.DRIVING:
 			var recovered: Variant = active_vehicle.recover_vehicle()
 			_show_control_hint("No clear recovery spot" if recovered == false else "Vehicle recovered")
-		elif control_state == ControlState.ON_FOOT:
+		elif control_state == ControlState.ON_FOOT and not in_match:
 			if person.has_method("recover_person"):
 				_show_control_hint("Returned to safe ground" if person.recover_person() else "No clear recovery spot")
 	_interact_was_pressed = false
@@ -239,7 +242,9 @@ func _process(_delta: float) -> void:
 	_exit_was_pressed = exit_pressed
 	_recover_was_pressed = Input.is_action_pressed("vehicle_recover")
 	var nearby_vehicle := _nearest_vehicle()
-	if control_state == ControlState.ON_FOOT and nearby_vehicle:
+	if in_match:
+		pass
+	elif control_state == ControlState.ON_FOOT and nearby_vehicle:
 		active_vehicle = nearby_vehicle
 		hud.set_active_vehicle(active_vehicle)
 		hud.set_enter_available(true)
@@ -274,6 +279,9 @@ func _input(event: InputEvent) -> void:
 	if get_tree().paused or _input_suspended or GameplayControls.text_focused(get_viewport()) or not event is InputEventKey or not event.pressed or event.echo:
 		return
 	var key_event := event as InputEventKey
+	# Free-roam shortcuts stay out of a match: each one would teleport, pause or pull a player out of the fight.
+	if _in_match():
+		return
 	if city_life and key_event.keycode == KEY_F5:
 		city_life.open_journal()
 		get_viewport().set_input_as_handled()
@@ -282,8 +290,12 @@ func _input(event: InputEvent) -> void:
 		environment_controls.open_menu()
 		get_viewport().set_input_as_handled()
 		return
-	if key_event.keycode == KEY_B:
+	if key_event.keycode == KEY_F9:
 		_teleport_to_godavari_bridge()
+		get_viewport().set_input_as_handled()
+		return
+	if key_event.keycode == KEY_HOME and control_state == ControlState.ON_FOOT:
+		_show_control_hint("Returned to safe ground" if person.recover_person() else "No clear recovery spot")
 		get_viewport().set_input_as_handled()
 		return
 	if _is_key(key_event, KEY_E, 101):
@@ -328,7 +340,10 @@ func _handle_menu_input() -> void:
 		if _map_open:
 			set_map_open(false)
 		else:
-			pause_menu.open_menu()
+			if _in_match() and tdm_local.has_method("toggle_menu"):
+				tdm_local.toggle_menu()
+			else:
+				pause_menu.open_menu()
 	_pause_was_pressed = pause_pressed
 	var zoom_in := Input.is_action_pressed("minimap_zoom_in")
 	var zoom_out := Input.is_action_pressed("minimap_zoom_out")
@@ -373,10 +388,27 @@ func _set_menu_paused(value: bool) -> void:
 	hud.set_interaction_prompt("Paused" if value else "")
 	_update_mouse_mode()
 
+## Hosting or joining usually happens from the pause screen; a match must never start paused.
+func prepare_for_match() -> void:
+	_paused = false
+	get_tree().paused = false
+	hud.set_interaction_prompt("")
+	_update_mouse_mode()
+
+func refresh_mouse_mode() -> void:
+	_update_mouse_mode()
+
+func _in_match() -> bool:
+	return tdm_local != null and tdm_local.in_match
+
+## The lobby, end screen and in-match menu need a cursor, and clicks on them must not fire the rifle.
+func _match_needs_cursor() -> bool:
+	return _in_match() and tdm_local.has_method("needs_cursor") and tdm_local.needs_cursor()
+
 func _update_mouse_mode() -> void:
 	if OS.has_feature("android"):
 		return
-	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if get_tree().paused else Input.MOUSE_MODE_CAPTURED
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if get_tree().paused or _match_needs_cursor() else Input.MOUSE_MODE_CAPTURED
 	_clear_control_inputs()
 
 func _notification(what: int) -> void:
@@ -404,14 +436,15 @@ func _clear_control_inputs() -> void:
 
 func _sync_input_context() -> void:
 	var text := GameplayControls.text_focused(get_viewport())
-	var suspended := _window_unfocused or text or get_tree().paused
+	var cursor := _match_needs_cursor()
+	var suspended := _window_unfocused or text or get_tree().paused or cursor
 	if suspended and not _input_suspended:
 		_clear_control_inputs()
 	_input_suspended = suspended
 	GameplayControls.blocked = suspended
 	if get_tree().paused:
 		GameplayControls.mode = GameplayControls.Mode.PAUSED
-	elif text or _window_unfocused:
+	elif text or _window_unfocused or cursor:
 		GameplayControls.mode = GameplayControls.Mode.UI_FOCUSED
 	elif control_state == ControlState.ON_FOOT:
 		GameplayControls.mode = GameplayControls.Mode.ON_FOOT

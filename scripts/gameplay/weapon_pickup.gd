@@ -55,7 +55,7 @@ func is_available() -> bool:
 	return not _used
 
 func _collect(body: Node) -> void:
-	if _used or gameplay == null or body != gameplay.game.person:
+	if _used or gameplay == null or body != gameplay.game.person or gameplay.tdm_active:
 		return
 	var first: bool = not gameplay.has_rifle
 	var new_rifle: bool = not gameplay.rifles().has(weapon_id)
@@ -65,7 +65,7 @@ func _collect(body: Node) -> void:
 	var rifle_name := Weapons.display_name(weapon_id)
 	if first:
 		gameplay.select_rifle(weapon_id)
-	gameplay.ammo = MAGAZINE
+	gameplay.ammo = gameplay.mag_size
 	gameplay.reserve = mini(RESERVE_CAP, gameplay.reserve + RESERVE_BONUS)
 	if first:
 		# Picking a rifle up means you want to use it: hands it over ready to fire.

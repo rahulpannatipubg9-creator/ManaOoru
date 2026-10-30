@@ -214,8 +214,8 @@ counted separately and not de-duplicated, so totals overlap. The scan was not re
 **Built** (all under `scripts/tactical/` unless noted):
 `tdm_config`, `tdm_roster`, `tdm_spawns`, `tdm_match` (host rules); `tdm_session` (networking, host validation, chat/pings,
 version handshake, reconnect); `tdm_arena` (spawn zones, cover, boundary shell, fog and far-plane culling);
-`tdm_local` (turns session events into gameplay, practice mode, aim assist, radar data); `tdm_hud` (lobby, score bar,
-kill feed, hit marker, damage arcs, boundary warning, scoreboard, chat wheel, radar, end screen); `tdm_dummy`.
+`tdm_local` (turns session events into gameplay, practice mode, aim assist, minimap markers); `tdm_hud` (lobby, score bar,
+kill feed, hit marker, damage arcs, boundary warning, scoreboard, chat wheel, match menu, end screen); `tdm_dummy`.
 Hooks in existing files: `main.gd` (session, view, pause guard, no vehicles), `squad_lobby.gd` (mode picker and options),
 `lan_discovery.gd` (mode and detail in the room list), `network_manager.gd` (30 Hz in TDM, trusting damage and DBNO off),
 `network_player.gd` (team armband, teammate nameplate, head zone, 3D sounds), `city_gameplay.gd` (30-round magazine, 2 s
@@ -229,11 +229,23 @@ reload, no crime, no grenades, vault, medkits, missions or extra vehicles), `set
   shooter near the origin, target near the hit point, range, no wall in between, fire rate, protection, friendly fire)
   rather than re-casting the ray itself. This avoids the 20/30 Hz stale-puppet problem. No rewind.
 - Spawn zones: up to six candidates per team are found; those with a straight line to an enemy zone are pruned, keeping at least two.
-- Minimap: the free-roam minimap is hidden in a match. A small north-up radar replaces it (teammates, enemies for 3 s
-  after they fire, pings). Pings are not drawn on the original minimap.
-- Killcam: a text message ("Killed by X, respawning in N") instead of a camera on the killer.
+- Minimap: the game's minimap stays up and shows teammates, enemies for 3 s after they fire, and pings.
+- Killcam: three seconds over the killer's shoulder, with a text message ("Killed by X, respawning in N").
 - Falls: only dropping below the arena floor counts as a fall death; ordinary fall damage is ignored.
 - Fog density is a fixed 0.0065, a trade between hiding the far plane and seeing across the arena.
+- Controls (2026-10-30): desktop has no match buttons. Tab held shows the scoreboard, T opens quick chat, Esc opens the
+  match menu (Resume, Settings, Back to lobby in practice, Leave match). Touch shows small MENU, SCORE and CHAT buttons.
+- Ready flags are gone from the lobby, because START never used them. The session calls remain.
+- Teams (2026-10-30): the lobby has a column per team with JOIN RED / JOIN BLUE; the host taps a player to move them.
+  A move is refused, with the reason shown, unless teams stay within one. In a live match SWITCH TEAM is in the menu:
+  same balance rule, a normal 5 s respawn on the new side, K/D kept, 30 s cooldown (`team_switch_cooldown_seconds`).
+- Teammates carry a name and health ticks visible through walls, fading with distance, and a ring on their minimap dot.
+  Aiming at one shows a brief "Teammate" tag and no claim is sent. Enemies show nothing.
+- Health (2026-10-30): after the 5 s delay regen eases in over 3 s to 11.8 HP/s, about 10 s for a full refill. The main
+  signal is a red screen edge that scales with missing health; under 30 HP the colour drains and a heartbeat plays. A
+  hit gives a short camera punch through `add_recoil`, with no loss of control.
+- Score bar is one line; the kill limit shows in the lobby. Rifle, ammo and health sit bottom-centre.
+- The spare radar was removed; the game's minimap carries the match markers. Protocol version 3 (CZ Bren 2).
 
 **Tests added** (`tests/`): `tdm_match_regression` (94 checks, rules), `tdm_network_regression` (21 checks, two real
 processes over ENet on localhost: handshake, version refusal, host-validated hits and kill, chat and ping relay, end of
