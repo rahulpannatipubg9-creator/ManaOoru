@@ -73,7 +73,7 @@ func build(world: Node, data: MapData) -> void:
 			_add_bus_stop(_map_point(stop), str(stop.name))
 		for gate: Dictionary in parsed.entrances:
 			_add_gate(_map_point(gate), str(gate.name))
-preload("res://scripts/performance/startup_profile.gd").mark("  street: market stops gates")
+	preload("res://scripts/performance/startup_profile.gd").mark("  street: market stops gates")
 	for road in data.roads:
 		if RoadStyle.is_major(road.kind) or road.kind == "tertiary":
 			_add_road_furniture(road)

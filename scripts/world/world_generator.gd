@@ -170,7 +170,7 @@ func _create_ground() -> void:
 		push_warning("Terrain data missing; ground will be empty")
 		return
 	# Vertex maths runs on worker threads; nodes and shapes are made here on the main thread.
-preload("res://scripts/performance/startup_profile.gd").mark("  ground: material")
+	preload("res://scripts/performance/startup_profile.gd").mark("  ground: material")
 	var chunks := terrain.build_chunks(TERRAIN_CHUNK_CELLS)
 	preload("res://scripts/performance/startup_profile.gd").mark("  ground: threaded vertices")
 	for built: Dictionary in chunks:
