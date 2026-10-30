@@ -9,6 +9,7 @@ const Discovery := preload("res://scripts/network/lan_discovery.gd")
 const MANAGER := """extends Node
 signal connection_state_changed(active: bool, is_host: bool)
 signal peer_list_updated(peers: Dictionary)
+signal join_failed(reason: String)
 const DEFAULT_PORT := 7777
 const MAX_CLIENTS := 16
 var hosting := false
@@ -154,7 +155,7 @@ func _device(model: String) -> Dictionary:
 	var lobby := Lobby.new()
 	holder.add_child(lobby)
 	lobby.setup(manager, finder)
-	lobby.nickname = model if " " in model else lobby.nickname
+	lobby.set_nickname(model)
 	return {"manager": manager, "finder": finder, "lobby": lobby}
 
 func _tap(lobby: Node, text: String) -> void:
