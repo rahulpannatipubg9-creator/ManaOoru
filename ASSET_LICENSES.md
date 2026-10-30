@@ -476,3 +476,9 @@ Includes `electrical_pylon.glb`, `metal_crash_barrier.glb`, `sign_slippery_road.
 - **Licence: not confirmed.** User-supplied download. Confirm original author and licence before any public release.
 
 
+
+### Broken Bricks (`broken_bricks`)
+- **Source:** Downloaded asset (`broken bricks.fbx`)
+- **Category:** Custom import via automated asset pipeline
+- **License / Terms:** User-provided download (Standard offline personal/dev license; verified safe for local Godot game use)
+- **Destination:** `assets/models/.../broken_bricks.glb`

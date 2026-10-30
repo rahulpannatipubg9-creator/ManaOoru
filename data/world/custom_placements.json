@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "assets": [
+    {
+      "id": "broken_bricks",
+      "name": "Broken Bricks",
+      "model_path": "res://assets/models/debris/broken_bricks.glb",
+      "category": "debris",
+      "location_key": "coal_mine",
+      "location_name": "Coal Mine OCP 5 Incline Worksite",
+      "district": "Singareni Collieries OCP 5 Incline",
+      "position": [
+        1541.56,
+        0.0,
+        1384.7
+      ],
+      "use_ground_height": true,
+      "ground_offset_y": 0.02,
+      "rotation_y_deg": 60.0,
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "collision_type": "trimesh",
+      "visibility_range_end": 250.0,
+      "metadata": {
+        "source_file": "broken bricks.fbx",
+        "triangles": 15000,
+        "dimensions": {
+          "width_x": 0.945,
+          "depth_y": 1.04,
+          "height_z": 0.314
+        },
+        "placement_reasoning": "Asset 'broken_bricks' is classified as category 'debris' with semantic tags ['construction', 'coal_mine', 'debris', 'industrial']. Its physical footprint is 0.945m (W) x 1.04m (D) x 0.314m (H). The best authentic setting in Godavarikhani is 'Coal Mine OCP 5 Incline Worksite' in the Singareni Collieries OCP 5 Incline: Industrial haulage and quarry sector on the southeast rim. This provides natural context without disrupting vehicular carriageways."
+      }
+    }
+  ]
+}
