@@ -18,6 +18,16 @@
 
 ## Entries
 
+### Godot iOS export preset and iPhone multi-orientation support (2026-10-30)
+- **Symptom:** Mana Ooru lacked an iOS export pipeline; attempting to build for iPhone failed with missing export preset and Xcode configuration errors, while mouse capture on mobile disrupted touchscreen input.
+- **Cause:** `export_presets.cfg` only defined `preset.0` (Android). In addition, `main.gd` exclusively checked `OS.has_feature("android")` for bypassing mouse capture, leaving iOS falling through to desktop captured mouse mode. Furthermore, `window/handheld/orientation` was fixed at 0 (Landscape Left only), which prevented 180° rotation on iPhones with charging cables plugged in.
+- **Rule:** When configuring iOS export in Godot:
+  1. Add an iOS export preset with `application/targeted_device_family=2` (iPhone & iPad universal, mapping to `TARGETED_DEVICE_FAMILY = "1,2"` in Xcode).
+  2. Set `application/export_project_only=true` so the headless export writes a complete Xcode project (`ManaOoru.xcodeproj`) and data pack (`ManaOoru.pck`) that can be opened or built via Xcode or CI/CD without hardcoded developer team credentials.
+  3. Ensure `window/handheld/orientation=4` (Sensor Landscape) in `project.godot` so `UISupportedInterfaceOrientations` includes both `UIInterfaceOrientationLandscapeLeft` and `UIInterfaceOrientationLandscapeRight`.
+  4. Always check `OS.has_feature("android") or OS.has_feature("ios") or OS.has_feature("mobile")` when configuring mouse mode, HUD touch overlays, and platform performance tiers.
+- **Check:** `tools/build_ios.sh` and headless export `godot --headless --export-debug "iOS" builds/ios/ManaOoru.ipa` followed by `grep TARGETED_DEVICE_FAMILY builds/ios/ManaOoru.xcodeproj/project.pbxproj`.
+
 ### Hardware-aware device tier classification & settings persistence (2026-10-30)
 - **Symptom:** Different mobile devices and tablets either stuttered or overheated when running uniform graphics presets without hardware inspection.
 - **Cause:** GPU, CPU cores, RAM, and screen refresh rate were not inspected at boot to choose appropriate viewport scaling, shadow cascades, and frame rates.

@@ -369,7 +369,7 @@ func _set_menu_paused(value: bool) -> void:
 	_update_mouse_mode()
 
 func _update_mouse_mode() -> void:
-	if OS.has_feature("android"):
+	if OS.has_feature("android") or OS.has_feature("ios") or OS.has_feature("mobile"):
 		return
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if get_tree().paused else Input.MOUSE_MODE_CAPTURED
 	_clear_control_inputs()

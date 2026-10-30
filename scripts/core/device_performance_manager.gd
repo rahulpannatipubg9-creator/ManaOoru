@@ -35,7 +35,8 @@ const TIER_1_SOC_PATTERNS := [
 const TIER_3_GPU_PATTERNS := [
 	"adreno (tm) 660", "adreno 660", "adreno (tm) 730", "adreno 730",
 	"adreno (tm) 740", "adreno 740", "adreno (tm) 750", "adreno 750",
-	"mali-g610", "mali-g615", "mali-g710", "mali-g715", "mali-g720", "immortalis"
+	"mali-g610", "mali-g615", "mali-g710", "mali-g715", "mali-g720", "immortalis",
+	"apple gpu"
 ]
 
 const TIER_3_SOC_PATTERNS := [

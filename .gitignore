@@ -9,6 +9,8 @@ builds/
 *.zip
 *.dmg
 *.app/
+*.ipa
+*.xcarchive
 
 # Intermediate Blender auto-backups and heavy 3D sculpting dumps (>100MB)
 *.blend1
