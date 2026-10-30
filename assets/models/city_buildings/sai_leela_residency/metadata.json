@@ -1,0 +1,19 @@
+{
+  "scene": "Sai_Leela_Residency",
+  "objects": 270,
+  "bounds_blender": {
+    "min": [
+      -12.0,
+      -11.5,
+      -0.375
+    ],
+    "max": [
+      12.0,
+      12.0,
+      23.09284782409668
+    ]
+  },
+  "triangles_source": 25985,
+  "placement": "review_only",
+  "dimensions_estimated": true
+}

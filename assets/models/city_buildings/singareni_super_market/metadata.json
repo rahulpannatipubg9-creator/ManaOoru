@@ -1,0 +1,19 @@
+{
+  "scene": "Singareni_Super_Market",
+  "objects": 388,
+  "bounds_blender": {
+    "min": [
+      -14.0,
+      -7.099999904632568,
+      -0.2750000059604645
+    ],
+    "max": [
+      14.0,
+      8.449999809265137,
+      8.300000190734863
+    ]
+  },
+  "triangles_source": 17064,
+  "placement": "review_only",
+  "dimensions_estimated": true
+}

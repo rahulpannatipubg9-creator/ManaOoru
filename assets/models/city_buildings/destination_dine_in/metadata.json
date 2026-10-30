@@ -1,0 +1,19 @@
+{
+  "scene": "Destination_Dine_In",
+  "objects": 414,
+  "bounds_blender": {
+    "min": [
+      -11.0,
+      -8.0,
+      -0.2750000059604645
+    ],
+    "max": [
+      11.0,
+      8.0,
+      8.449999809265137
+    ]
+  },
+  "triangles_source": 14800,
+  "placement": "review_only",
+  "dimensions_estimated": true
+}

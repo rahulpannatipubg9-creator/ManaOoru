@@ -1,0 +1,19 @@
+{
+  "scene": "Singareni_Sector_2_Stadium",
+  "objects": 1332,
+  "bounds_blender": {
+    "min": [
+      -75.0,
+      -45.0,
+      -0.7000000476837158
+    ],
+    "max": [
+      75.0,
+      105.0,
+      25.475000381469727
+    ]
+  },
+  "triangles_source": 28125,
+  "placement": "review_only",
+  "dimensions_estimated": true
+}

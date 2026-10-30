@@ -1,0 +1,19 @@
+{
+  "scene": "Mythri_Rajesh_Theatre",
+  "objects": 266,
+  "bounds_blender": {
+    "min": [
+      -21.0,
+      -15.0,
+      -0.3100000023841858
+    ],
+    "max": [
+      19.5,
+      24.5,
+      11.25
+    ]
+  },
+  "triangles_source": 4742,
+  "placement": "review_only",
+  "dimensions_estimated": true
+}

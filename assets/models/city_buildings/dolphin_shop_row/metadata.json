@@ -1,0 +1,19 @@
+{
+  "scene": "Dolphin_Shop_Row",
+  "objects": 461,
+  "bounds_blender": {
+    "min": [
+      -19.0,
+      -10.5,
+      -0.4000000059604645
+    ],
+    "max": [
+      19.0,
+      8.0,
+      14.263924598693848
+    ]
+  },
+  "triangles_source": 6828,
+  "placement": "review_only",
+  "dimensions_estimated": true
+}

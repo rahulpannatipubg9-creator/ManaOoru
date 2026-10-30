@@ -1,0 +1,19 @@
+{
+  "scene": "Srinivasa_Theatre",
+  "objects": 263,
+  "bounds_blender": {
+    "min": [
+      -15.008999824523926,
+      -11.199999809265137,
+      -0.23999999463558197
+    ],
+    "max": [
+      15.008999824523926,
+      24.0,
+      11.099995613098145
+    ]
+  },
+  "triangles_source": 5529,
+  "placement": "review_only",
+  "dimensions_estimated": true
+}

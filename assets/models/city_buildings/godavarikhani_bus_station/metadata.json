@@ -1,0 +1,19 @@
+{
+  "scene": "Godavarikhani_Bus_Station",
+  "objects": 687,
+  "bounds_blender": {
+    "min": [
+      -50.0,
+      -34.0,
+      -0.550000011920929
+    ],
+    "max": [
+      50.0,
+      58.0,
+      26.024747848510742
+    ]
+  },
+  "triangles_source": 12664,
+  "placement": "review_only",
+  "dimensions_estimated": true
+}
