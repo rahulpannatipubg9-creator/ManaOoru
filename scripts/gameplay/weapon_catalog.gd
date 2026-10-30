@@ -32,6 +32,8 @@ const STATS := {
 		# The Team Deathmatch host refuses claims closer together than this (network jitter allowed for).
 		"min_claim_interval": 0.075,
 		"recoil": Vector2(0.022, 0.009),
+		# Radians per second the view settles back after a burst (feel only; never checked by the host).
+		"recoil_recovery": 0.38,
 		"kick": 0.045,
 	},
 	# The AK hits harder and fires slower than the M416 and climbs more: three body hits kill (0.26 s)
@@ -52,6 +54,7 @@ const STATS := {
 		"head_damage": 85.0,
 		"min_claim_interval": 0.09,
 		"recoil": Vector2(0.034, 0.016),
+		"recoil_recovery": 0.30,
 		"kick": 0.06,
 	},
 	# The CZ Bren 2 is a modern 5.56 tactical rifle: fast, flat-shooting with tight recoil
@@ -71,6 +74,7 @@ const STATS := {
 		"head_damage": 75.0,
 		"min_claim_interval": 0.075,
 		"recoil": Vector2(0.020, 0.008),
+		"recoil_recovery": 0.45,
 		"kick": 0.042,
 	},
 }

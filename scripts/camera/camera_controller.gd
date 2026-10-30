@@ -1,6 +1,7 @@
 extends Node3D
 
 const GyroLook := preload("res://scripts/mobile/gyro_look.gd")
+const Weapons := preload("res://scripts/gameplay/weapon_catalog.gd")
 
 enum ViewMode { THIRD_PERSON, FIRST_PERSON }
 
@@ -30,11 +31,34 @@ const SPEED_FOV_FULL := 30.0
 ## Head bob depth in metres, walking and sprinting, in first person; third person uses a third.
 @export var bob_walk := 0.025
 @export var bob_run := 0.055
-## Rate (rad/s) at which pitch recoil settles back once the trigger rests.
+## Rate (rad/s) at which pitch recoil settles back once the trigger rests, unless the rifle in the hands has its
+## own `recoil_recovery` in weapon_catalog.gd.
 @export var recoil_recovery := 0.35
-const RECOIL_SETTLE_DELAY := 0.12
-## Matches the character's stride, so the dip lands on each footstep.
+## A big climb comes back quicker than a small one: extra rate per radian still to recover.
+@export var recoil_recovery_stiffness := 3.0
+@export var recoil_settle_delay := 0.12
+## How fast each shot's kick reaches the view (per second): high enough to read as a shot, not a cut.
+@export var recoil_kick_rate := 45.0
+## Aiming narrows the field of view to this share, at this rate (per second).
+@export var ads_fov_scale := 0.62
+@export var ads_zoom_rate := 14.0
+## Seconds the view takes to travel from the shoulder to the sight, and back.
+@export var ads_view_seconds := 0.14
+## How fast (per second) the view follows a change of stance, and a swap of shoulder.
+@export var stance_camera_rate := 9.0
+@export var shoulder_swap_rate := 10.0
+## After an obstacle has shortened the boom it lengthens again at this speed (m/s) instead of popping out.
+@export var boom_recover_rate := 4.0
+## Radius of the ball the boom sweeps on foot: a ray alone flickers on poles and railings.
+@export var boom_probe_radius := 0.12
+## The landing dip: downward kick (m/s) at full strength, then a damped spring back to level.
+@export var landing_dip_speed := 1.7
+@export var landing_dip_stiffness := 110.0
+@export var landing_dip_damping := 14.0
+## Fallback only, when the body has no animated character to keep time with.
 const BOB_STRIDE := 1.5
+## Stride phase at which a foot is down, so the dip of the bob lands on the footstep.
+const BOB_PLANT_PHASE := 0.0
 var view_mode := ViewMode.THIRD_PERSON
 var looking_behind := false
 var _pitch: float = -0.18
@@ -74,6 +98,19 @@ var _recoil_debt := 0.0
 ## Third-person aim borrowed the first-person sight view and gives it back on release.
 var _ads_sight := false
 var _since_recoil := 0.0
+## Recoil on its way into the view: x pitch, y yaw.
+var _recoil_pending := Vector2.ZERO
+## 0 at the shoulder, 1 at the sight, while third-person aim travels to the sight view.
+var _ads_blend := 0.0
+## The boom's own length before obstacles, and the most it may be while recovering from one.
+var _boom_length := 7.0
+var _boom_limit := INF
+var _boom_exclude_timer := 0.0
+var _stance_target := 1.45
+var _mount_x := 0.0
+var _dip := 0.0
+var _dip_velocity := 0.0
+var _bob_offset := Vector2.ZERO
 
 func _process(delta: float) -> void:
 	if not _camera or not _camera.current or GameplayControls.blocked:
@@ -100,12 +137,20 @@ static func clamp_pitch_value(value: float, lower: float, upper: float) -> float
 
 func _ready() -> void:
 	_third_person_position = position
+	_mount_x = position.x
 	_set_level_mount(view_mode == ViewMode.THIRD_PERSON)
 	var spring_arm := get_node_or_null("SpringArm3D") as SpringArm3D
 	if spring_arm:
 		spring_arm.spring_length = camera_distance
+		_boom_length = camera_distance
 		spring_arm.margin = 0.45
 		spring_arm.collision_mask = 1
+		if _on_foot():
+			var probe := SphereShape3D.new()
+			probe.radius = boom_probe_radius
+			spring_arm.shape = probe
+			# A swept ball, unlike a ray, stops dead inside the capsule it starts in.
+			spring_arm.add_excluded_object((get_parent() as CollisionObject3D).get_rid())
 		_camera = spring_arm.get_node_or_null("Camera3D") as Camera3D
 		if _camera:
 			# A larger near plane keeps depth precision for road markings across the town.
@@ -178,6 +223,7 @@ func toggle_shoulder() -> void:
 
 func set_view_mode(mode: ViewMode) -> void:
 	_ads_sight = false
+	_ads_blend = 0.0
 	if mode == view_mode:
 		return
 	view_mode = mode
@@ -191,6 +237,7 @@ func set_view_mode(mode: ViewMode) -> void:
 	else:
 		if spring_arm:
 			spring_arm.spring_length = camera_distance
+			_boom_length = camera_distance
 		_yaw = _world_yaw()
 		_pitch = clamp_pitch_value(_pitch, min_pitch, max_pitch)
 		_apply_orbit_rotation()
@@ -204,8 +251,8 @@ func _switch_view_keep_aim(mode: ViewMode) -> void:
 		if spring_arm:
 			spring_arm.spring_length = 0.0
 	elif spring_arm:
-		# Start from the aiming boom so the view eases back out instead of jumping.
-		spring_arm.spring_length = 2.2
+		# Start at the eye (_ads_blend is 1): the view travels back out to the shoulder without a jump.
+		spring_arm.spring_length = 0.0
 	_pitch = clamp_pitch_value(_pitch, _min_pitch(), _max_pitch())
 	_set_level_mount(mode == ViewMode.THIRD_PERSON)
 
@@ -215,6 +262,17 @@ func is_sight_view() -> bool:
 
 func is_first_person() -> bool:
 	return view_mode == ViewMode.FIRST_PERSON
+
+## True while the eye is at the body's head: the model is hidden and the rifle is held to the view.
+func hides_body() -> bool:
+	return view_mode == ViewMode.FIRST_PERSON or _ads_blend > 0.7
+
+## Where the player is looking up or down (radians, + is up), for the upper body to follow.
+func aim_pitch() -> float:
+	return _pitch
+
+func _on_foot() -> bool:
+	return get_parent() is CharacterBody3D and get_parent().has_method("is_weapon_equipped")
 
 ## World yaw that walking directions are measured against; looking behind never flips WASD.
 func movement_yaw() -> float:
@@ -284,8 +342,35 @@ func _set_level_mount(_level: bool) -> void:
 	_apply_orbit_rotation()
 	reset_physics_interpolation()
 
-func _physics_process(_delta: float) -> void:
+func _physics_process(delta: float) -> void:
+	_settle_mount(delta)
+	_apply_recoil(delta)
 	_apply_orbit_rotation()
+
+## Stance height and shoulder side ease here, in the tick, so they are interpolated with the body.
+func _settle_mount(delta: float) -> void:
+	if not _on_foot():
+		return
+	var body := get_parent()
+	_stance_y = lerpf(_stance_y, _stance_target, 1.0 - exp(-stance_camera_rate * delta))
+	var side := -0.62 * _shoulder_sign if body.is_weapon_equipped() and body.get("combat_mode") == true else _third_person_position.x
+	_mount_x = lerpf(_mount_x, side, 1.0 - exp(-shoulder_swap_rate * delta))
+
+## A shot's kick arrives over a few ticks; applying it at once would be a step the interpolation cannot hide.
+func _apply_recoil(delta: float) -> void:
+	if _recoil_pending == Vector2.ZERO:
+		return
+	var step := _recoil_pending * (1.0 - exp(-recoil_kick_rate * delta))
+	if _recoil_pending.length_squared() < 0.0000001:
+		step = _recoil_pending
+	_recoil_pending -= step
+	_pitch = clamp_pitch_value(_pitch + step.x, _min_pitch(), _max_pitch())
+	_yaw += step.y
+
+## How far the camera trails the capsule's height (person_controller.gd), 0 for anything else.
+func _height_lag() -> float:
+	var lag: Variant = get_parent().get("camera_height_lag")
+	return float(lag) if lag != null else 0.0
 
 func _apply_orbit_rotation() -> void:
 	var body := get_parent() as Node3D
@@ -302,15 +387,23 @@ func _apply_orbit_rotation() -> void:
 		# roll above and the body's lean (docs/lessons/CHARACTERS.md).
 		var peek_lateral := Vector3(-_current_peek * 0.45, 0.0, 0.0)
 		var mount := _third_person_position
-		if body.has_method("is_weapon_equipped") and body.is_weapon_equipped() and body.get("combat_mode") == true:
-			mount.x = -0.62 * _shoulder_sign
-		if body.has_method("is_weapon_equipped"): mount.y = _stance_y
-		var offset := Basis(Vector3.UP, body_yaw) * (mount + peek_lateral)
+		var mount_yaw := body_yaw
+		if _on_foot():
+			mount.x = _mount_x
+			mount.y = _stance_y + _height_lag()
+			# With a rifle out the body chases the aim with some lag. The shoulder offset follows the aim itself, or
+			# the view would swing sideways on every turn while the body caught up.
+			if body.is_weapon_equipped() and body.get("combat_mode") == true and not looking_behind:
+				mount_yaw = _yaw + PI
+			mount = mount.lerp(Vector3(0.0, _stance_y + 0.12 + _height_lag(), 0.0), smoothstep(0.0, 1.0, _ads_blend))
+		var offset := Basis(Vector3.UP, mount_yaw) * (mount + peek_lateral)
 		transform = Transform3D(body_basis.inverse() * level, body_basis.inverse() * offset)
 		return
 	var body_yaw := _body_yaw()
 	if body and body.has_method("is_weapon_equipped") and body.get("combat_mode") == true:
-		position = Vector3(0.0, _stance_y + 0.12, 0.0)
+		position = Vector3(0.0, _stance_y + 0.12 + _height_lag(), 0.0)
+	elif _on_foot():
+		position.y = first_person_offset.y * _stance_y / 1.45 + _height_lag()
 	if looking_behind:
 		# GTA-style rear view: face backwards along the body, so first person looks out the back.
 		rotation = Vector3(0.0, 0.0, 0.0)
@@ -331,8 +424,11 @@ func _update_aim(delta: float) -> void:
 	var wants_aim: bool = body.get("combat_mode") == true and body.is_weapon_equipped() and (Input.is_action_pressed("aim") or touch_aim)
 	is_aiming = wants_aim
 	# BGMI/PUBG: aiming from third person looks down the sight in first person and
-	# returns to the shoulder view on release, without moving the aim point.
-	if wants_aim and view_mode == ViewMode.THIRD_PERSON:
+	# returns to the shoulder view on release, without moving the aim point. The view
+	# travels between the two (see _ads_blend) rather than cutting.
+	var borrow := wants_aim and (view_mode == ViewMode.THIRD_PERSON or _ads_sight)
+	_ads_blend = move_toward(_ads_blend, 1.0 if borrow else 0.0, delta / maxf(ads_view_seconds, 0.001))
+	if borrow and view_mode == ViewMode.THIRD_PERSON and _ads_blend >= 1.0:
 		_ads_sight = true
 		_switch_view_keep_aim(ViewMode.FIRST_PERSON)
 	elif not wants_aim and _ads_sight:
@@ -340,14 +436,35 @@ func _update_aim(delta: float) -> void:
 		_switch_view_keep_aim(ViewMode.THIRD_PERSON)
 	var running: bool = body.get("is_running") == true and not wants_aim
 	_run_blend = lerpf(_run_blend, 1.0 if running else 0.0, 1.0 - exp(-6.0 * delta))
-	var view_fov := first_person_fov if view_mode == ViewMode.FIRST_PERSON else _base_fov
-	var target_fov: float = view_fov * (0.62 if wants_aim else 1.0) + sprint_fov_boost * _run_blend
+	var view_fov := first_person_fov if view_mode == ViewMode.FIRST_PERSON else lerpf(_base_fov, first_person_fov, _ads_blend)
+	var target_fov: float = view_fov * (ads_fov_scale if wants_aim else 1.0) + sprint_fov_boost * _run_blend
 	if _camera:
-		_camera.fov = lerpf(_camera.fov, target_fov, 1.0 - exp(-14.0 * delta))
+		_camera.fov = lerpf(_camera.fov, target_fov, 1.0 - exp(-ads_zoom_rate * delta))
 	var spring_arm := get_node_or_null("SpringArm3D") as SpringArm3D
 	if spring_arm and view_mode == ViewMode.THIRD_PERSON:
 		var target_distance := (2.2 if wants_aim else 3.2) if body.is_weapon_equipped() and body.get("combat_mode") == true else camera_distance
-		spring_arm.spring_length = lerpf(spring_arm.spring_length, target_distance, 1.0 - exp(-14.0 * delta))
+		_boom_length = lerpf(_boom_length, target_distance, 1.0 - exp(-14.0 * delta))
+		_update_boom(spring_arm, delta)
+	_boom_exclude_timer -= delta
+	if spring_arm and _boom_exclude_timer <= 0.0:
+		_boom_exclude_timer = 1.0
+		# Other players are solid for the rifle but must not shove the view around.
+		for player in get_tree().get_nodes_in_group("network_players"):
+			spring_arm.add_excluded_object((player as CollisionObject3D).get_rid())
+
+## An obstacle shortens the boom at once (the camera must not enter the wall); when it clears, the boom lengthens at
+## boom_recover_rate instead of popping out. boom_recover_rate alone would also slow zooming, so _boom_limit only
+## applies from the moment something was hit until the boom has caught up.
+func _update_boom(spring_arm: SpringArm3D, delta: float) -> void:
+	var wanted := _boom_length * (1.0 - smoothstep(0.0, 1.0, _ads_blend))
+	var hit := spring_arm.get_hit_length()
+	if hit < spring_arm.spring_length - spring_arm.margin - 0.05:
+		_boom_limit = hit + spring_arm.margin
+	elif _boom_limit < wanted:
+		_boom_limit += boom_recover_rate * delta
+	else:
+		_boom_limit = INF
+	spring_arm.spring_length = minf(wanted, _boom_limit)
 
 func _update_peek(delta: float) -> void:
 	_current_peek = lerpf(_current_peek, target_peek, 1.0 - exp(-16.0 * delta))
@@ -372,9 +489,13 @@ func apply_gyro_sample(sample: Vector3, delta: float) -> void:
 	if amount != Vector2.ZERO:
 		_look(amount)
 
+## The view eases to a new stance height (_settle_mount); the capsule has already changed.
 func set_stance_height(height: float) -> void:
-	_stance_y = height
-	position.y = height
+	_stance_target = height
+
+## A landing: the view drops and springs back. `strength` is 0..1.
+func add_landing_dip(strength: float) -> void:
+	_dip_velocity -= landing_dip_speed * clampf(strength, 0.0, 1.0) * (0.5 if is_aiming else 1.0)
 
 func clear_touch_look() -> void:
 	_look_touch_index = -1
@@ -384,14 +505,11 @@ func clear_touch_look() -> void:
 	target_peek = 0
 	_gyro.reset()
 
-func add_recoil(pitch_kick: float = 0.022, yaw_kick: float = 0.008) -> void:
+func add_recoil(pitch_kick: float = 0.022, yaw_kick: float = 0.008, yaw_bias := 0.0) -> void:
 	_since_look = 0.0
-	_pitch = clamp_pitch_value(_pitch + pitch_kick, _min_pitch(), _max_pitch())
+	_recoil_pending += Vector2(pitch_kick, yaw_bias + (randf() - 0.5) * 2.0 * yaw_kick)
 	_recoil_debt += pitch_kick
 	_since_recoil = 0.0
-	var random_yaw := (randf() - 0.5) * 2.0 * yaw_kick
-	_yaw += random_yaw
-	_apply_orbit_rotation()
 
 ## Step-timed head bob through the camera's view offsets (the spring arm owns its
 ## position): a dip on each footstep and a sway per stride, stronger when sprinting
@@ -403,21 +521,32 @@ func _update_bob(delta: float) -> void:
 	var target := Vector2.ZERO
 	if body and body.has_method("is_weapon_equipped") and body.is_on_floor() and not is_aiming:
 		var speed := Vector2(body.velocity.x, body.velocity.z).length()
-		_bob_phase = fmod(_bob_phase + speed * delta / BOB_STRIDE * TAU, TAU)
+		# Keep time with the character's own stride, so the dip lands on the footstep at every speed.
+		var stride: float = body.stride_phase() if body.has_method("stride_phase") else -1.0
+		_bob_phase = fposmod((stride - BOB_PLANT_PHASE) * TAU, TAU) if stride >= 0.0 else fmod(_bob_phase + speed * delta / BOB_STRIDE * TAU, TAU)
 		var depth := lerpf(bob_walk, bob_run, _run_blend) * clampf(speed / 4.0, 0.0, 1.0)
 		if view_mode == ViewMode.THIRD_PERSON:
 			depth /= 3.0
 		target = Vector2(sin(_bob_phase) * depth * 0.6, -absf(sin(_bob_phase)) * depth)
 	var weight := 1.0 - exp(-18.0 * delta)
-	_camera.h_offset = lerpf(_camera.h_offset, target.x, weight)
-	_camera.v_offset = lerpf(_camera.v_offset, target.y, weight)
+	var step := minf(delta, 1.0 / 30.0)
+	_dip_velocity += (-landing_dip_stiffness * _dip - landing_dip_damping * _dip_velocity) * step
+	_dip += _dip_velocity * step
+	_bob_offset = _bob_offset.lerp(target, weight)
+	_camera.h_offset = _bob_offset.x
+	_camera.v_offset = _bob_offset.y + _dip
 
 ## After a burst the muzzle climb eases back down, as in BGMI, instead of leaving
 ## the view pointing at the sky.
 func _update_recoil_recovery(delta: float) -> void:
 	_since_recoil += delta
-	if _recoil_debt <= 0.0 or _since_recoil < RECOIL_SETTLE_DELAY:
+	if _recoil_debt <= 0.0 or _since_recoil < recoil_settle_delay:
 		return
-	var step := minf(_recoil_debt, recoil_recovery * delta)
+	var step := minf(_recoil_debt, maxf(_recoil_recovery_rate(), _recoil_debt * recoil_recovery_stiffness) * delta)
 	_recoil_debt -= step
 	_pitch = clamp_pitch_value(_pitch - step, _min_pitch(), _max_pitch())
+
+## The rifle in the hands sets how quickly its climb comes back (weapon_catalog.gd).
+func _recoil_recovery_rate() -> float:
+	var id: Variant = get_parent().get("weapon_id")
+	return float(Weapons.stats(int(id)).get("recoil_recovery", recoil_recovery)) if id != null else recoil_recovery
