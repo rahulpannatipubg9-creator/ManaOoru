@@ -298,6 +298,11 @@ func _switch_character() -> void:
 		_show_control_hint("CHARACTER: %s  •  Tab to switch" % selected)
 
 func _handle_menu_input() -> void:
+	var pause_menu: CanvasLayer = hud.settings_menu.pause_menu
+	if pause_menu.owns_keys():
+		_pause_was_pressed = Input.is_action_pressed("pause")
+		_map_was_pressed = Input.is_action_pressed("map_toggle")
+		return
 	if city_life and city_life.has_modal():
 		var close_pressed := Input.is_action_pressed("pause")
 		if close_pressed and not _pause_was_pressed:
@@ -315,7 +320,7 @@ func _handle_menu_input() -> void:
 		if _map_open:
 			set_map_open(false)
 		else:
-			_set_menu_paused(not _paused)
+			pause_menu.open_menu()
 	_pause_was_pressed = pause_pressed
 	var zoom_in := Input.is_action_pressed("minimap_zoom_in")
 	var zoom_out := Input.is_action_pressed("minimap_zoom_out")

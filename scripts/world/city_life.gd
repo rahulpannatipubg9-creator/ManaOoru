@@ -5,6 +5,11 @@ const EnvironmentController := preload("res://scripts/world/city_environment.gd"
 const CommunityController := preload("res://scripts/world/city_community.gd")
 const Interior := preload("res://scripts/world/city_shop_interior.gd")
 const SAVE_PATH := "user://city_life_v1.json"
+const MODAL_WIDTH := 420.0
+const JOURNAL_LIST_HEIGHT := 400.0
+const JOURNAL_SHOPS := 6
+## Where Esc and Back lead, when a pop-up was opened from another screen.
+var modal_back: Callable
 var environment: Node3D
 var community: Node3D
 var targets: Array[Dictionary] = []
@@ -22,6 +27,8 @@ var _ui: CanvasLayer
 var _bar: Label
 var _modal: PanelContainer
 var _modal_root: ColorRect
+var _modal_header: HBoxContainer
+var _modal_back_button: Button
 var _shop_feedback: Label
 var _interior: Node3D
 var _inside_record: Dictionary = {}
@@ -159,8 +166,7 @@ func purchase(product: String) -> bool:
 	return true
 
 func _buy(product: String) -> void:
-	var success := purchase(product)
-	_shop_feedback.text = "%s purchased • %d coins left" % [product.capitalize(), _game.hud.coins_available()] if success else "Not enough coins • explore for rewards"
+	_refresh_wallet(_shop_feedback, purchase(product))
 
 func enter_interior(shop: Dictionary) -> void:
 	if inside_shop:
@@ -393,57 +399,123 @@ func toast(text: String) -> void:
 func has_modal() -> bool:
 	return is_instance_valid(_modal)
 
-func _new_modal(title: String) -> VBoxContainer:
+## Builds the shared pop-up: a dim screen, a card sized to its content, a title and Back.
+## Callers fill the returned column. Esc and Back both go through back_modal.
+func _new_modal(title: String, width := MODAL_WIDTH) -> VBoxContainer:
 	close_modal()
 	_mouse_before = Input.mouse_mode
 	_game._clear_control_inputs()
-	_game.get_tree().paused = true
+	_game.pause_tree(true)
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	_modal_root = ColorRect.new()
-	_modal_root.color = Color(0.02, 0.03, 0.045, 0.78)
-	_modal_root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_modal_root.theme = UiTheme.theme()
+	UiTheme.make_dim(_modal_root)
 	_ui.add_child(_modal_root)
 	_modal = PanelContainer.new()
-	var background := StyleBoxFlat.new()
-	background.bg_color = Color(0.035, 0.055, 0.08, 0.98)
-	background.set_corner_radius_all(12)
-	background.border_color = Color(0.2, 0.38, 0.47)
-	background.set_border_width_all(1)
-	_modal.add_theme_stylebox_override("panel", background)
-	var theme := Theme.new()
-	theme.set_color("font_color", "Label", Color("edf4f7"))
-	theme.set_color("font_color", "Button", Color("edf4f7"))
-	_modal.theme = theme
+	_modal.custom_minimum_size.x = width
 	_modal.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
-	_modal.offset_left = -235
-	_modal.offset_right = 235
-	_modal.offset_top = -245
-	_modal.offset_bottom = 245
+	_modal.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	_modal.grow_vertical = Control.GROW_DIRECTION_BOTH
 	_modal_root.add_child(_modal)
 	var margin := MarginContainer.new()
 	for side: String in ["left", "right", "top", "bottom"]:
-		margin.add_theme_constant_override("margin_" + side, 18)
+		margin.add_theme_constant_override("margin_" + side, UiTheme.SPACE_S)
 	_modal.add_child(margin)
-	var column := VBoxContainer.new()
-	column.add_theme_constant_override("separation", 10)
-	margin.add_child(column)
+	var page := VBoxContainer.new()
+	page.add_theme_constant_override("separation", UiTheme.SPACE_M)
+	margin.add_child(page)
+	_modal_header = HBoxContainer.new()
+	_modal_header.add_theme_constant_override("separation", UiTheme.SPACE_S)
+	page.add_child(_modal_header)
 	var heading := Label.new()
 	heading.text = title
-	heading.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	heading.add_theme_font_size_override("font_size", 22)
-	column.add_child(heading)
+	heading.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	heading.add_theme_font_size_override("font_size", UiTheme.FONT_TITLE)
+	_modal_header.add_child(heading)
+	_modal_back_button = _button(_modal_header, "Back", back_modal)
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", UiTheme.SPACE_S)
+	page.add_child(column)
+	_focus_modal.call_deferred(column)
+	_modal_root.create_tween().tween_property(_modal_root, "modulate:a", 1.0, UiTheme.MOTION_FAST).from(0.01)
 	return column
 
+## Keyboard players start on the first choice, or on Back when there is none.
+func _focus_modal(column: VBoxContainer) -> void:
+	if not is_instance_valid(column):
+		return
+	for found: Node in column.find_children("*", "BaseButton", true, false):
+		if found.is_visible_in_tree() and not found.disabled:
+			found.grab_focus()
+			return
+	_modal_back_button.grab_focus()
+
+## Closes the pop-up to the game. Choices that act on the world use this.
 func close_modal() -> void:
 	if not has_modal():
 		return
 	_modal_root.queue_free()
 	_modal = null
 	_modal_root = null
+	modal_back = Callable()
 	_game.get_tree().paused = false
 	_game._clear_control_inputs()
 	Input.mouse_mode = _mouse_before
 	_game._sync_input_context()
+
+## Esc and Back: closes the pop-up and returns to the screen that opened it, if any.
+func back_modal() -> void:
+	var previous := modal_back
+	close_modal()
+	if previous.is_valid():
+		previous.call()
+
+## A small marigold value such as a price. Used in rows and modal headers.
+func _chip(text: String) -> Label:
+	var chip := Label.new()
+	chip.text = text
+	chip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	chip.add_theme_font_size_override("font_size", UiTheme.FONT_SMALL)
+	chip.add_theme_color_override("font_color", UiTheme.ACCENT)
+	var style := UiTheme.box(UiTheme.INK, UiTheme.RADIUS_PILL)
+	style.set_content_margin(SIDE_LEFT, UiTheme.SPACE_S + UiTheme.SPACE_XS)
+	style.set_content_margin(SIDE_RIGHT, UiTheme.SPACE_S + UiTheme.SPACE_XS)
+	style.set_content_margin(SIDE_TOP, UiTheme.SPACE_XS)
+	style.set_content_margin(SIDE_BOTTOM, UiTheme.SPACE_XS)
+	chip.add_theme_stylebox_override("normal", style)
+	return chip
+
+## A chip in the modal's title row, left of Back.
+func _header_chip(text: String) -> Label:
+	var chip := _chip(text)
+	chip.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_modal_header.add_child(chip)
+	_modal_header.move_child(chip, _modal_back_button.get_index())
+	return chip
+
+## A button in the modal's title row, left of Back.
+func _header_button(text: String, callback: Callable) -> Button:
+	var button := _button(_modal_header, text, callback)
+	_modal_header.move_child(button, _modal_back_button.get_index())
+	return button
+
+## The wallet chip. It turns red when a purchase fails.
+func _refresh_wallet(chip: Label, afforded := true) -> void:
+	chip.text = "%d coins" % _game.hud.coins_available()
+	chip.add_theme_color_override("font_color", UiTheme.ACCENT if afforded else UiTheme.DANGER)
+
+## A short choice: a name on the left and, when given, a chip on the right.
+func _row(parent: Node, text: String, chip_text: String, callback: Callable) -> Button:
+	var button := _button(parent, text, callback)
+	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	if not chip_text.is_empty():
+		var chip := _chip(chip_text)
+		button.add_child(chip)
+		chip.set_anchors_and_offsets_preset(Control.PRESET_CENTER_RIGHT, Control.PRESET_MODE_MINSIZE, UiTheme.SPACE_S)
+		chip.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+		chip.grow_vertical = Control.GROW_DIRECTION_BOTH
+	return button
 
 func open_shop(shop: Dictionary) -> void:
 	if shop.has("market_id") and _game.gameplay and _game.gameplay.market:
@@ -452,64 +524,55 @@ func open_shop(shop: Dictionary) -> void:
 	if has_modal() or _game.control_state != _game.ControlState.ON_FOOT:
 		return
 	var column := _new_modal(str(shop.name))
-	_shop_feedback = Label.new()
-	_shop_feedback.text = "Wallet: %d coins" % _game.hud.coins_available()
-	column.add_child(_shop_feedback)
-	_button(column, "Tea • 1 coin • +15 energy", func() -> void: _buy("tea"))
-	_button(column, "Snack • 2 coins • +30 energy", func() -> void: _buy("snack"))
+	_shop_feedback = _header_chip("")
+	_refresh_wallet(_shop_feedback)
+	_row(column, "Tea", "1", func() -> void: _buy("tea"))
+	_row(column, "Snack", "2", func() -> void: _buy("snack"))
 	if str(shop.get("kind", "")) in ["fuel", "car_wash"]:
-		_button(column, "Refuel • 3 coins • +35% fuel", func() -> void: _buy("fuel"))
+		_row(column, "Refuel", "3", func() -> void: _buy("fuel"))
 	if not inside_shop:
-		_button(column, "Step inside", func() -> void: enter_interior(shop))
-	_button(column, "Back to street" if not inside_shop else "Back to counter", close_modal)
+		_row(column, "Step inside", "", func() -> void: enter_interior(shop))
 
 func open_journal() -> void:
 	if has_modal() or _game.get_tree().paused:
 		return
-	var column := _new_modal("Your Godavarikhani journal")
-	var summary := Label.new()
-	summary.text = "%d discoveries • %d coins • %d achievements\nExplore three places for a 10-coin bonus." % [discoveries.size(), _game.hud.coins_available(), achievements.size()]
-	summary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	column.add_child(summary)
+	var column := _new_modal("Journal", MODAL_WIDTH + UiTheme.SPACE_XL)
+	_header_chip("%d found" % discoveries.size())
 	var scroll := ScrollContainer.new()
-	scroll.custom_minimum_size.y = 190
+	scroll.custom_minimum_size.y = JOURNAL_LIST_HEIGHT
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.follow_focus = true
 	column.add_child(scroll)
 	var list := VBoxContainer.new()
+	list.add_theme_constant_override("separation", UiTheme.SPACE_XS)
 	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.add_child(list)
 	for target: Dictionary in targets:
 		if target.kind == "token" and not discoveries.has(target.id):
 			continue
-		var record: Dictionary = target
-		_button(list, ("✓ " if discoveries.has(target.id) else "○ ") + str(target.name), func() -> void:
-			close_modal()
-			_game.navigator.set_destination(Vector2(record.position.x, record.position.z), record.name)
-			toast("GPS set: %s" % record.name))
-	for entry: Dictionary in _world.local_activity.shop_entries + _fuel_stops:
-		var shop: Dictionary = entry
-		_button(list, "Shop: " + str(shop.name), func() -> void:
-			close_modal()
-			_game.navigator.set_destination(Vector2(shop.position.x, shop.position.z), shop.name)
-			toast("Shop route set: %s" % shop.name))
-	var times := HBoxContainer.new()
-	column.add_child(times)
-	for value: int in [8, 17, 21]:
-		var h := value
-		_button(times, "Wait until %02d:00" % h, func() -> void: environment.set_hour(h))
-	var volume := HSlider.new()
-	volume.min_value = 0
-	volume.max_value = 1
-	volume.step = 0.05
-	volume.value = environment.ambience.volume
-	volume.tooltip_text = "City ambience volume"
-	volume.value_changed.connect(func(value: float) -> void: environment.ambience.volume = value)
-	column.add_child(volume)
-	_button(column, "Return to city", close_modal)
+		var found := discoveries.has(target.id)
+		var row := _gps_row(list, target, "" if found else "+%d" % (3 if target.kind == "token" else 5))
+		if found:
+			row.add_theme_color_override("font_color", UiTheme.TEXT_MUTED)
+	var here: Vector3 = _game.tracked_body().global_position
+	var shops: Array[Dictionary] = []
+	shops.append_array(_world.local_activity.shop_entries)
+	shops.append_array(_fuel_stops)
+	shops.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		return here.distance_squared_to(a.position) < here.distance_squared_to(b.position))
+	for shop: Dictionary in shops.slice(0, JOURNAL_SHOPS):
+		_gps_row(list, shop, "Shop")
+
+func _gps_row(list: Node, place: Dictionary, chip: String) -> Button:
+	return _row(list, str(place.name), chip, func() -> void:
+		close_modal()
+		_game.navigator.set_destination(Vector2(place.position.x, place.position.z), place.name)
+		toast("GPS set: %s" % place.name))
 
 func _button(parent: Node, text: String, callback: Callable) -> Button:
 	var button := Button.new()
 	button.text = text
-	button.custom_minimum_size.y = 34
+	button.custom_minimum_size.y = UiTheme.TOUCH_TARGET
 	button.pressed.connect(callback)
 	parent.add_child(button)
 	return button

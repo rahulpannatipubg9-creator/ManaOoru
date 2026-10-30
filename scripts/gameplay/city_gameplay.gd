@@ -3,6 +3,12 @@ extends Node3D
 const Pursuer := preload("res://scripts/gameplay/pursuer.gd")
 const CityAssets := preload("res://scripts/gameplay/city_assets.gd")
 const Weapons := preload("res://scripts/gameplay/weapon_catalog.gd")
+const BOARD_WIDTH := 1120.0
+const BOARD_JOBS := [["story", "Story", ""], ["delivery", "Delivery", "+20"], ["taxi", "Taxi", "+20"], ["race", "Race", "+30"],
+	["ambulance", "Ambulance", "+20"], ["firefighter", "Fire", "+20"], ["vigilante", "Vigilante", "+20"], ["gang", "Gang", "+20"]]
+const BOARD_SUPPLIES := [["medkit", "Medkit", "5"], ["armour", "Armour", "8"], ["ammo", "Ammo", "4"], ["grenades", "Grenades x3", "6"]]
+const BOARD_VEHICLES := [["motorcycle", "Motorcycle"], ["scooter", "Scooter"], ["police", "Police"],
+	["ambulance", "Ambulance"], ["boat", "Boat"], ["plane", "Plane"]]
 var passenger: Node3D
 var market: Node3D
 var spoken_dialogue := false
@@ -242,10 +248,10 @@ func _refresh_status() -> void:
 		_status.text += "\n%s • %s • %ds" % [mission.title, mission.stage, ceili(mission.time)]
 	_crosshair.visible = action_mode and game.control_state == game.ControlState.ON_FOOT and not game.is_map_open()
 
-func _open(title: String) -> VBoxContainer:
+func _open(title: String, width: float = 0.0) -> VBoxContainer:
 	if life.has_modal() or get_tree().paused or game.is_map_open():
 		return null
-	return life._new_modal(title)
+	return life._new_modal(title, width if width > 0.0 else life.MODAL_WIDTH)
 
 func _button(column: Node, title: String, callback: Callable) -> void:
 	life._button(column, title, callback)
@@ -253,59 +259,82 @@ func _button(column: Node, title: String, callback: Callable) -> void:
 func open_board() -> void:
 	if tdm_active:
 		return
-	var column := _open("City activities")
+	var column := _open("Activities", BOARD_WIDTH)
 	if column == null:
 		return
-	var scroll := ScrollContainer.new()
-	scroll.custom_minimum_size = Vector2(440, 320)
-	column.add_child(scroll)
-	var list := VBoxContainer.new()
-	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.add_child(list)
-	var info := Label.new()
-	info.text = "Jobs follow the GPS and gold checkpoint. Stop inside it.\n1 equip • 2 switch rifle • Click fire/punch • Right-click aim • Y reload\nG grenade • K medkit • Hold O to help\nP surrender • J talk • U vault • F8 radio"
-	info.text += "\nInventory: %d medkits • %d businesses • %d jobs completed" % [medkits, properties.size(), completed]
-	info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	list.add_child(info)
-	_button(list, "Visit market • GPS", func() -> void:
-		life.close_modal()
-		market.visit())
-	_button(list, "Market produce delivery • 12 coins", func() -> void:
+	life._header_button("Journal", _board_to_journal)
+	var wallet: Label = life._header_chip("")
+	life._refresh_wallet(wallet)
+	var groups := HBoxContainer.new()
+	groups.add_theme_constant_override("separation", UiTheme.SPACE_M)
+	column.add_child(groups)
+	var jobs := _board_group(groups, "Jobs", 2, 2.0)
+	for item: Array in BOARD_JOBS:
+		var job: String = item[0]
+		life._row(jobs, item[1], item[2], func() -> void:
+			life.close_modal()
+			start_mission(job)).disabled = job == "story" and story_step >= 3
+	life._row(jobs, "Market run", "+12", func() -> void:
 		life.close_modal()
 		market.start_delivery())
-	for kind in ["story", "delivery", "taxi", "race", "ambulance", "firefighter", "vigilante", "gang"]:
-		var job: String = kind
-		_button(list, "Start " + job.capitalize(), func() -> void:
-			life.close_modal()
-			start_mission(job))
-	if not mission.is_empty():
-		_button(list, "Cancel current activity", func() -> void:
-			end_mission(false, "Activity cancelled")
-			life.close_modal())
-	_button(list, "Mode: " + ("Action" if action_mode else "Peaceful exploration"), func() -> void:
-		set_action_mode(not action_mode)
-		life.close_modal())
-	_button(list, "Squad Multiplayer (Host / Join Room)", func() -> void:
+	life._row(jobs, "Find market", "GPS", func() -> void:
 		life.close_modal()
-		if game.hud and game.hud.has_method("toggle_multiplayer_panel"):
-			game.hud.toggle_multiplayer_panel())
-	_button(list, "Spoken dialogue: " + ("On" if spoken_dialogue else "Off"), func() -> void:
-		spoken_dialogue = not spoken_dialogue
-		life.close_modal()
-		life.toast("Spoken dialogue " + ("enabled" if spoken_dialogue else "disabled")))
-	_button(list, "Repair nearest vehicle • 5 coins", func() -> void: repair_nearby())
-	_button(list, "Medkit • 5 coins", func() -> void: buy_supply("medkit"))
-	_button(list, "Armour • 8 coins", func() -> void: buy_supply("armour"))
-	_button(list, "Ammo • 4 coins", func() -> void: buy_supply("ammo"))
-	_button(list, "3 grenades • 6 coins", func() -> void: buy_supply("grenades"))
-	_button(list, "Buy local business • 80 coins", func() -> void: buy_property())
-	for kind in ["motorcycle", "scooter", "police", "ambulance", "boat", "plane"]:
-		var vehicle_kind: String = kind
-		_button(list, "Try " + vehicle_kind + " (blockout)", func() -> void:
+		market.visit())
+	var shop := _board_group(groups, "Shop", 1, 1.0)
+	for item: Array in BOARD_SUPPLIES:
+		var supply: String = item[0]
+		life._row(shop, item[1], item[2], func() -> void: life._refresh_wallet(wallet, buy_supply(supply)))
+	life._row(shop, "Business", "80", func() -> void: life._refresh_wallet(wallet, buy_property()))
+	var vehicles := _board_group(groups, "Vehicles", 2, 2.0)
+	life._row(vehicles, "Repair", "5", func() -> void: life._refresh_wallet(wallet, repair_nearby()))
+	for item: Array in BOARD_VEHICLES:
+		var vehicle_kind: String = item[0]
+		life._row(vehicles, item[1], "", func() -> void:
 			life.close_modal()
 			spawn_extra_vehicle(vehicle_kind))
-	_button(list, "Return to city", life.close_modal)
-	_button(column, "Close", life.close_modal)
+	var footer := HBoxContainer.new()
+	footer.add_theme_constant_override("separation", UiTheme.SPACE_S)
+	column.add_child(footer)
+	var mode := CheckButton.new()
+	mode.text = "Action mode"
+	mode.custom_minimum_size.y = UiTheme.TOUCH_TARGET
+	mode.button_pressed = action_mode
+	mode.toggled.connect(set_action_mode)
+	footer.add_child(mode)
+	if not mission.is_empty():
+		var spacer := Control.new()
+		spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		footer.add_child(spacer)
+		_button(footer, "Cancel job", func() -> void:
+			end_mission(false, "Activity cancelled")
+			life.close_modal())
+
+## One titled block of cards on the Activities board. Returns the grid to fill.
+func _board_group(parent: Node, title: String, columns: int, width_share: float) -> GridContainer:
+	var block := VBoxContainer.new()
+	block.add_theme_constant_override("separation", UiTheme.SPACE_S)
+	block.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	block.size_flags_stretch_ratio = width_share
+	parent.add_child(block)
+	var heading := Label.new()
+	heading.text = title
+	heading.add_theme_color_override("font_color", UiTheme.TEXT_MUTED)
+	block.add_child(heading)
+	var grid := GridContainer.new()
+	grid.columns = columns
+	grid.add_theme_constant_override("h_separation", UiTheme.SPACE_XS)
+	grid.add_theme_constant_override("v_separation", UiTheme.SPACE_XS)
+	block.add_child(grid)
+	return grid
+
+## The journal's Back returns here, and this board's Back still leads where it did.
+func _board_to_journal() -> void:
+	var previous: Callable = life.modal_back
+	life.close_modal()
+	life.open_journal()
+	life.modal_back = func() -> void:
+		open_board()
+		life.modal_back = previous
 
 func _job_points() -> Array[Vector3]:
 	var start: Vector3 = game.tracked_body().global_position
@@ -868,18 +897,17 @@ func talk_nearby() -> bool:
 	if nearest.has_meta("market_shop") and market:
 		market.open_shop(nearest.get_meta("market_shop"))
 		return true
-	var column := _open("Neighbourhood conversation")
+	var column := _open("Neighbour")
 	if column == null:
 		return false
 	var text := Label.new()
-	text.text = "Hello! Local shops need deliveries. Try the Activities board.\nThe market is lively in the day. Drive carefully near crossings."
+	text.text = "Local shops need deliveries."
 	text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	column.add_child(text)
 	_speak(text.text)
-	_button(column, "Ask for delivery work", func() -> void:
+	life._row(column, "Delivery work", "+20", func() -> void:
 		life.close_modal()
 		start_mission("delivery"))
-	_button(column, "Goodbye", life.close_modal)
 	return true
 
 func cycle_radio() -> void:
