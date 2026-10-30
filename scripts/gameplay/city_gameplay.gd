@@ -256,12 +256,6 @@ func _process(delta: float) -> void:
 			life.toast("Police alerted")
 	_last_driving = driving
 	_radio.stream_paused = not driving
-	if game.control_state == game.ControlState.ON_FOOT and game.person.is_on_floor() and game.person.velocity.length() > 0.5:
-		_foot_timer -= delta
-		if _foot_timer <= 0.0:
-			_foot_timer = 0.28 if game.person.is_running else 0.45
-			_audio.step.pitch_scale = randf_range(0.9, 1.1)
-			_audio.step.play()
 	_refresh_crosshair()
 
 ## Vitals, ammo, wanted and the objective are read from here by the HUD itself (hud.gd _read_game_state).
