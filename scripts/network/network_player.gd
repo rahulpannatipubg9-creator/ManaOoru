@@ -23,6 +23,8 @@ var aiming := false
 var _aim_blend := 0.0
 var _alive := true
 var _hide_at_msec := -1
+## Squad: when an eliminated player may reappear; -1 while they are not eliminated.
+var _return_at_msec := -1
 ## How long a dead player's body stays on the ground before it disappears.
 const BODY_SECONDS := 2.5
 
@@ -259,7 +261,7 @@ func _update_overhead_display() -> void:
 	_overhead_label.text = nickname
 	if is_downed:
 		_overhead_label.modulate = Color(1.0, 0.25, 0.25, 1.0)
-		_overhead_status.text = "⚠️ DOWNED (%.0fs) • HOLD [H] TO REVIVE" % bleedout_time
+		_overhead_status.text = "Down %.0fs  [H] Revive" % bleedout_time
 		_overhead_status.modulate = Color(1.0, 0.3, 0.3, 1.0)
 	else:
 		_overhead_label.modulate = Color(0.4, 0.85, 1.0, 1.0)
@@ -322,9 +324,8 @@ func _process(delta: float) -> void:
 
 	# Downed bleedout handling
 	if is_downed:
+		# Only a countdown for the name tag: the host decides when they are out (network_manager.gd).
 		bleedout_time = maxf(0.0, bleedout_time - delta)
-		if bleedout_time <= 0.0 and network_manager and network_manager.has_method("notify_player_eliminated"):
-			network_manager.notify_player_eliminated(peer_id)
 
 	if tdm_mode:
 		_step_timer -= delta
@@ -510,6 +511,33 @@ func tdm_claim_hit(hit_position: Vector3, origin: Vector3, weapon_used := Weapon
 	if network_manager != null and network_manager.tdm != null and network_manager.tdm.active:
 		network_manager.tdm.claim_hit(peer_id, is_head_hit(hit_position.y), origin, hit_position, weapon_used)
 
+func set_nickname(value: String) -> void:
+	nickname = value
+	_update_overhead_display()
+
+## Squad elimination: the body falls where they died, then try_return() brings them back.
+func set_eliminated() -> void:
+	is_downed = false
+	stance = 0
+	set_tdm_alive(false, false)
+	_return_at_msec = Time.get_ticks_msec() + int(BODY_SECONDS * 1000.0)
+
+func is_eliminated() -> bool:
+	return _return_at_msec >= 0
+
+## Called with each position they report. Once the body has had its time they appear there, without
+## sliding across the map from where they died.
+func try_return(position_now: Vector3) -> bool:
+	if Time.get_ticks_msec() < _return_at_msec:
+		return false
+	_return_at_msec = -1
+	health = max_health
+	global_position = position_now
+	_target_position = position_now
+	_previous_position = position_now
+	set_tdm_alive(true, false)
+	return true
+
 func set_downed(down: bool) -> void:
 	is_downed = down
 	if down:
@@ -537,6 +565,7 @@ func take_damage(amount: float) -> void:
 
 func apply_local_damage(amount: float, hit_zone: String) -> void:
 	health = clampf(health - amount, 0.0, max_health)
-	if health <= 0.0 and not is_downed:
+	# With a network, only the host's word puts someone down: their armour may have saved them.
+	if health <= 0.0 and not is_downed and network_manager == null:
 		set_downed(true)
 	_update_overhead_display()

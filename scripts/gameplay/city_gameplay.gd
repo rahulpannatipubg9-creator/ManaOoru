@@ -627,7 +627,9 @@ func try_loot_nearby() -> bool:
 		if is_instance_valid(node) and node.has_method("collect"):
 			if player_pos.distance_to(node.global_position) < 2.5:
 				var loot: Dictionary = node.collect(game.person, self)
-				life.toast("Looted crate: +%d Ammo, +%d Medkits, +%d Coins" % [loot.get("ammo", 0), loot.get("medkits", 0), loot.get("coins", 0)])
+				if loot.is_empty():
+					continue
+				life.toast("+%d ammo  +%d medkit  +%d coins" % [loot.get("ammo", 0), loot.get("medkits", 0), loot.get("coins", 0)])
 				return true
 	return false
 
@@ -786,6 +788,10 @@ func _respawn() -> void:
 		game.active_vehicle.set_driving_enabled(false)
 		game.control_state = game.ControlState.EXITING
 		game._finish_exit_vehicle()
+	# In a squad, running out of health knocks you down for teammates to revive; there is no trip home.
+	if game.get("network_manager") and game.network_manager.is_active():
+		game.network_manager.knock_down_local()
+		return
 	game.person.global_position = game.person.respawn_position
 	game.person.velocity = Vector3.ZERO
 	game.person.heal_full()
