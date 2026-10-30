@@ -175,7 +175,7 @@ func setup(data: MapData, is_excluded: Callable) -> void:
 		var document: Variant = JSON.parse_string(FileAccess.get_file_as_string(APPEARANCE_REFERENCES_PATH))
 		if document is Dictionary and document.get("buildings") is Dictionary:
 			appearance_references = document.buildings
-preload("res://scripts/performance/startup_profile.gd").mark("  setup: head")
+	preload("res://scripts/performance/startup_profile.gd").mark("  setup: head")
 	for building in data.buildings:
 		var points: PackedVector2Array = building.points
 		var area := _signed_area(points)
@@ -263,7 +263,7 @@ func _assign_boards() -> void:
 	var reasons := {}
 	for record: Dictionary in storefront_allocator.unplaced:
 		reasons[record.reason] = int(reasons.get(record.reason, 0)) + 1
-preload("res://scripts/performance/startup_profile.gd").mark("    boards: allocate")
+	preload("res://scripts/performance/startup_profile.gd").mark("    boards: allocate")
 	var report := {"businesses": storefront_allocator.businesses, "storefronts": storefront_allocator.units,
 		"assignments": storefront_allocator.assignments, "unplaced": storefront_allocator.unplaced, "reasons": reasons}
 	var file := FileAccess.open("user://signage_placement_report.json", FileAccess.WRITE)

@@ -195,9 +195,8 @@ func _process(delta: float) -> void:
 			node.visible = false
 
 func _match_hidden() -> Array[CanvasItem]:
-	var nodes: Array[CanvasItem] = [$Panel, $Offline, $TouchControls/Reset, $TouchControls/Enter, $TouchControls/LookHint]
-	for node in [compass_bar, btn_multiplayer_toggle, btn_bridge_travel, net_room_banner, btn_gyro_mode, btn_medkit, btn_grenade,
-			btn_talk, btn_surrender, btn_help, btn_mode, btn_character, btn_free_look, btn_revive, btn_loot]:
+	var nodes: Array[CanvasItem] = [$TouchControls/Enter]
+	for node in [compass_bar, net_room_banner, btn_wheel, btn_revive, btn_loot]:
 		if is_instance_valid(node):
 			nodes.append(node)
 	return nodes
@@ -214,7 +213,6 @@ func set_match_mode(value: bool) -> void:
 		# These have their own conditions and come back when those hold.
 		for node: CanvasItem in [$TouchControls/Enter, btn_revive, btn_loot]:
 			node.visible = false
-		$Offline.visible = not _touch_overlay_enabled
 
 func _driving() -> bool:
 	return _game != null and _game.control_state == _game.ControlState.DRIVING

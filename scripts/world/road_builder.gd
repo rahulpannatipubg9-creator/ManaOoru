@@ -91,7 +91,7 @@ func build(data: MapData) -> void:
 		else:
 			_add_road(road)
 			topoexport_rendered_count += 1
-preload("res://scripts/performance/startup_profile.gd").mark("  road: topo")
+	preload("res://scripts/performance/startup_profile.gd").mark("  road: topo")
 	for crossing in data.crossings:
 		_add_zebra(crossing, data)
 	for barrier in data.barriers:
@@ -103,7 +103,7 @@ preload("res://scripts/performance/startup_profile.gd").mark("  road: topo")
 	for area in data.areas:
 		if area.kind == "stadium":
 			_add_compound_wall(area.points, data)
-preload("res://scripts/performance/startup_profile.gd").mark("  road: zebra walls rail")
+	preload("res://scripts/performance/startup_profile.gd").mark("  road: zebra walls rail")
 	_commit()
 	preload("res://scripts/performance/startup_profile.gd").mark("  road: commit")
 
