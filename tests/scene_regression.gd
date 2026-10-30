@@ -21,7 +21,7 @@ func _init() -> void:
 	assert(world.buildings.facade_board_count() > 0, "Building shopfront signs must be assigned")
 	var atlas: Variant = JSON.parse_string(FileAccess.get_file_as_string(BuildingBuilder.BOARDS_PATH))
 	for poi in world.map_data.pois:
-		if str(poi.name).is_empty():
+		if str(poi.name).is_empty() or not poi.get("position_verified", true):
 			continue
 		var found := false
 		for board: Dictionary in atlas.boards:

@@ -51,7 +51,19 @@ func apply_settings() -> void:
 		var original: float = _base_distances[geometry.get_instance_id()]
 		geometry.visibility_range_end = minf(original, budget.distance) if original > 0.0 else budget.distance
 	for light in _shadow_defaults:
-		if is_instance_valid(light): light.shadow_enabled = _shadow_defaults[light] and budget.shadows
+		if is_instance_valid(light):
+			light.shadow_enabled = _shadow_defaults[light] and budget.shadows
+			if light is DirectionalLight3D and budget.shadows:
+				var cascade: int = int(budget.get("shadow_cascade", 1))
+				if cascade == 1:
+					light.directional_shadow_mode = DirectionalLight3D.SHADOW_ORTHOGONAL
+				elif cascade == 2:
+					light.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS
+				else:
+					light.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
+				var dist: float = float(budget.get("shadow_distance", 35.0))
+				if dist > 0.0:
+					light.directional_shadow_max_distance = dist
 	if game.city_life and game.city_life.environment:
 		game.city_life.environment.effects_budget = budget.effects
 	_timer = 0.0

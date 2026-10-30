@@ -787,12 +787,20 @@ func _current_profile() -> StringName:
 	var action: bool = _game.gameplay != null and _game.gameplay.action_mode
 	return HudLayoutProfiles.profile_for(_game.control_state == _game.ControlState.DRIVING, action)
 
+var _tablet_inset_override := false
+
+func set_tablet_ergonomics_inset(enabled: bool) -> void:
+	if _tablet_inset_override != enabled:
+		_tablet_inset_override = enabled
+		if _touch_overlay_enabled:
+			_layout_touch(get_viewport().get_visible_rect().size)
+
 ## The default (uncustomised) layout for this screen, and what the editor shows for it.
 func _layout_context(profile: StringName) -> Dictionary:
 	var viewport_size := get_viewport().get_visible_rect().size
 	var dpi := float(DisplayServer.screen_get_dpi())
 	var units_mm := ClawLayout.units_per_mm(viewport_size, Vector2(DisplayServer.window_get_size()), dpi)
-	var tablet := ClawLayout.is_tablet(Vector2(DisplayServer.screen_get_size()), dpi)
+	var tablet := ClawLayout.is_tablet(Vector2(DisplayServer.screen_get_size()), dpi) or _tablet_inset_override
 	var safe := ClawLayout.canvas_safe_rect(get_viewport())
 	return {
 		"rects": ClawLayout.compute(viewport_size, safe, units_mm, tablet, touch_settings.button_scale, touch_settings.left_handed),
