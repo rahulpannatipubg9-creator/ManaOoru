@@ -10,6 +10,7 @@ const PHOTO_SEQUENCE_PATH := "res://data/local/vidyanagar2_photo_sequence.json"
 const VISIBILITY_DISTANCE := 220.0
 const IMPOSTOR_TEXTURE := preload("res://assets/textures/trees/broadleaf_impostor.png")
 const BANANA_TREE_SCENE := preload("res://assets/models/foliage/banana_tree.glb")
+const SUV_SCENE := preload("res://assets/models/suv_4x4/suv_4x4_complete.glb")
 ## Keep the authored photo-reference houses behind the mapped residential
 ## carriageway.  Their porches are part of the frontage, so the clearance is
 ## measured from the outer porch edge rather than only from the wall body.
@@ -201,6 +202,10 @@ func _build_segment_2(world: Node, p_start: Vector2, p_end: Vector2) -> void:
 	_build_compound_wall(world, left_wall_a, left_gate_a, 0.95)
 	_build_gate(world, (left_gate_a + left_gate_b) * 0.5, dir, 2.4, 1.1)
 	_build_compound_wall(world, left_gate_b, left_wall_b, 0.95)
+
+	# Parked SUV 4x4 in the quarters driveway
+	var suv_pt: Vector2 = left_house_pt + normal * 1.8
+	_add_parked_suv(world, suv_pt, atan2(dir.x, dir.y) + PI * 0.5)
 
 	# Right side set back: low wall with gate, single-storey quarters
 	var right_house_pt: Vector2 = p_start + dir * (length * 0.50) + normal * 7.5
@@ -507,7 +512,34 @@ func _add_banana_tree(world: Node, map_pos: Vector2, rot_y: float = 0.0, scale_f
 
 	add_child(tree_node)
 	banana_tree_count += 1
-	banana_tree_count += 1
+
+## Adds a parked SUV 4x4 in residential driveway
+func _add_parked_suv(world: Node, map_pos: Vector2, yaw: float) -> void:
+	if not SUV_SCENE:
+		return
+	var ground: float = float(world.ground_height(map_pos))
+	var suv := SUV_SCENE.instantiate() as Node3D
+	suv.name = "ParkedSUV4x4"
+	suv.position = Vector3(map_pos.x, ground + 0.02, map_pos.y)
+	suv.rotation.y = yaw
+
+	# Add StaticBody3D collision box around vehicle body
+	var body := StaticBody3D.new()
+	body.name = "SUVCollider"
+	var col := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	box.size = Vector3(2.15, 1.65, 4.80)
+	col.shape = box
+	col.position = Vector3(0.0, 0.85, 0.0)
+	body.add_child(col)
+	suv.add_child(body)
+
+	for child: Node in suv.find_children("*", "GeometryInstance3D"):
+		var geom := child as GeometryInstance3D
+		if geom:
+			geom.visibility_range_end = VISIBILITY_DISTANCE
+
+	add_child(suv)
 
 ## Reusable box mesh helper with optional static collision
 func _box(parent: Node3D, node_name: String, size: Vector3, pos: Vector3, rot_y: float, mat: Material, add_collision: bool = false) -> void:

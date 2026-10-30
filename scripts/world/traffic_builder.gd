@@ -50,7 +50,7 @@ func build(world: Node, data: MapData) -> void:
 		vehicle.speed = 5.5 + float(index % 4) * 1.0
 		# The detailed Tuk Tuk is player-drivable. Ambient vehicles are not, so
 		# don't show a second Tuk Tuk that looks usable but cannot be entered.
-		vehicle.vehicle_kind = "bus" if index == 0 else ("municipal" if index == 4 else ("auto" if index % 3 == 0 else "car"))
+		vehicle.vehicle_kind = "bus" if index == 0 else ("municipal" if index == 4 else ("suv" if index == 3 or index == 7 else ("auto" if index % 3 == 0 else "car")))
 		if index == 2:
 			vehicle.vehicle_kind = "scooter"
 			vehicle.speed = 3.5

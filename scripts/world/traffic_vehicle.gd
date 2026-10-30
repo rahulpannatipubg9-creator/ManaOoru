@@ -2,6 +2,7 @@ class_name TrafficVehicle
 extends Node3D
 
 const TUK_TUK_SCENE := preload("res://assets/models/tuk_tuk/gdk_tuk_tuk.glb")
+const SUV_SCENE := preload("res://assets/models/suv_4x4/suv_4x4_complete.glb")
 
 ## Lightweight ambient traffic. It follows map-derived lanes without a rigid
 ## body, so dozens of cars can run on local/mobile hardware without disturbing
@@ -106,6 +107,12 @@ func _build_visual() -> void:
 		# the mapped road instead of shrinking it to a centimetre.
 		tuk_tuk.position.y = 1.40
 		add_child(tuk_tuk)
+		return
+	if vehicle_kind == "suv":
+		var suv := SUV_SCENE.instantiate() as Node3D
+		suv.name = "SUV4x4Model"
+		suv.position.y = 0.02
+		add_child(suv)
 		return
 	var length := 4.1 if vehicle_kind == "car" else 2.8
 	var width := 1.75 if vehicle_kind == "car" else 1.45
