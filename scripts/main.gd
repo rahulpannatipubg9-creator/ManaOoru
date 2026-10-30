@@ -29,8 +29,6 @@ var first_person_view := false
 var navigator: GpsNavigator
 const VehicleEntry := preload("res://scripts/vehicle/vehicle_entry.gd")
 var entry: VehicleEntry
-const HINT_DURATION_MSEC := 2000
-var _hint_until_msec := 0
 var _window_unfocused := false
 var _input_suspended := false
 var _transition_camera: Camera3D
@@ -494,13 +492,6 @@ func _activate_only(selected: PhysicsBody3D) -> void:
 		candidate.set_driving_enabled(is_selected)
 		candidate.set_keyboard_input_enabled(is_selected)
 
-func _interact() -> void:
-	if control_state != ControlState.ON_FOOT:
-		return
-	var nearby_vehicle := _nearest_vehicle()
-	if nearby_vehicle == null:
-		_show_control_hint("")
-
 func _nearby_shop() -> Dictionary:
 	if city_life:
 		return city_life.nearby_shop()
@@ -535,8 +526,6 @@ func _try_on_foot_interaction() -> void:
 	var terminal := _nearby_terminal()
 	if not terminal.is_empty():
 		_show_control_hint("Mancherial, Ramagundam, Karimnagar")
-		return
-	_show_control_hint("")
 
 ## V switches every camera between first and third person, so the choice
 ## carries over when getting in or out of a vehicle.
@@ -547,7 +536,6 @@ func toggle_camera_view() -> void:
 		var camera := node.get_node_or_null("CameraPivot")
 		if camera and camera.has_method("set_view_mode"):
 			camera.set_view_mode(mode)
-	_show_control_hint("")
 
 func _toggle_camera_shoulder() -> void:
 	var target: Node3D = active_vehicle if control_state == ControlState.DRIVING else person
@@ -555,10 +543,10 @@ func _toggle_camera_shoulder() -> void:
 	if camera and camera.has_method("toggle_shoulder"):
 		camera.toggle_shoulder()
 
+## Action feedback goes to the one toast queue; the prompt pill only says what a key will do next.
 func _show_control_hint(message: String) -> void:
-	_hint_until_msec = Time.get_ticks_msec() + HINT_DURATION_MSEC
-	if hud:
-		hud.set_interaction_prompt(message)
+	if city_life:
+		city_life.toast(message)
 
 func _teleport_to_godavari_bridge() -> void:
 	var bridge_target := Vector3(751.15, -24.8, -3275.0)
@@ -607,8 +595,7 @@ func _teleport_to_godavari_bridge() -> void:
 			_show_control_hint("At Godavari bridge")
 
 func _set_prompt(message: String) -> void:
-	if Time.get_ticks_msec() >= _hint_until_msec:
-		hud.set_interaction_prompt(message)
+	hud.set_interaction_prompt(message)
 
 func enter_vehicle(vehicle_override: PhysicsBody3D = null) -> void:
 	if tdm_local != null and tdm_local.in_match:

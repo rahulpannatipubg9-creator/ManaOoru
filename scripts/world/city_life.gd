@@ -50,7 +50,6 @@ var _fuel_stops: Array[Dictionary] = []
 var _interior_cooldown := 0.0
 var _toasts: Control
 var _hints: RefCounted
-var _fuel_sent := -1.0
 
 func setup(game: Node) -> void:
 	_game = game
@@ -94,7 +93,6 @@ func _process(delta: float) -> void:
 	_timer = 0.0
 	_update_fuel()
 	_check_discoveries()
-	_refresh_fuel()
 	_check_hints()
 	if _save_timer > 30.0 or _last_wallet != _game.hud.coins_available():
 		_save_timer = 0.0
@@ -161,7 +159,6 @@ func purchase(product: String) -> bool:
 		if vehicle != null:
 			fuel[str(vehicle.name)] = minf(100.0, float(fuel.get(str(vehicle.name), 70.0)) + 35.0)
 	_game.person.health_changed.emit(_game.person.health, _game.person.max_health)
-	_refresh_fuel()
 	save_progress()
 	return true
 
@@ -332,20 +329,6 @@ func _build_ui() -> void:
 	add_child(_ui)
 	_toasts = ToastQueue.new()
 	_ui.add_child(_toasts)
-
-## Fuel stays off screen until it runs low. Sends -1 when there is nothing to show.
-func _refresh_fuel() -> void:
-	if not _game.hud.has_method("set_fuel"):
-		return
-	var vehicle: Node3D = _game.active_vehicle
-	var level := -1.0
-	if _game.control_state == _game.ControlState.DRIVING and vehicle != null and not vehicle is GdkHelicopter:
-		var left := float(fuel.get(str(vehicle.name), 70.0))
-		if left <= LOW_FUEL:
-			level = left
-	if level != _fuel_sent:
-		_fuel_sent = level
-		_game.hud.set_fuel(level)
 
 ## Queues a short message. See scripts/ui/toast_queue.gd.
 func toast(text: String) -> void:
