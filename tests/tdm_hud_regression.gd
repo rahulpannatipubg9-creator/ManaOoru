@@ -36,8 +36,10 @@ func check(condition: bool, message: String) -> void:
 		printerr("FAIL: " + message)
 
 func frames(count: int) -> void:
+	# Both, because a slow frame can run several physics ticks before a single _process.
 	for _i in count:
 		await physics_frame
+		await process_frame
 
 func _until(condition: Callable, seconds: float) -> void:
 	var deadline := Time.get_ticks_msec() + int(seconds * 1000.0)
@@ -91,8 +93,8 @@ func run() -> void:
 	var entry: Node = game.hud.settings_menu.get_child(0)
 	check(entry is Button and not entry.visible, "the desktop SETTINGS button is hidden in a match")
 	game.city_life.toast("Action mode enabled")
-	await process_frame
-	await process_frame
+	for _i in 3:
+		await process_frame
 	check(not game.city_life.get("_toast").visible, "free-roam toasts stay off the match screen")
 
 	# Lobby
@@ -177,6 +179,7 @@ func run() -> void:
 	check(mate._armband != null and enemy._armband != null, "both sides wear an armband")
 	check(mate._overhead_label.visible and mate._overhead_label.text == "Mate", "a teammate shows their name")
 	check(mate._overhead_label.no_depth_test and mate._tdm_health != null and mate._tdm_health.visible and mate._tdm_health.no_depth_test, "a teammate's marker shows through walls")
+	mate.tdm_update_marker(person.global_position, 0.5) # The host's next vitals would overwrite a set value.
 	check(mate._tdm_health.text.length() == 10, "the marker shows half health (%d ticks)" % mate._tdm_health.text.length())
 	check(not enemy._overhead_label.visible and enemy._tdm_health == null, "an enemy shows no name or marker")
 	var near_alpha: float = mate._tdm_marker_alpha
@@ -279,8 +282,10 @@ func run() -> void:
 		check(pickup.process_mode != Node.PROCESS_MODE_DISABLED, "street rifles return after the match")
 		break
 
+	root.multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()
 	for canvas in CANVASES:
 		await _check_layout(canvas)
+	root.multiplayer.multiplayer_peer = null
 	await _check_play(game)
 	await _check_real_screen(game)
 
@@ -301,6 +306,7 @@ func _check_layout(canvas: Vector2i) -> void:
 	root.add_child(view)
 	var session: Node = Session.new()
 	view.add_child(session)
+	session.set_physics_process(false) # Screens only: no rules run behind this session.
 	session.active = true
 	session.config = Config.new()
 	session.rows = _rows()

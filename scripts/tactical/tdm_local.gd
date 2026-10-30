@@ -90,6 +90,7 @@ func setup(p_game: Node, p_session: Node) -> void:
 	hud.position_provider = _position_of
 	hud.minimap_provider = func() -> Rect2: return game.hud.minimap.get_rect() if game.hud.minimap != null and game.hud.minimap.visible else Rect2()
 	hud.status_floor_provider = _status_floor
+	hud.touch_rects_provider = _touch_rects
 	hud.start_pressed.connect(_on_start)
 	hud.team_requested.connect(func(team: int) -> void: session.request_team(team))
 	hud.move_requested.connect(func(peer_id: int) -> void: session.host_move_player(peer_id))
@@ -218,6 +219,9 @@ func _hide_free_roam_ui() -> void:
 func _keep_free_roam_ui_hidden() -> void:
 	# Toasts belong to free roam ("Action mode enabled"); expiring them keeps city_life from showing one.
 	game.city_life.set("_toast_timer", 0.0)
+	var toast: Node = game.city_life.get("_toast")
+	if toast is CanvasItem:
+		toast.visible = false
 	for entry: Dictionary in _hidden_ui:
 		if is_instance_valid(entry.node):
 			entry.node.visible = false
@@ -644,6 +648,13 @@ func _status_floor() -> float:
 		if is_instance_valid(button) and button.is_visible_in_tree():
 			top = button.position.y if top < 0.0 else minf(top, button.position.y)
 	return top - 8.0 if top >= 0.0 else -1.0
+
+func _touch_rects() -> Array:
+	var rects: Array = []
+	for child: Node in game.hud.get_node("TouchControls").get_children():
+		if child is BaseButton and child.is_visible_in_tree():
+			rects.append(child.get_global_rect())
+	return rects
 
 ## Team-mates always, enemies for a few seconds after they fire, and team pings, on the game's minimap.
 func _minimap_markers() -> Array:
