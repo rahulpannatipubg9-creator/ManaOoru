@@ -21,14 +21,15 @@ const OPACITY_RANGE := Vector2(0.35, 1.0)
 ## The stick's spawn zone around a moved joystick, as a multiple of the stick size.
 const MOVED_ZONE_SCALE := 2.2
 
-const ON_FOOT_SLOTS: Array[StringName] = [&"Fire", &"FireLeft", &"Scope", &"Reload", &"Jump", &"Crouch", &"Prone",
-	&"PeekLeft", &"PeekRight", &"Joystick", &"Run", &"FreeLook", &"View", &"Vehicle", &"Surrender", &"Help",
-	&"Talk", &"Equip", &"Swap", &"Medkit", &"Grenade", &"FireMode", &"Mode", &"Character", &"Reset", &"Squad", &"Gyro",
+## Walking only ever shows these. Slots no longer in a list are dropped when an old file loads.
+const NORMAL_SLOTS: Array[StringName] = [&"Joystick", &"Jump", &"Run", &"Vehicle", &"Wheel", &"Menu",
 	&"Context", &"ContextAlt"]
+const ON_FOOT_SLOTS: Array[StringName] = [&"Joystick", &"Jump", &"Run", &"Vehicle", &"Wheel", &"Menu",
+	&"Context", &"ContextAlt", &"Fire", &"Scope", &"Reload", &"Crouch", &"Swap"]
 ## Driving reuses on-foot slots for its own buttons (see ClawLayout.SCENE_BUTTON_SLOTS),
 ## so moving BRAKE in VEHICLE never moves FIRE in FIRING.
-const VEHICLE_SLOTS: Array[StringName] = [&"Joystick", &"Fire", &"Scope", &"Reload", &"Crouch", &"Prone",
-	&"Vehicle", &"Run", &"FreeLook", &"View", &"Reset", &"Squad", &"Gyro"]
+const VEHICLE_SLOTS: Array[StringName] = [&"Joystick", &"Fire", &"Scope", &"Reload", &"Crouch",
+	&"Vehicle", &"Run", &"Wheel", &"Menu"]
 
 ## profile -> {slot: {"center": Vector2 (0..1 of the safe area), "scale": float}}
 var overrides := {}
@@ -40,7 +41,10 @@ func _init() -> void:
 		overrides[profile] = {}
 
 static func slots_for(profile: StringName) -> Array[StringName]:
-	return VEHICLE_SLOTS if profile == VEHICLE else ON_FOOT_SLOTS
+	match profile:
+		VEHICLE: return VEHICLE_SLOTS
+		NORMAL: return NORMAL_SLOTS
+		_: return ON_FOOT_SLOTS
 
 ## Driving wins over everything; on foot, ACTION mode means the FIRING layout.
 static func profile_for(driving: bool, action_mode: bool) -> StringName:

@@ -133,7 +133,6 @@ func _ready() -> void:
 	add_child(tdm_local)
 	tdm_local.setup(self, tdm_session)
 	hud.multiplayer_panel.tdm_local = tdm_local
-	hud.set_interaction_prompt("Press [B] for Godavari River Bridge  •  Walk closer to a vehicle")
 
 ## Spawn and parked cars come from roadside spots the world picked on real roads.
 func _place_on_real_roadsides() -> void:
@@ -243,7 +242,7 @@ func _process(_delta: float) -> void:
 		elif not _nearby_terminal().is_empty():
 			_set_prompt("[E]  TGSRTC BUS STATION  •  VIEW ROUTES")
 		else:
-			_set_prompt("Walk closer to a vehicle or shop")
+			_set_prompt("")
 	# The driver stays visible in the seat, except in first person where the
 	# camera sits inside their head.
 	if control_state != ControlState.ON_FOOT:
@@ -256,7 +255,10 @@ func _process(_delta: float) -> void:
 			hud.set_flight_altitude(float(flight_state.get("altitude", 0.0)))
 		else:
 			hud.set_gear(active_vehicle.gearbox.label(), active_vehicle.gearbox.rpm, active_vehicle.is_automatic())
-		_set_prompt("[F]  LAND TO EXIT" if active_vehicle is GdkHelicopter and not active_vehicle._grounded else "[F]  EXIT VEHICLE")
+		# Silent while moving: the pill only appears when getting out is a real option.
+		var airborne: bool = active_vehicle is GdkHelicopter and not active_vehicle._grounded
+		var stopped: bool = absf(active_vehicle.current_speed) < 1.0
+		_set_prompt("" if not stopped else ("[F]  LAND TO EXIT" if airborne else "[F]  EXIT VEHICLE"))
 
 func _input(event: InputEvent) -> void:
 	if get_tree().paused or _input_suspended or GameplayControls.text_focused(get_viewport()) or not event is InputEventKey or not event.pressed or event.echo:

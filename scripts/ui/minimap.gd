@@ -3,6 +3,8 @@ extends Control
 
 ## Real-time minimap. Follows the person on foot and the occupied vehicle while
 ## driving. Redraws at a capped rate, and only when something it shows changed.
+## A plain map until asked: tap for the full map, hold for zoom and north-up controls.
+## The GPS destination and distance show in the HUD's objective block.
 
 signal open_full_map_requested
 
@@ -12,14 +14,16 @@ const DESKTOP_REFRESH_HZ := 30.0
 const MOBILE_REFRESH_HZ := 15.0
 const LOW_FPS_REFRESH_HZ := 8.0
 const LOW_FPS_THRESHOLD := 40.0
-const STATUS_HEIGHT := 24.0
+## Holding a finger this long brings up the zoom and orientation buttons...
+const HOLD_SECONDS := 0.4
+## ...for this long.
+const CONTROLS_SECONDS := 4.0
 
 var heading_up := false
 var zoom_index := DEFAULT_ZOOM_INDEX
 var canvas: MapCanvas
 var _game: Node
 var _navigator: GpsNavigator
-var _status: Label
 var _overlay: Control
 var _buttons: Dictionary = {}
 var _refresh_timer := 0.0
@@ -27,6 +31,8 @@ var _dirty := true
 var _last_position := Vector2.INF
 var _last_heading := Vector2.ZERO
 var _touch_index := -1
+var _touch_held := 0.0
+var _controls_left := 0.0
 ## Optional: func() -> Array of [map point (Vector2), Color, radius px]. Team Deathmatch draws team-mates,
 ## enemies who just fired and pings with it.
 var markers: Callable
@@ -48,30 +54,19 @@ func setup(game: Node, data: MapData, building_footprints: Array[PackedVector2Ar
 	_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_overlay.draw.connect(_draw_overlay)
 	add_child(_overlay)
-	_status = Label.new()
-	_status.name = "Status"
-	_status.add_theme_font_size_override("font_size", 13)
-	_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_status.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_status.clip_text = true
-	var status_background := StyleBoxFlat.new()
-	status_background.bg_color = Color(0.0, 0.0, 0.0, 0.65)
-	_status.add_theme_stylebox_override("normal", status_background)
-	add_child(_status)
-	for button_name in ["ZoomIn", "ZoomOut", "Orientation", "Map"]:
+	for button_name in ["ZoomIn", "ZoomOut", "Orientation"]:
 		var button := Button.new()
 		button.name = button_name
 		button.focus_mode = Control.FOCUS_NONE
-		button.add_theme_font_size_override("font_size", 14)
+		button.add_theme_font_size_override("font_size", UiTheme.FONT_BODY)
+		button.visible = false
 		add_child(button)
 		_buttons[button_name] = button
 	_buttons.ZoomIn.text = "+"
 	_buttons.ZoomOut.text = "−"
-	_buttons.Map.text = "MAP"
 	_buttons.ZoomIn.pressed.connect(change_zoom.bind(1))
 	_buttons.ZoomOut.pressed.connect(change_zoom.bind(-1))
 	_buttons.Orientation.pressed.connect(toggle_orientation)
-	_buttons.Map.pressed.connect(open_full_map_requested.emit)
 	navigator.route_changed.connect(mark_dirty)
 	resized.connect(_layout)
 	_update_orientation_button()
@@ -95,6 +90,7 @@ func refresh_hz() -> float:
 	return MOBILE_REFRESH_HZ if OS.has_feature("mobile") else DESKTOP_REFRESH_HZ
 
 func _process(delta: float) -> void:
+	_tick_controls(delta)
 	_refresh_timer += delta
 	if _refresh_timer < 1.0 / refresh_hz():
 		return
@@ -125,8 +121,6 @@ func refresh() -> void:
 	canvas.destination = _navigator.marker_point()
 	canvas.queue_redraw()
 	_overlay.queue_redraw()
-	var status := _navigator.status_text()
-	_status.text = status if not status.is_empty() else "%s  •  %s" % ["Heading-up" if heading_up else "North-up", "Driving" if _game.control_state == _game.ControlState.DRIVING else "On foot"]
 
 func _layout() -> void:
 	if canvas == null:
@@ -135,14 +129,12 @@ func _layout() -> void:
 	canvas.size = size
 	_overlay.position = Vector2.ZERO
 	_overlay.size = size
-	_status.position = Vector2(0.0, size.y - STATUS_HEIGHT)
-	_status.size = Vector2(size.x, STATUS_HEIGHT)
-	var button_size := clampf(size.x * 0.15, 26.0, 40.0)
+	# Fingers need the full size, even if three buttons then fill a small map's edge.
+	var button_size := clampf(size.y / 3.0 - 6.0, 32.0, UiTheme.TOUCH_TARGET)
 	var x := size.x - button_size - 4.0
 	_place_button(_buttons.ZoomIn, Vector2(x, 4.0), Vector2(button_size, button_size))
 	_place_button(_buttons.ZoomOut, Vector2(x, 8.0 + button_size), Vector2(button_size, button_size))
 	_place_button(_buttons.Orientation, Vector2(x, 12.0 + button_size * 2.0), Vector2(button_size, button_size))
-	_place_button(_buttons.Map, Vector2(4.0, 4.0), Vector2(button_size * 1.6, button_size))
 	_dirty = true
 
 func _place_button(button: Button, at: Vector2, button_size: Vector2) -> void:
@@ -155,10 +147,10 @@ func _update_orientation_button() -> void:
 		_buttons.Orientation.tooltip_text = "Heading-up (N to switch)" if heading_up else "North-up (N to switch)"
 
 func _draw_overlay() -> void:
-	_overlay.draw_rect(Rect2(Vector2.ZERO, size), Color(0.0, 0.0, 0.0, 0.85), false, 2.0)
+	_overlay.draw_rect(Rect2(Vector2.ONE, size - Vector2(2.0, 2.0)), UiTheme.LINE, false, 2.0)
 	if markers.is_valid():
 		var transform := canvas.map_transform()
-		var area := Rect2(Vector2.ZERO, Vector2(size.x, size.y - STATUS_HEIGHT))
+		var area := Rect2(Vector2.ZERO, size)
 		for marker: Array in markers.call():
 			var at: Vector2 = transform * (marker[0] as Vector2)
 			if area.has_point(at):
@@ -167,10 +159,10 @@ func _draw_overlay() -> void:
 	if not heading_up:
 		return
 	var north := canvas.map_transform().basis_xform(Vector2(0.0, -1.0)).normalized()
-	var radius := minf(size.x, size.y - STATUS_HEIGHT) * 0.5 - 14.0
-	var at := Vector2(size.x * 0.5, (size.y - STATUS_HEIGHT) * 0.5) + north * radius
-	_overlay.draw_circle(at, 10.0, Color(0.0, 0.0, 0.0, 0.7))
-	_overlay.draw_string(ThemeDB.fallback_font, at + Vector2(-5.0, 5.0), "N", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#ff6b6b"))
+	var radius := minf(size.x, size.y) * 0.5 - 14.0
+	var at := size * 0.5 + north * radius
+	_overlay.draw_circle(at, 11.0, UiTheme.SURFACE_SOLID)
+	_overlay.draw_string(UiTheme.font(), at + Vector2(-5.0, 5.0), "N", HORIZONTAL_ALIGNMENT_LEFT, -1, UiTheme.FONT_SMALL, UiTheme.ACCENT)
 
 func _gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed:
@@ -193,18 +185,39 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventScreenTouch:
 		if event.pressed and get_global_rect().has_point(event.position):
 			_touch_index = event.index
+			_touch_held = 0.0
 			get_viewport().set_input_as_handled()
 		elif not event.pressed and event.index == _touch_index:
+			var was_hold := _touch_held >= HOLD_SECONDS
 			_touch_index = -1
 			get_viewport().set_input_as_handled()
-			if not event.canceled and get_global_rect().has_point(event.position):
+			if not event.canceled and not was_hold and get_global_rect().has_point(event.position):
 				_handle_tap(event.position)
 	elif event is InputEventScreenDrag and event.index == _touch_index:
 		get_viewport().set_input_as_handled()
 
 func _handle_tap(screen_position: Vector2) -> void:
 	for button: Button in _buttons.values():
-		if button.get_global_rect().has_point(screen_position):
+		if button.visible and button.get_global_rect().has_point(screen_position):
 			button.pressed.emit()
+			_show_controls(true)
 			return
 	open_full_map_requested.emit()
+
+func controls_visible() -> bool:
+	return _controls_left > 0.0
+
+func _show_controls(value: bool) -> void:
+	_controls_left = CONTROLS_SECONDS if value else 0.0
+	for button: Button in _buttons.values():
+		button.visible = value
+
+func _tick_controls(delta: float) -> void:
+	if _touch_index != -1:
+		_touch_held += delta
+		if _touch_held >= HOLD_SECONDS and _controls_left <= 0.0:
+			_show_controls(true)
+	elif _controls_left > 0.0:
+		_controls_left -= delta
+		if _controls_left <= 0.0:
+			_show_controls(false)
