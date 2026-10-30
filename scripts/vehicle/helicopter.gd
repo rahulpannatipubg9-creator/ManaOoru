@@ -109,6 +109,9 @@ func set_driving_enabled(value: bool) -> void:
 		freeze = true
 		linear_velocity = Vector3.ZERO
 		angular_velocity = Vector3.ZERO
+		# Parked in the air (the pilot died, a match began): nobody could reach it there.
+		if _ground_probe().is_empty():
+			recover_vehicle()
 	else:
 		freeze = false
 		sleeping = false

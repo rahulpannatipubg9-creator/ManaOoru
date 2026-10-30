@@ -164,7 +164,7 @@ Fix the High items first, and add a `docs/lessons/` entry with each fix, as `AGE
 
 ## Fixed on `ui/fixes`
 
-11, 16 (filter only, see below), 17, 18, 19, 21, 22, 25, 28.
+11, 16, 17, 18, 19, 21, 22, 25, 28, 29. For 16 the filter is tested, but no APK has been built and opened.
 
 ## Found reading the vehicle, helicopter, character and environment code (2026-10-30)
 
@@ -173,6 +173,7 @@ These come from reading the code, not from a running game. Already fixed on `ui/
 - A wrecked helicopter never updated its exit prompt and skipped the fall-out-of-world recovery (`helicopter.gd`).
 - Weather set back to Automatic held forced rain for up to 180 s (`city_environment.gd`).
 - Street lamps were sorted four times a second by day, when none can show (`city_environment.gd`).
+- A helicopter parked in mid-air stayed there out of reach (`helicopter.gd`, was 29).
 - A held lean stayed on the driver for the whole drive, and Rahul's fingers stayed open on handlebars
   (`test_character.gd`).
 
@@ -180,7 +181,6 @@ Still open:
 
 | # | Rating | Where | Issue |
 |---|---|---|---|
-| 29 | Medium, Certain | `gameplay/city_gameplay.gd:790`, `tactical/tdm_local.gd:136`, `vehicle/helicopter.gd:109` | Dying in the air, or a match starting in flight, calls `set_driving_enabled(false)`, which freezes the helicopter where it is. It stays in the sky out of reach. Recover it to `_safe_landing` when it is not grounded |
 | 30 | Medium, Likely | `player/test_character.gd:379`, `:1225` | `_pose_male_face` runs after the clips and sets `CC_Base_Head` from rest, which wipes the head from the gait and `Rifle_ADS_Idle` clips and the `HEADING_HEAD` twist. Running it first looks right, but the rifle head turn was tuned on top of the wiped pose, so check it in a render |
 | 31 | Low, Certain | `world/city_environment.gd:91`, `gameplay/city_gameplay.gd:998` | Headlights are only built at setup, so bought vehicles never get any |
 | 32 | Low, Certain | `player/test_character.gd:286` | `hip_height()` reads `_hip`, which only the test lady sets. Rahul sits at the 0.95 fallback in a shipped build, but at her hip height on a desktop that has her model |
