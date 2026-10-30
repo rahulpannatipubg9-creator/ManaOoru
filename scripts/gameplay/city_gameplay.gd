@@ -553,7 +553,7 @@ func select_rifle(id: int) -> void:
 	_magazines[game.person.weapon_id] = ammo
 	ammo = mini(int(_magazines.get(id, mag_size)), mag_size)
 	_reload_time = 0.0
-	gun_feel.cancel_reload()
+	if gun_feel: gun_feel.cancel_reload()
 	game.person.weapon_reload_time = 0.0
 	game.person.set_weapon_model(id)
 	_shot_cooldown = maxf(_shot_cooldown, 0.35)
@@ -570,7 +570,7 @@ func attack() -> bool:
 		return false
 	var armed: bool = game.person.is_weapon_equipped()
 	if armed and ammo == 0:
-		gun_feel.play_dry()
+		if gun_feel: gun_feel.play_dry()
 		reload_weapon()
 		return false
 	var gun := Weapons.stats(game.person.weapon_id)
@@ -633,7 +633,7 @@ func attack() -> bool:
 		ammo -= 1
 		if tdm_active:
 			tdm_local.on_shot_fired()
-		gun_feel.on_shot(game.person.weapon_id, game.person.weapon_muzzle_position(), endpoint, hit, closest != null)
+		if gun_feel: gun_feel.on_shot(game.person.weapon_id, game.person.weapon_muzzle_position(), endpoint, hit, closest != null)
 		_last_shot_distance = origin.distance_to(endpoint)
 		var since_shot := (Time.get_ticks_msec() - _last_shot_msec) / 1000.0
 		_burst_shot = 0 if since_shot > recoil_pattern_reset else _burst_shot + 1
@@ -646,7 +646,7 @@ func attack() -> bool:
 		if game.person.camera_pivot and game.person.camera_pivot.has_method("add_recoil"):
 			# Mostly the rifle's own learnable pattern, with a little chance on top.
 			var pattern: Array = gun.recoil_pattern
-			var kick: Vector2 = gun_feel.recoil_for(gun.recoil * stance_mult)
+			var kick: Vector2 = gun_feel.recoil_for(gun.recoil * stance_mult) if gun_feel else gun.recoil * stance_mult
 			game.person.camera_pivot.add_recoil(kick.x, kick.y * 0.4, float(pattern[_burst_shot % pattern.size()]) * stance_mult)
 	else:
 		_audio.punch.play()
@@ -705,7 +705,7 @@ func reload_weapon() -> void:
 		return
 	_reload_time = reload_seconds
 	game.person.weapon_reload_time = reload_seconds
-	gun_feel.play_reload(reload_seconds)
+	if gun_feel: gun_feel.play_reload(reload_seconds)
 
 func throw_grenade() -> bool:
 	if tdm_active:

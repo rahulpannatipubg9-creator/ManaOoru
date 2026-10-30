@@ -90,12 +90,10 @@ func run() -> void:
 	await frames(20)
 
 	# Nothing from free roam sits on the match screen.
-	var entry: Node = game.hud.settings_menu.get_child(0)
-	check(entry is Button and not entry.visible, "the desktop SETTINGS button is hidden in a match")
 	game.city_life.toast("Action mode enabled")
 	for _i in 3:
 		await process_frame
-	check(not game.city_life.get("_toast").visible, "free-roam toasts stay off the match screen")
+	check(not game.city_life.get("_toasts").visible, "free-roam toasts stay off the match screen")
 
 	# Lobby
 	check(local.needs_cursor(), "the lobby needs the cursor")

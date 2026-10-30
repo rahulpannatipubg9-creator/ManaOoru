@@ -426,7 +426,11 @@ func _layout() -> void:
 	_center_line(_goal_label, _score_box.position.y + _score_box.size.y + 2.0)
 	var below_score := _score_box.position.y + SCORE_ROW_HEIGHT + 22.0
 
-	var x := safe.position.x + SPACE_SMALL
+	# Buttons and chat start right of a top-left minimap, so nothing lands on it.
+	var left_edge := safe.position.x + SPACE_SMALL
+	if map_on_top and not map_on_right:
+		left_edge = minimap.end.x + SPACE_SMALL
+	var x := left_edge
 	for button: Button in [_menu_button, _scoreboard_button, _chat_button]:
 		button.size = TOUCH_BUTTON_SIZE
 		button.position = Vector2(x, safe.position.y + SPACE_SMALL)
@@ -447,10 +451,10 @@ func _layout() -> void:
 	if minimap.has_area() and not map_on_top:
 		_chat_log.position = Vector2(minimap.position.x, minimap.position.y - 8.0 - _chat_log.size.y)
 	else:
-		_chat_log.position = Vector2(safe.position.x + SPACE_SMALL, safe.position.y + SPACE_SMALL + TOUCH_BUTTON_SIZE.y + 8.0)
+		_chat_log.position = Vector2(left_edge, safe.position.y + SPACE_SMALL + TOUCH_BUTTON_SIZE.y + 8.0)
 
 	var status_floor: float = status_floor_provider.call() if status_floor_provider.is_valid() else -1.0
-	if status_floor < 0.0:
+	if status_floor <= 0.0:
 		status_floor = safe.end.y - SPACE_SMALL
 	_status_box.reset_size()
 	_status_box.position = Vector2((view.x - STATUS_WIDTH) * 0.5, status_floor - _status_box.size.y)

@@ -207,19 +207,14 @@ func _hide_free_roam_ui() -> void:
 	_hidden_ui.clear()
 	var nodes: Array = [game.hud.get_node_or_null("Panel"), game.hud.get_node_or_null("Offline"),
 		game.hud.get_node_or_null("InteractionPrompt")]
-	# The always-on desktop SETTINGS button sits on the score bar; the match menu has its own.
-	nodes.append_array(game.hud.settings_menu.get_children().filter(func(child: Node) -> bool: return child is Button))
+	# Toasts belong to free roam ("Action mode enabled").
+	nodes.append(game.city_life.get("_toasts"))
 	for node in nodes:
 		if node is CanvasItem:
 			_hidden_ui.append({"node": node, "visible": node.visible})
 			node.visible = false
 
 func _keep_free_roam_ui_hidden() -> void:
-	# Toasts belong to free roam ("Action mode enabled"); expiring them keeps city_life from showing one.
-	game.city_life.set("_toast_timer", 0.0)
-	var toast: Node = game.city_life.get("_toast")
-	if toast is CanvasItem:
-		toast.visible = false
 	for entry: Dictionary in _hidden_ui:
 		if is_instance_valid(entry.node):
 			entry.node.visible = false
@@ -642,7 +637,7 @@ func _status_floor() -> float:
 	if not hud.touch_mode:
 		return -1.0
 	var top := -1.0
-	for button in [game.hud.btn_fire_mode, game.hud.btn_swap, game.hud.btn_equip]:
+	for button in [game.hud.btn_swap]:
 		if is_instance_valid(button) and button.is_visible_in_tree():
 			top = button.position.y if top < 0.0 else minf(top, button.position.y)
 	return top - 8.0 if top >= 0.0 else -1.0
