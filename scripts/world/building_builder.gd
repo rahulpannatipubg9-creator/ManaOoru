@@ -203,7 +203,9 @@ func setup(data: MapData, is_excluded: Callable) -> void:
 	_pending.assign(_chunks.keys())
 	_assign_boards()
 	preload("res://scripts/world/user_shop_facades.gd").build(self, data)
-	_add_historical_shop_reference_panels()
+	# Research notes, not signboards: developer runs only.
+	if "--dev-panels" in OS.get_cmdline_user_args():
+		_add_historical_shop_reference_panels()
 
 ## True when this real place's name is already on its building's shop front.
 func has_facade_board(place_name: String) -> bool:

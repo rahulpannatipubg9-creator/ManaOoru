@@ -133,7 +133,7 @@ func _ready() -> void:
 	add_child(tdm_local)
 	tdm_local.setup(self, tdm_session)
 	hud.multiplayer_panel.tdm_local = tdm_local
-	hud.set_interaction_prompt("Press [B] for Godavari River Bridge  •  Walk closer to a vehicle")
+	hud.set_interaction_prompt("")
 
 ## Spawn and parked cars come from roadside spots the world picked on real roads.
 func _place_on_real_roadsides() -> void:
@@ -219,7 +219,7 @@ func _process(_delta: float) -> void:
 			if person.has_method("recover_person"):
 				_show_control_hint("Returned to safe ground" if person.recover_person() else "No clear recovery spot")
 	if Input.is_key_pressed(KEY_TAB) and not _info_was_pressed:
-		_show_control_hint("MANA OORU - Godavarikhani exploration")
+		_show_control_hint("")
 	_interact_was_pressed = false
 	var camera_pressed := Input.is_action_pressed("vehicle_camera")
 	if camera_pressed and not _camera_was_pressed:
@@ -234,16 +234,16 @@ func _process(_delta: float) -> void:
 		active_vehicle = nearby_vehicle
 		hud.set_active_vehicle(active_vehicle)
 		hud.set_enter_available(true)
-		_set_prompt("[E]  ENTER %s" % active_vehicle.name)
+		_set_prompt("[E] Enter %s" % active_vehicle.name)
 	elif control_state == ControlState.ON_FOOT:
 		hud.set_enter_available(false)
 		var shop := _nearby_shop()
 		if not shop.is_empty():
-			_set_prompt(city_life.prompt_text() if city_life else "[E]  SHOP: %s  •  1 coin" % str(shop.name).to_upper())
+			_set_prompt(city_life.prompt_text() if city_life else "[E] Shop")
 		elif not _nearby_terminal().is_empty():
-			_set_prompt("[E]  TGSRTC BUS STATION  •  VIEW ROUTES")
+			_set_prompt("[E] Bus routes")
 		else:
-			_set_prompt("Walk closer to a vehicle or shop")
+			_set_prompt("")
 	# The driver stays visible in the seat, except in first person where the
 	# camera sits inside their head.
 	if control_state != ControlState.ON_FOOT:
@@ -256,7 +256,7 @@ func _process(_delta: float) -> void:
 			hud.set_flight_altitude(float(flight_state.get("altitude", 0.0)))
 		else:
 			hud.set_gear(active_vehicle.gearbox.label(), active_vehicle.gearbox.rpm, active_vehicle.is_automatic())
-		_set_prompt("[F]  LAND TO EXIT" if active_vehicle is GdkHelicopter and not active_vehicle._grounded else "[F]  EXIT VEHICLE")
+		_set_prompt("")
 
 func _input(event: InputEvent) -> void:
 	if get_tree().paused or _input_suspended or GameplayControls.text_focused(get_viewport()) or not event is InputEventKey or not event.pressed or event.echo:
@@ -295,7 +295,7 @@ func _switch_character() -> void:
 	var character := person.get_node_or_null("TestCharacter")
 	if character and character.has_method("toggle_character"):
 		var selected: String = character.toggle_character()
-		_show_control_hint("CHARACTER: %s  •  Tab to switch" % selected)
+		_show_control_hint("Character: %s" % selected)
 
 func _handle_menu_input() -> void:
 	if city_life and city_life.has_modal():
@@ -357,7 +357,7 @@ func pause_tree(value: bool) -> void:
 func _set_menu_paused(value: bool) -> void:
 	_paused = value
 	pause_tree(value)
-	hud.set_interaction_prompt("PAUSED  -  Esc to resume  •  M for map" if value else "")
+	hud.set_interaction_prompt("Paused" if value else "")
 	_update_mouse_mode()
 
 func _update_mouse_mode() -> void:
@@ -450,7 +450,7 @@ func _interact() -> void:
 		return
 	var nearby_vehicle := _nearest_vehicle()
 	if nearby_vehicle == null:
-		_show_control_hint("E - no nearby object to interact with")
+		_show_control_hint("")
 
 func _nearby_shop() -> Dictionary:
 	if city_life:
@@ -479,15 +479,15 @@ func _try_on_foot_interaction() -> void:
 	var shop := _nearby_shop()
 	if not shop.is_empty():
 		if hud.spend_coins(1):
-			_show_control_hint("Purchased at %s" % str(shop.name).to_upper())
+			_show_control_hint("Purchased")
 		else:
-			_show_control_hint("Need 1 coin to buy at %s" % str(shop.name).to_upper())
+			_show_control_hint("Need 1 coin")
 		return
 	var terminal := _nearby_terminal()
 	if not terminal.is_empty():
-		_show_control_hint("%s: MANCHERIAL → RAMAGUNDAM → KARIMNAGAR" % str(terminal.name).to_upper())
+		_show_control_hint("Mancherial, Ramagundam, Karimnagar")
 		return
-	_show_control_hint("Walk closer to a vehicle, shop, or bus station")
+	_show_control_hint("")
 
 ## V switches every camera between first and third person, so the choice
 ## carries over when getting in or out of a vehicle.
@@ -498,7 +498,7 @@ func toggle_camera_view() -> void:
 		var camera := node.get_node_or_null("CameraPivot")
 		if camera and camera.has_method("set_view_mode"):
 			camera.set_view_mode(mode)
-	_show_control_hint("FIRST-PERSON VIEW  -  V for third person" if first_person_view else "THIRD-PERSON VIEW  -  V for first person")
+	_show_control_hint("")
 
 func _toggle_camera_shoulder() -> void:
 	var target: Node3D = active_vehicle if control_state == ControlState.DRIVING else person
@@ -528,11 +528,11 @@ func _teleport_to_godavari_bridge() -> void:
 			active_vehicle.respawn_position = chowrastha_target
 			if active_vehicle.has_method("settle_on_ground"):
 				active_vehicle.settle_on_ground()
-			_show_control_hint("Teleported back to Chowrastha Junction")
+			_show_control_hint("Back at Chowrastha")
 		elif control_state == ControlState.ON_FOOT and person:
 			person.global_position = chowrastha_target
 			person.rotation.y = chowrastha_yaw
-			_show_control_hint("Teleported back to Chowrastha Junction")
+			_show_control_hint("Back at Chowrastha")
 	else:
 		if control_state == ControlState.DRIVING and active_vehicle:
 			active_vehicle.global_position = bridge_target
@@ -542,7 +542,7 @@ func _teleport_to_godavari_bridge() -> void:
 			active_vehicle.respawn_position = bridge_target
 			if active_vehicle.has_method("settle_on_ground"):
 				active_vehicle.settle_on_ground()
-			_show_control_hint("Teleported to Godavari River Bridge (1,100 m)")
+			_show_control_hint("At Godavari bridge")
 		elif control_state == ControlState.ON_FOOT and person:
 			# Also bring the active vehicle to the bridge approach so the player can drive immediately!
 			if active_vehicle:
@@ -555,7 +555,7 @@ func _teleport_to_godavari_bridge() -> void:
 					active_vehicle.settle_on_ground()
 			person.global_position = bridge_target + Vector3(2.5, 0.2, 0.0)
 			person.rotation.y = bridge_yaw
-			_show_control_hint("Teleported to Godavari River Bridge (1,100 m)  •  [E] Drive across")
+			_show_control_hint("At Godavari bridge")
 
 func _set_prompt(message: String) -> void:
 	if Time.get_ticks_msec() >= _hint_until_msec:
@@ -588,11 +588,11 @@ func exit_vehicle() -> void:
 		_show_control_hint("Slow down before exiting")
 		return
 	if active_vehicle.has_method("can_exit_safely") and not active_vehicle.can_exit_safely():
-		_show_control_hint("Land the helicopter before exiting")
+		_show_control_hint("Land before exiting")
 		return
 	var exit_position: Variant = _safe_exit_position()
 	if exit_position == null:
-		_show_control_hint("No space to exit here")
+		_show_control_hint("No space to exit")
 		return
 	parked_transforms[active_vehicle] = active_vehicle.global_transform
 	control_state = ControlState.EXITING

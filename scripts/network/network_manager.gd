@@ -98,7 +98,7 @@ func host_game(port: int = DEFAULT_PORT, nickname: String = "Host") -> Error:
 	peer = ENetMultiplayerPeer.new()
 	var err := peer.create_server(port, MAX_CLIENTS)
 	if err != OK:
-		notification_posted.emit("Failed to create server on port %d: %d" % [port, err], true)
+		notification_posted.emit("Could not host a room", true)
 		return err
 
 	var mp := _get_mp()
@@ -111,7 +111,7 @@ func host_game(port: int = DEFAULT_PORT, nickname: String = "Host") -> Error:
 	}
 	connection_state_changed.emit(true, true)
 	peer_list_updated.emit(peers)
-	notification_posted.emit("Room hosted on port %d as '%s'" % [port, local_nickname], false)
+	notification_posted.emit("Room hosted", false)
 	return OK
 
 ## Join an existing room via IP and port
@@ -128,13 +128,13 @@ func join_game(address: String = "127.0.0.1", port: int = DEFAULT_PORT, nickname
 	peer = ENetMultiplayerPeer.new()
 	var err := peer.create_client(clean_addr, port)
 	if err != OK:
-		notification_posted.emit("Failed to connect to %s:%d" % [clean_addr, port], true)
+		notification_posted.emit("Could not connect", true)
 		return err
 
 	var mp := _get_mp()
 	if mp:
 		mp.multiplayer_peer = peer
-	notification_posted.emit("Connecting to %s:%d..." % [clean_addr, port], false)
+	notification_posted.emit("Connecting", false)
 	return OK
 
 func disconnect_game() -> void:
@@ -158,7 +158,6 @@ func _clear_all_puppets() -> void:
 # --- Connection Event Callbacks ---
 
 func _on_peer_connected(id: int) -> void:
-	notification_posted.emit("Peer connected: %d" % id, false)
 	if not peers.has(id):
 		peers[id] = {
 			"nickname": "Player %d" % id,
@@ -187,15 +186,15 @@ func _on_connected_to_server() -> void:
 		"is_downed": false
 	}
 	connection_state_changed.emit(true, false)
-	notification_posted.emit("Connected to host as '%s'" % local_nickname, false)
+	notification_posted.emit("Connected", false)
 	rpc("rpc_register_player", local_nickname)
 
 func _on_connection_failed() -> void:
-	notification_posted.emit("Connection failed. Check host IP and port.", true)
+	notification_posted.emit("Connection failed", true)
 	disconnect_game()
 
 func _on_server_disconnected() -> void:
-	notification_posted.emit("Host closed the room or lost connection.", true)
+	notification_posted.emit("Room closed", true)
 	disconnect_game()
 
 # --- Puppet Management ---
@@ -380,7 +379,7 @@ func rpc_notify_downed(downed_id: int) -> void:
 		if is_instance_valid(p) and p.has_method("set_downed"):
 			p.set_downed(true)
 	player_downed.emit(downed_id, name_tag)
-	notification_posted.emit("⚠️ %s is KNOCKED DOWN!" % name_tag, true)
+	notification_posted.emit("%s is down" % name_tag, true)
 
 func _process_local_downed(delta: float) -> void:
 	var person := _get_local_person()
@@ -420,9 +419,8 @@ func _process_revive_interaction(delta: float) -> void:
 		if _revive_target_id != closest_downed:
 			_revive_target_id = closest_downed
 			_revive_progress = 0.0
+			notification_posted.emit("Reviving %s" % peers.get(_revive_target_id, {}).get("nickname", "Teammate"), false)
 		_revive_progress += delta / REVIVE_DURATION # 8 seconds held revive
-		var target_name: String = peers.get(_revive_target_id, {}).get("nickname", "Teammate")
-		notification_posted.emit("Reviving %s: %d%%" % [target_name, int(_revive_progress * 100.0)], false)
 		if _revive_progress >= 1.0:
 			rpc("rpc_notify_revived", _revive_target_id)
 			_revive_target_id = -1
@@ -452,7 +450,7 @@ func rpc_notify_revived(revived_id: int) -> void:
 			if person.has_method("_update_stance"):
 				person._update_stance(false, false)
 	player_revived.emit(revived_id, name_tag)
-	notification_posted.emit("💚 %s was REVIVED!" % name_tag, false)
+	notification_posted.emit("%s revived" % name_tag, false)
 
 func notify_player_eliminated(elim_id: int) -> void:
 	var crate_pos := Vector3.ZERO
@@ -467,7 +465,7 @@ func notify_player_eliminated(elim_id: int) -> void:
 func rpc_notify_eliminated(elim_id: int, crate_pos: Vector3) -> void:
 	var name_tag: String = peers.get(elim_id, {}).get("nickname", "Player %d" % elim_id)
 	player_eliminated.emit(elim_id, name_tag)
-	notification_posted.emit("☠️ %s was ELIMINATED!" % name_tag, true)
+	notification_posted.emit("%s eliminated" % name_tag, true)
 
 	# Spawn death loot crate
 	if crate_pos != Vector3.ZERO and main_node:
@@ -504,4 +502,4 @@ func rpc_notify_crate_looted(crate_id: int, looter_id: int) -> void:
 		var crate_node := main_node.get_node_or_null("LootCrate_%d" % crate_id)
 		if crate_node and is_instance_valid(crate_node):
 			crate_node.queue_free()
-	notification_posted.emit("📦 %s looted death crate!" % looter_name, false)
+	notification_posted.emit("%s looted a crate" % looter_name, false)

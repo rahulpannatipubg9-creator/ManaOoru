@@ -160,7 +160,7 @@ func set_vehicle_mode(value: bool) -> void:
 	for ctrl in combat_controls:
 		if is_instance_valid(ctrl): ctrl.visible = not value
 	if value:
-		set_interaction_prompt("[F]  EXIT VEHICLE")
+		set_interaction_prompt("")
 
 func show_vehicle_controls_hint() -> void:
 	$VehicleControlsHint.text = "VEHICLE CONTROLS\nW Accelerate   S Brake/Reverse   A/D Steer\nT Auto/Manual   X/Z Gear up/down\nSpace Handbrake   F Exit"
@@ -867,7 +867,7 @@ func _toggle_scope() -> void:
 	var pivot: Node = player.camera_pivot
 	if not pivot.touch_aim and _game.gameplay.get("has_rifle") == false:
 		if _game.city_life and _game.city_life.has_method("toast"):
-			_game.city_life.toast("No rifle yet • pick one up at Chowrastha")
+			_game.city_life.toast("No rifle yet, find one at Chowrastha")
 		return
 	if not pivot.touch_aim:
 		if not _game.gameplay.action_mode:
@@ -954,8 +954,8 @@ func _build_multiplayer_ui() -> void:
 	# Godavari River Bridge Fast-Travel Button
 	btn_bridge_travel = Button.new()
 	btn_bridge_travel.name = "BtnBridgeTravel"
-	btn_bridge_travel.text = "🌉 BRIDGE [B]"
-	btn_bridge_travel.tooltip_text = "Fast Travel to Godavari River Bridge (1,100 m) [Hotkey: B]"
+	btn_bridge_travel.text = "🌉 BRIDGE"
+	btn_bridge_travel.tooltip_text = "Fast travel to Godavari bridge"
 	btn_bridge_travel.mouse_filter = Control.MOUSE_FILTER_STOP
 	var bridge_btn_style := StyleBoxFlat.new()
 	bridge_btn_style.bg_color = Color(0.12, 0.32, 0.22, 0.88)

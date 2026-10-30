@@ -112,7 +112,7 @@ func _add_stall(spot: Dictionary, index: int) -> void:
 	visitor.position = Vector3(1.0, 0, 1.9)
 	visitor.ground_sampler = visitor.sample_world_surface.bind(world)
 	var sign := Label3D.new()
-	sign.text = title + "\n[E] Browse • Delivery work"
+	sign.text = title
 	sign.position = Vector3(0, 3.6, 0)
 	sign.font_size = 26
 	sign.pixel_size = 0.008
@@ -152,21 +152,20 @@ func open_shop(record: Dictionary) -> void:
 
 func visit() -> bool:
 	if shops.is_empty():
-		game.city_life.toast("Market placement unavailable in this map")
+		game.city_life.toast("No market on this map")
 		return false
 	var at: Vector3 = shops[0].position
 	game.navigator.set_destination(Vector2(at.x, at.z), "Market Chai Corner")
-	game.city_life.toast("Market marked on GPS • walk to the counter and press E")
+	game.city_life.toast("Market marked on map")
 	return true
 
 func start_delivery() -> bool:
 	var gameplay: Node = game.gameplay
 	if shops.size() < 2 or not gameplay.mission.is_empty():
-		game.city_life.toast("Finish or cancel the current activity first")
+		game.city_life.toast("Finish your current job first")
 		return false
 	gameplay.mission = {"kind": "market_delivery", "title": "Market produce delivery", "points": [shops[1].position, shops[0].position], "index": 0, "stage": "Collect parcel at Fresh Produce", "time": 180.0, "reward": 12, "hold": 0.0}
 	gameplay._set_mission_target()
-	game.city_life.toast("Collect a parcel at Fresh Produce • then deliver to Chai Corner")
 	return true
 
 func _process(delta: float) -> void:
