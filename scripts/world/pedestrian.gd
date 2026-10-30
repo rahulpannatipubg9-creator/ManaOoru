@@ -60,6 +60,11 @@ var _phase := 0.0
 var _travelled := 0.0
 var _direction_sign := 1.0
 var _crossing_wait := 0.0
+const ANIM_LOD_CLOSE_DISTANCE := 15.0
+const ANIM_LOD_MID_DISTANCE := 35.0
+
+var _anim_lod_timer := 0.0
+var _accumulated_anim_delta := 0.0
 var _crossing_start := Vector3.ZERO
 
 func _ready() -> void:
@@ -82,9 +87,21 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	var camera := get_viewport().get_camera_3d()
-	if camera != null and global_position.distance_squared_to(camera.global_position) > simulation_distance * simulation_distance:
-		visible = false
-		return
+	if camera != null:
+		var dist_sq := global_position.distance_squared_to(camera.global_position)
+		if dist_sq > simulation_distance * simulation_distance:
+			visible = false
+			return
+		# Animation LOD: 60 FPS up close (0-15m), 30 FPS at 15-35m, 15 FPS beyond 35m
+		if dist_sq > ANIM_LOD_CLOSE_DISTANCE * ANIM_LOD_CLOSE_DISTANCE:
+			var target_fps := 15.0 if dist_sq > ANIM_LOD_MID_DISTANCE * ANIM_LOD_MID_DISTANCE else 30.0
+			_anim_lod_timer += delta
+			_accumulated_anim_delta += delta
+			if _anim_lod_timer < 1.0 / target_fps:
+				return
+			delta = _accumulated_anim_delta
+			_anim_lod_timer = 0.0
+			_accumulated_anim_delta = 0.0
 	visible = true
 	if _panic_time > 0.0:
 		_panic_time = maxf(0.0, _panic_time - delta)

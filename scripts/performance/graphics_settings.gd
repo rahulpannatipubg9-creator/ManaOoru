@@ -1,9 +1,9 @@
 extends RefCounted
 const PATH := "user://graphics.cfg"
 const PROFILES := {
-	"Low": {"scale": 0.65, "distance": 320.0, "actors": 12, "simulation": 120.0, "shadows": false, "effects": 0.25, "fps": 30},
-	"Medium": {"scale": 0.8, "distance": 550.0, "actors": 28, "simulation": 220.0, "shadows": true, "effects": 0.6, "fps": 60},
-	"High": {"scale": 1.0, "distance": 850.0, "actors": 55, "simulation": 400.0, "shadows": true, "effects": 1.0, "fps": 60}}
+	"Low": {"scale": 0.65, "distance": 320.0, "actors": 12, "simulation": 120.0, "shadows": false, "effects": 0.25, "fps": 30, "max_draw_calls": 180, "max_vram_mb": 450.0, "shadow_cascade": 1, "shadow_distance": 0.0},
+	"Medium": {"scale": 0.8, "distance": 550.0, "actors": 28, "simulation": 220.0, "shadows": true, "effects": 0.6, "fps": 60, "max_draw_calls": 220, "max_vram_mb": 450.0, "shadow_cascade": 1, "shadow_distance": 35.0},
+	"High": {"scale": 1.0, "distance": 850.0, "actors": 55, "simulation": 400.0, "shadows": true, "effects": 1.0, "fps": 60, "max_draw_calls": 250, "max_vram_mb": 450.0, "shadow_cascade": 2, "shadow_distance": 65.0}}
 var preset := "Auto"
 var values: Dictionary = PROFILES.Medium.duplicate()
 

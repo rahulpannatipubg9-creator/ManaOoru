@@ -61,6 +61,11 @@ var source_rendered_way_count := 0
 var drain_segment_count := 0
 var topoexport_rendered_count := 0
 var topoexport_duplicate_count := 0
+var focus: Callable
+var _sectors: Dictionary = {}
+var _active_sectors: Dictionary = {}
+var _last_sector := Vector2i(999999, 999999)
+var _stream_timer := 0.0
 var _surfaces: Dictionary = {}
 var _markings: Dictionary = {}
 var _solids: Dictionary = {}
@@ -400,42 +405,92 @@ static func densify(points: PackedVector2Array, max_step: float) -> PackedVector
 	return result
 
 func _commit() -> void:
+	for child in get_children():
+		child.queue_free()
+	_sectors.clear()
+	_active_sectors.clear()
+	_last_sector = Vector2i(999999, 999999)
+
+	var collision_container := Node3D.new()
+	collision_container.name = "RoadCollision"
+	add_child(collision_container)
+
+	var all_cells: Dictionary = {}
 	for cell in _surfaces:
-		var surface: MeshSurface = _surfaces[cell]
-		var chunk := Node3D.new()
-		chunk.name = "RoadChunk_%d_%d" % [cell.x, cell.y]
-		add_child(chunk)
-		chunk.add_child(_mesh_instance(surface, _road_material, 0.0))
-		if not surface.collision.is_empty():
+		all_cells[cell] = true
+	for cell in _markings:
+		all_cells[cell] = true
+	for cell in _solids:
+		all_cells[cell] = true
+
+	for cell: Vector2i in all_cells:
+		var sector := Node3D.new()
+		sector.name = "RoadSector_%d_%d" % [cell.x, cell.y]
+		if _surfaces.has(cell):
+			var surface: MeshSurface = _surfaces[cell]
+			sector.add_child(_mesh_instance(surface, _road_material, 0.0))
+			if not surface.collision.is_empty():
+				var body := StaticBody3D.new()
+				body.name = "RoadCollision_%d_%d" % [cell.x, cell.y]
+				body.collision_layer = 1 | (1 << (ROAD_LAYER - 1))
+				body.collision_mask = 0
+				var shape := ConcavePolygonShape3D.new()
+				shape.set_faces(surface.collision)
+				var collision := CollisionShape3D.new()
+				collision.shape = shape
+				body.add_child(collision)
+				collision_container.add_child(body)
+		if _markings.has(cell):
+			var markings := _mesh_instance(_markings[cell], _marking_material, MARKINGS_VIEW_DISTANCE)
+			markings.name = "Markings_%d_%d" % [cell.x, cell.y]
+			sector.add_child(markings)
+		if _solids.has(cell):
+			var solid: MeshSurface = _solids[cell]
+			var walls := _mesh_instance(solid, _surface_material, 0.0)
+			walls.name = "Walls_%d_%d" % [cell.x, cell.y]
 			var body := StaticBody3D.new()
-			body.collision_layer = 1 << (ROAD_LAYER - 1)
-			body.collision_mask = 0
 			var shape := ConcavePolygonShape3D.new()
-			shape.set_faces(surface.collision)
+			shape.backface_collision = true
+			shape.set_faces(solid.collision)
 			var collision := CollisionShape3D.new()
 			collision.shape = shape
 			body.add_child(collision)
-			chunk.add_child(body)
-	for cell in _markings:
-		var markings := _mesh_instance(_markings[cell], _marking_material, MARKINGS_VIEW_DISTANCE)
-		markings.name = "Markings_%d_%d" % [cell.x, cell.y]
-		add_child(markings)
-	for cell in _solids:
-		var solid: MeshSurface = _solids[cell]
-		var walls := _mesh_instance(solid, _surface_material, 0.0)
-		walls.name = "Walls_%d_%d" % [cell.x, cell.y]
-		add_child(walls)
-		var body := StaticBody3D.new()
-		var shape := ConcavePolygonShape3D.new()
-		shape.backface_collision = true
-		shape.set_faces(solid.collision)
-		var collision := CollisionShape3D.new()
-		collision.shape = shape
-		body.add_child(collision)
-		walls.add_child(body)
+			collision_container.add_child(body)
+			sector.add_child(walls)
+		_sectors[cell] = sector
+
 	_surfaces.clear()
 	_markings.clear()
 	_solids.clear()
+	update_streaming(Vector2.ZERO)
+
+func _process(delta: float) -> void:
+	_stream_timer -= delta
+	if _stream_timer <= 0.0 and focus.is_valid():
+		_stream_timer = 0.25
+		update_streaming(focus.call())
+
+## Spatial Grid Partitioning (GTA Sector System): 250m x 250m sectors.
+## Only the active 3x3 grid (9 sectors around the player/focus) is active in the scene tree.
+func update_streaming(center: Vector2) -> void:
+	var current_cell := Vector2i(floori(center.x / CHUNK_SIZE), floori(center.y / CHUNK_SIZE))
+	if current_cell == _last_sector:
+		return
+	_last_sector = current_cell
+	var wanted: Dictionary = {}
+	for dx in [-1, 0, 1]:
+		for dy in [-1, 0, 1]:
+			var cell := current_cell + Vector2i(dx, dy)
+			if _sectors.has(cell):
+				wanted[cell] = true
+	for cell: Vector2i in _active_sectors.keys():
+		if not wanted.has(cell):
+			remove_child(_sectors[cell])
+			_active_sectors.erase(cell)
+	for cell: Vector2i in wanted.keys():
+		if not _active_sectors.has(cell):
+			add_child(_sectors[cell])
+			_active_sectors[cell] = true
 
 func _mesh_instance(surface: MeshSurface, material: Material, view_distance: float) -> MeshInstance3D:
 	var instance := MeshInstance3D.new()

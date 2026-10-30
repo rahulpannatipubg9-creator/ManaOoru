@@ -40,6 +40,7 @@ const CityLifeController := preload("res://scripts/world/city_life.gd")
 var city_life: Node3D
 var gameplay: Node3D
 var performance_controller: Node
+var device_performance_manager: Node
 var environment_controls: CanvasLayer
 var network_manager: Node
 ## Team Deathmatch (scripts/tactical): the networking session and the on-device gameplay around it.
@@ -106,7 +107,10 @@ func _ready() -> void:
 	navigator.setup(road_network, _navigation_state)
 	preload("res://scripts/performance/startup_profile.gd").mark("main: navigator.setup(road_network, _navigation_state)")
 	add_child(navigator)
-	world.buildings.focus = func() -> Vector2: return GeoProjection.world_to_map(tracked_body().global_position)
+	var player_focus := func() -> Vector2: return GeoProjection.world_to_map(tracked_body().global_position)
+	world.buildings.focus = player_focus
+	if world.roads:
+		world.roads.focus = player_focus
 	hud.configure_map(world.map_data, world.rendered_building_footprints, world.map_data.landmarks, navigator)
 	preload("res://scripts/performance/startup_profile.gd").mark("main: hud.configure_map(world.map_data, world.rendered_b")
 	entry = VehicleEntry.new()
@@ -132,6 +136,10 @@ func _ready() -> void:
 	add_child(performance_controller)
 	performance_controller.setup(self)
 	preload("res://scripts/performance/startup_profile.gd").mark("main: performance_controller.setup(self)")
+	device_performance_manager = preload("res://scripts/core/device_performance_manager.gd").new()
+	device_performance_manager.name = "DevicePerformanceManager"
+	add_child(device_performance_manager)
+	device_performance_manager.setup(self)
 	network_manager = preload("res://scripts/network/network_manager.gd").new()
 	add_child(network_manager)
 	network_manager.setup(self)

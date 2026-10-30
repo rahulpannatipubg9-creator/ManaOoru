@@ -1,0 +1,22 @@
+# Mana Ooru — Code Ownership Configuration
+# Core repository maintainer reviews critical engine, physics, and world systems.
+
+# Default maintainer for the entire repository
+* @rahulpannatipubg9-creator
+
+# Core game engine configuration and project settings
+/project.godot @rahulpannatipubg9-creator
+/AGENTS.md @rahulpannatipubg9-creator
+/tools/ @rahulpannatipubg9-creator
+/.githooks/ @rahulpannatipubg9-creator
+
+# Critical gameplay, movement physics, and camera control scripts
+/scripts/ @rahulpannatipubg9-creator
+/scenes/main.tscn @rahulpannatipubg9-creator
+/scenes/world/ @rahulpannatipubg9-creator
+
+# Quality gates & regression tests
+/tests/ @rahulpannatipubg9-creator
+
+# Legal & Asset licensing
+/ASSET_LICENSES.md @rahulpannatipubg9-creator

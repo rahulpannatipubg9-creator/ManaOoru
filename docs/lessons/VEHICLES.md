@@ -49,3 +49,8 @@ Code: `scripts/vehicle/` (`vehicle_entry.gd` for getting in and out and the seat
 - **Cause:** every car read the same input.
 - **Rule:** exactly one thing has input authority at a time; `main.gd` assigns it and parked cars keep their
   stored transforms.
+
+### Parked vehicle suspension draining mobile CPU (2026-10-30)
+- **Symptom:** Running 4 suspension raycasts and Pacejka tyre friction calculations per car on every parked Thar, Tuk Tuk, and Porsche drained CPU on mobile.
+- **Rule:** Parked vehicles sleep on their simple box collider with zero raycasts running. Full suspension, drivetrain and tyre calculations wake up only when `driving_enabled` is handed to the car by `main.gd`. Tire raycasts strictly query Layer 1 (Roads/Terrain), ignoring buildings, pedestrians and props. Engine audio is strictly voice-capped: only the active driven vehicle plays engine audio, while parked cars are completely muted.
+- **Check:** `movement_regression.gd`, verify parked cars sleep at rest, zero audio playback when parked, and wake up smoothly on entry.

@@ -376,6 +376,27 @@ func close_menu() -> void:
 	if hud._game.performance_controller.settings.save_to() != OK or _save_menu_settings() != OK:
 		hint.text = "Not saved"
 		return
+	var dpm_node: Variant = hud._game.get("device_performance_manager")
+	if dpm_node != null:
+		var pc_values: Dictionary = hud._game.performance_controller.settings.values
+		var cascade_val: int = int(pc_values.get("shadow_cascade", 1))
+		var shadow_mode_val: int = DirectionalLight3D.SHADOW_ORTHOGONAL if cascade_val == 1 else (DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS if cascade_val == 2 else DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS)
+		var active_prof: Variant = dpm_node.get("active_profile")
+		var tablet_inset: bool = active_prof.get("tablet_hud_inset", false) if active_prof is Dictionary else false
+		dpm_node.call("save_settings", {
+			"tier": dpm_node.get("active_tier"),
+			"tier_name": "Custom Profile",
+			"target_fps": pc_values.get("fps", 60),
+			"scaling_3d_scale": pc_values.get("scale", 1.0),
+			"shadow_enabled": pc_values.get("shadows", true),
+			"directional_shadow_mode": shadow_mode_val,
+			"directional_shadow_max_distance": pc_values.get("shadow_distance", 35.0),
+			"view_distance": pc_values.get("distance", 550.0),
+			"simulation_distance": pc_values.get("simulation", 220.0),
+			"actors": pc_values.get("actors", 28),
+			"effects": pc_values.get("effects", 0.6),
+			"tablet_hud_inset": tablet_inset
+		}, true)
 	panel.hide()
 	hud._game.pause_tree(_was_paused)
 	hud._game._clear_control_inputs()

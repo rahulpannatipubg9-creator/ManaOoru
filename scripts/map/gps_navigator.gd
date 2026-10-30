@@ -10,7 +10,7 @@ signal route_changed
 const UPDATE_INTERVAL := 0.2
 const PROGRESS_SEARCH_WINDOW := 40
 const ARRIVAL_RADIUS := {RoadNetwork.Mode.WALK: 10.0, RoadNetwork.Mode.DRIVE: 18.0}
-const OFF_ROUTE_DISTANCE := {RoadNetwork.Mode.WALK: 25.0, RoadNetwork.Mode.DRIVE: 35.0}
+const OFF_ROUTE_DISTANCE := {RoadNetwork.Mode.WALK: 25.0, RoadNetwork.Mode.DRIVE: 25.0}
 const OFF_ROUTE_GRACE_SECONDS := 1.5
 const REROUTE_COOLDOWN_MSEC := 2000
 const ARRIVED_MESSAGE_SECONDS := 4.0

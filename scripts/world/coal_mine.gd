@@ -12,6 +12,9 @@ extends Node3D
 
 const DISPLAY_NAME := "Coal Gallery"
 const GALLERY_SCENE := "res://assets/models/coal_mine/coal_mine_gallery.glb"
+const SIGN_WINDING_ROAD := preload("res://assets/models/city_props/road/sign_winding_road.glb")
+const SIGN_SLIPPERY_ROAD := preload("res://assets/models/city_props/road/sign_slippery_road.glb")
+const ELECTRICAL_PYLON := preload("res://assets/models/city_props/road/electrical_pylon.glb")
 ## Walkable floor cells of the gallery (from tools/export_coal_mine.py).
 const FLOOR_DATA := "res://assets/models/coal_mine/coal_mine_floor.json"
 const ROCK_HEIGHT := 6.0
@@ -92,6 +95,39 @@ func _build_portal() -> void:
 	trigger.add_child(shape)
 	trigger.body_entered.connect(_on_portal_entered)
 	add_child(trigger)
+	_place_mine_infrastructure_props()
+
+func _place_mine_infrastructure_props() -> void:
+	if SIGN_WINDING_ROAD:
+		var sign_w := SIGN_WINDING_ROAD.instantiate() as Node3D
+		sign_w.name = "SignWindingRoad"
+		sign_w.position = Vector3(-5.8, 0.0, 7.5)
+		sign_w.rotation.y = 0.0
+		_setup_prop_collision(sign_w)
+		add_child(sign_w)
+
+	if SIGN_SLIPPERY_ROAD:
+		var sign_s := SIGN_SLIPPERY_ROAD.instantiate() as Node3D
+		sign_s.name = "SignSlipperyRoad"
+		sign_s.position = Vector3(5.8, 0.0, 7.5)
+		sign_s.rotation.y = 0.0
+		_setup_prop_collision(sign_s)
+		add_child(sign_s)
+
+	if ELECTRICAL_PYLON:
+		var pylon := ELECTRICAL_PYLON.instantiate() as Node3D
+		pylon.name = "InclinePowerPylon"
+		pylon.position = Vector3(-12.5, 0.0, 1.5)
+		pylon.rotation.y = PI * 0.5
+		_setup_prop_collision(pylon)
+		add_child(pylon)
+
+func _setup_prop_collision(root: Node3D) -> void:
+	for node in root.find_children("*", "MeshInstance3D", true, false):
+		var mesh := node as MeshInstance3D
+		mesh.visibility_range_end = 250.0 if OS.has_feature("mobile") else 600.0
+		if mesh.mesh != null:
+			mesh.create_trimesh_collision()
 
 func _build_gallery() -> void:
 	if not ResourceLoader.exists(GALLERY_SCENE):

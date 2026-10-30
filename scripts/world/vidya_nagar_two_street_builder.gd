@@ -9,6 +9,8 @@ extends Node3D
 const PHOTO_SEQUENCE_PATH := "res://data/local/vidyanagar2_photo_sequence.json"
 const VISIBILITY_DISTANCE := 220.0
 const IMPOSTOR_TEXTURE := preload("res://assets/textures/trees/broadleaf_impostor.png")
+const BANANA_TREE_SCENE := preload("res://assets/models/foliage/banana_tree.glb")
+const SUV_SCENE := preload("res://assets/models/suv_4x4/suv_4x4_complete.glb")
 ## Keep the authored photo-reference houses behind the mapped residential
 ## carriageway.  Their porches are part of the frontage, so the clearance is
 ## measured from the outer porch edge rather than only from the wall body.
@@ -40,6 +42,7 @@ var porch_count := 0
 var house_count := 0
 var tank_count := 0
 var tree_count := 0
+var banana_tree_count := 0
 
 func _init() -> void:
 	name = "VidyaNagar2Street"
@@ -154,8 +157,8 @@ func build(world: Node, _map_data: MapData) -> void:
 	# Group 4: Photos 13 to 17 (Indices 12 to 16) - Closely spaced low houses, pale colors, corrugated porches, water tanks
 	_build_segment_4(world, map_pts[12], map_pts[16])
 
-	print("Vidya Nagar 2 street replica built: %d walls, %d gates, %d porches, %d houses, %d water tanks, %d trees" %
-		[wall_count, gate_count, porch_count, house_count, tank_count, tree_count])
+	print("Vidya Nagar 2 street replica built: %d walls, %d gates, %d porches, %d houses, %d water tanks, %d trees, %d banana trees" %
+		[wall_count, gate_count, porch_count, house_count, tank_count, tree_count, banana_tree_count])
 
 ## Segment 1: Photos 1-5 - Entrance section
 func _build_segment_1(world: Node, p_start: Vector2, p_end: Vector2) -> void:
@@ -178,6 +181,10 @@ func _build_segment_1(world: Node, p_start: Vector2, p_end: Vector2) -> void:
 	var tree_pt: Vector2 = p_start + dir * (length * 0.50) + normal * 4.6
 	_add_tree(world, tree_pt, 7.5)
 
+	# Front garden banana tree (Arati chettu)
+	var banana_pt1: Vector2 = p_start + dir * (length * 0.35) - normal * 3.8
+	_add_banana_tree(world, banana_pt1, 0.4, 1.0)
+
 ## Segment 2: Photos 6-9 - Wide tree-lined setbacks, quarters, low walls & gates
 func _build_segment_2(world: Node, p_start: Vector2, p_end: Vector2) -> void:
 	var dir: Vector2 = (p_end - p_start).normalized()
@@ -195,6 +202,10 @@ func _build_segment_2(world: Node, p_start: Vector2, p_end: Vector2) -> void:
 	_build_compound_wall(world, left_wall_a, left_gate_a, 0.95)
 	_build_gate(world, (left_gate_a + left_gate_b) * 0.5, dir, 2.4, 1.1)
 	_build_compound_wall(world, left_gate_b, left_wall_b, 0.95)
+
+	# Parked SUV 4x4 on roadside shoulder in front of the quarters gate
+	var suv_pt: Vector2 = p_start + dir * (length * 0.45) - normal * 3.1
+	_add_parked_suv(world, suv_pt, atan2(dir.x, dir.y))
 
 	# Right side set back: low wall with gate, single-storey quarters
 	var right_house_pt: Vector2 = p_start + dir * (length * 0.50) + normal * 7.5
@@ -218,6 +229,10 @@ func _build_segment_2(world: Node, p_start: Vector2, p_end: Vector2) -> void:
 	_add_tree(world, p_start + dir * (length * 0.75) - normal * 5.0, 7.8)
 	_add_tree(world, p_start + dir * (length * 0.30) + normal * 4.8, 8.2)
 	_add_tree(world, p_start + dir * (length * 0.80) + normal * 4.9, 7.6)
+
+	# Residential yard banana tree
+	var banana_pt2: Vector2 = p_start + dir * (length * 0.50) - normal * 3.9
+	_add_banana_tree(world, banana_pt2, -0.6, 1.1)
 
 ## Segment 3: Photos 10-12 - Narrow lane, taller pale blue dwelling right, dense vegetation left
 func _build_segment_3(world: Node, p_start: Vector2, p_end: Vector2) -> void:
@@ -245,6 +260,8 @@ func _build_segment_3(world: Node, p_start: Vector2, p_end: Vector2) -> void:
 	_add_tree(world, left_veg_1, 7.5)
 	_add_tree(world, left_veg_2, 8.5)
 	_add_tree(world, left_veg_3, 7.0)
+	_add_banana_tree(world, p_start + dir * (length * 0.42) - normal * 3.9, 1.2, 0.95)
+	_add_banana_tree(world, p_start + dir * (length * 0.72) - normal * 4.0, -0.8, 1.05)
 	_build_compound_wall(world, p_start + normal * -2.8, p_end + normal * -2.8, 0.90)
 
 ## Segment 4: Photos 13-17 - Closely spaced low houses, pale green/cream/blue, corrugated porches, water tanks
@@ -273,6 +290,7 @@ func _build_segment_4(world: Node, p_start: Vector2, p_end: Vector2) -> void:
 	_build_compound_wall(world, p_start - normal * 2.6, p_start + dir * (length * 0.45) - normal * 2.6, 0.90)
 	_build_compound_wall(world, p_start + dir * (length * 0.55) - normal * 2.6, p_end - normal * 2.6, 0.90)
 	_build_compound_wall(world, p_start + normal * 2.6, p_start + dir * (length * 0.40) + normal * 2.6, 0.90)
+	_add_banana_tree(world, p_start + dir * (length * 0.25) + normal * 3.8, 0.7, 1.0)
 	_build_compound_wall(world, p_start + dir * (length * 0.50) + normal * 2.6, p_end + normal * 2.6, 0.90)
 
 ## Builds a modular house facade with flat slab roof, parapet, optional corrugated porch, and water tank
@@ -464,6 +482,64 @@ func _add_tree(world: Node, map_pos: Vector2, height: float) -> void:
 	body.add_child(col)
 	tree.add_child(body)
 	tree_count += 1
+
+## Adds a 3D Banana Tree model
+func _add_banana_tree(world: Node, map_pos: Vector2, rot_y: float = 0.0, scale_factor: float = 1.0) -> void:
+	if world._is_on_any_road(map_pos, 0.8):
+		return # Keep outside carriageway
+	var ground: float = float(world.ground_height(map_pos))
+	var tree_node := BANANA_TREE_SCENE.instantiate() as Node3D
+	tree_node.name = "BananaTree_%d" % (banana_tree_count + 1)
+	tree_node.position = Vector3(map_pos.x, ground, map_pos.y)
+	tree_node.rotation.y = rot_y
+	tree_node.scale = Vector3(scale_factor, scale_factor, scale_factor)
+	for child: Node in tree_node.find_children("*", "GeometryInstance3D"):
+		var geom := child as GeometryInstance3D
+		if geom:
+			geom.visibility_range_end = VISIBILITY_DISTANCE
+
+	# Add thin trunk collision so character cannot walk straight through trunk
+	var body := StaticBody3D.new()
+	body.name = "TrunkCollider"
+	var col := CollisionShape3D.new()
+	var shape := CylinderShape3D.new()
+	shape.radius = 0.18
+	shape.height = 2.4
+	col.shape = shape
+	col.position = Vector3(0, 1.2, 0)
+	body.add_child(col)
+	tree_node.add_child(body)
+
+	add_child(tree_node)
+	banana_tree_count += 1
+
+## Adds a parked SUV 4x4 in residential driveway
+func _add_parked_suv(world: Node, map_pos: Vector2, yaw: float) -> void:
+	if not SUV_SCENE:
+		return
+	var ground: float = float(world.ground_height(map_pos))
+	var suv := SUV_SCENE.instantiate() as Node3D
+	suv.name = "ParkedSUV4x4"
+	suv.position = Vector3(map_pos.x, ground + 0.02, map_pos.y)
+	suv.rotation.y = yaw
+
+	# Add StaticBody3D collision box around vehicle body
+	var body := StaticBody3D.new()
+	body.name = "SUVCollider"
+	var col := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	box.size = Vector3(2.15, 1.65, 4.80)
+	col.shape = box
+	col.position = Vector3(0.0, 0.85, 0.0)
+	body.add_child(col)
+	suv.add_child(body)
+
+	for child: Node in suv.find_children("*", "GeometryInstance3D"):
+		var geom := child as GeometryInstance3D
+		if geom:
+			geom.visibility_range_end = VISIBILITY_DISTANCE
+
+	add_child(suv)
 
 ## Reusable box mesh helper with optional static collision
 func _box(parent: Node3D, node_name: String, size: Vector3, pos: Vector3, rot_y: float, mat: Material, add_collision: bool = false) -> void:

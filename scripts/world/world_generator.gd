@@ -75,6 +75,7 @@ func _ready() -> void:
 	await _stage(0.05, "Shaping the ground")
 	_create_ground()
 	await _stage(0.15, "Laying roads")
+	_create_distant_horizon()
 	roads = RoadBuilder.new()
 	preload("res://scripts/performance/startup_profile.gd").mark("world: roads = RoadBuilder.new()")
 	add_child(roads)
@@ -247,6 +248,44 @@ func _create_ground() -> void:
 		collision.shape = shape
 		chunk.add_child(collision)
 		ground.add_child(chunk)
+
+## Distant Horizon Mesh: A low-poly single-mesh skyline of the town for the far distance (500m to 2km), taking only 1 draw call.
+func _create_distant_horizon() -> void:
+	var surface := MeshSurface.new()
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.albedo_color = Color(0.62, 0.68, 0.75, 1.0)
+	var terrain := map_data.terrain
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 42
+
+	var num_silhouettes := 72
+	for i in range(num_silhouettes):
+		var angle := (float(i) / float(num_silhouettes)) * TAU
+		var dist := rng.randf_range(650.0, 1600.0)
+		var center_pt := Vector2(cos(angle), sin(angle)) * dist
+		var ground_y := terrain.height_at(center_pt) if terrain.is_valid else 0.0
+		var width := rng.randf_range(25.0, 50.0)
+		var height := rng.randf_range(12.0, 28.0)
+
+		var normal := Vector3(cos(angle), 0.0, sin(angle)).normalized()
+		var tangent := Vector2(-sin(angle), cos(angle)) * (width * 0.5)
+		var p0 := Vector3(center_pt.x - tangent.x, ground_y, center_pt.y - tangent.y)
+		var p1 := Vector3(center_pt.x + tangent.x, ground_y, center_pt.y + tangent.y)
+		var p2 := Vector3(center_pt.x + tangent.x, ground_y + height, center_pt.y + tangent.y)
+		var p3 := Vector3(center_pt.x - tangent.x, ground_y + height, center_pt.y - tangent.y)
+
+		surface.quad(p0, p1, p2, p3, normal, Color.WHITE,
+			Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, false)
+
+	var mesh_inst := MeshInstance3D.new()
+	mesh_inst.name = "DistantHorizonSkyline"
+	mesh_inst.mesh = surface.to_mesh()
+	mesh_inst.material_override = mat
+	mesh_inst.visibility_range_begin = 500.0
+	mesh_inst.visibility_range_end = 2000.0
+	mesh_inst.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(mesh_inst)
 
 ## Real ground cover: the land-cover raster goes to the shader as an 8-bit class texture.
 func _ground_material() -> Material:

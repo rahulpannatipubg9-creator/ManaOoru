@@ -10,7 +10,7 @@ signal open_full_map_requested
 
 const ZOOM_LEVELS := [0.35, 0.6, 1.0, 1.6, 2.4]
 const DEFAULT_ZOOM_INDEX := 2
-const DESKTOP_REFRESH_HZ := 30.0
+const DESKTOP_REFRESH_HZ := 20.0
 const MOBILE_REFRESH_HZ := 15.0
 const LOW_FPS_REFRESH_HZ := 8.0
 const LOW_FPS_THRESHOLD := 40.0
