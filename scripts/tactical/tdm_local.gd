@@ -114,6 +114,10 @@ func setup(p_game: Node, p_session: Node) -> void:
 	session.ping_received.connect(_on_ping)
 	session.team_refused.connect(func(reason: String) -> void: hud.show_message(reason, 3.0))
 	session.team_switched.connect(_on_team_switched)
+	# A match never pauses, but Settings still needs its tabs and sliders to answer a finger.
+	var bridge: Node = game.hud.get_node_or_null("MenuTouchBridge")
+	if bridge != null:
+		bridge.runs_unpaused = func() -> bool: return in_match
 
 # --- Entering and leaving --------------------------------------------------------
 
@@ -501,6 +505,7 @@ func _process(delta: float) -> void:
 		_cursor_wanted = cursor
 		if game.has_method("refresh_mouse_mode"):
 			game.refresh_mouse_mode()
+		_show_touch_controls(not cursor)
 	if not in_match and not practicing:
 		return
 	_settings_was_open = _settings_open()
@@ -832,6 +837,17 @@ func _blend_aim_assist(amount: float) -> void:
 	pivot.look_sensitivity = _base_sensitivity * slowdown
 	pivot.ads_sensitivity = _base_ads_sensitivity * slowdown
 	_aim_assist_amount = amount
+
+## The floating stick claims any touch in its zone before panels see it, so a lobby or menu button on the
+## left of the screen would be dead with the claw up. Held inputs are dropped with it.
+func _show_touch_controls(on: bool) -> void:
+	var overlay: bool = game.hud.get("_touch_overlay_enabled")
+	if not overlay:
+		return
+	if not on:
+		game.hud.clear_touch_inputs()
+	var menu_up: bool = game.hud._menu_open()
+	game.hud.get_node("TouchControls").visible = on and not menu_up
 
 ## A finger lifted while its button was hidden sends no release, so the button's real state decides.
 ## An empty magazine reloads by itself on touch, with no spare finger to ask.

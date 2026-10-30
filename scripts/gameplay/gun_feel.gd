@@ -87,6 +87,10 @@ var _pending_flesh := Vector3.INF
 static func pool_size(desktop: int, mobile := OS.has_feature("mobile")) -> int:
 	return ceili(desktop * MOBILE_POOL_SHARE) if mobile else desktop
 
+## How many particles one puff throws on this device.
+static func particle_count(desktop: int, mobile := OS.has_feature("mobile")) -> int:
+	return ceili(desktop * MOBILE_PARTICLE_SHARE) if mobile else desktop
+
 func setup(owner_game: Node) -> void:
 	game = owner_game
 	name = "GunFeel"
@@ -448,7 +452,7 @@ func _puff_emitter(color: Color, count: int, speed: float, life: float, size: fl
 	mesh.material = material
 	var puff := CPUParticles3D.new()
 	puff.mesh = mesh
-	puff.amount = count
+	puff.amount = particle_count(count)
 	puff.lifetime = life
 	puff.one_shot = true
 	puff.explosiveness = 1.0

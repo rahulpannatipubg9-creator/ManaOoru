@@ -10,6 +10,9 @@ extends Node
 
 ## Returns true while a menu that needs the bridge is on screen.
 var is_menu_open: Callable
+## Returns true when menus run over a live game that cannot pause, as in a match, where firing is
+## blocked by other means.
+var runs_unpaused: Callable
 ## Fingers that landed while a menu was open. They stay the menu's until they lift,
 ## so the lift after "Save & Return" cannot fall through onto the minimap below it.
 var _menu_fingers := {}
@@ -23,7 +26,9 @@ func _process(_delta: float) -> void:
 		Input.emulate_mouse_from_touch = wanted
 
 func menu_active() -> bool:
-	return is_inside_tree() and get_tree().paused and is_menu_open.is_valid() and is_menu_open.call()
+	if not is_inside_tree() or not is_menu_open.is_valid():
+		return false
+	return (get_tree().paused or (runs_unpaused.is_valid() and runs_unpaused.call())) and is_menu_open.call()
 
 func _input(event: InputEvent) -> void:
 	if not (event is InputEventScreenTouch or event is InputEventScreenDrag):

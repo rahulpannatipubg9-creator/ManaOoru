@@ -63,6 +63,16 @@ void fragment() {
 	COLOR = vec4(mix(scene, vec3(0.6, 0.02, 0.02), edge * strength), 1.0);
 }
 """
+## Phones get the red edge without reading the screen back, which costs a full-screen copy every frame.
+const WOUND_SHADER_MOBILE := """
+shader_type canvas_item;
+uniform float strength = 0.0;
+uniform float desaturate = 0.0;
+void fragment() {
+	float edge = smoothstep(0.3, 0.75, distance(UV, vec2(0.5)));
+	COLOR = vec4(vec3(0.6, 0.02, 0.02) * (1.0 - desaturate * 0.5), edge * strength);
+}
+"""
 const FEED_LINES := 3
 const FEED_SECONDS := 5.0
 const SCOREBOARD_SECONDS := 3.0
@@ -577,7 +587,7 @@ func _build_wound() -> void:
 	_wound.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_wound.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var shader := Shader.new()
-	shader.code = WOUND_SHADER
+	shader.code = WOUND_SHADER_MOBILE if OS.has_feature("mobile") else WOUND_SHADER
 	var material := ShaderMaterial.new()
 	material.shader = shader
 	_wound.material = material
