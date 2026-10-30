@@ -21,13 +21,25 @@ func triangle(a: Vector3, b: Vector3, c: Vector3, normal: Vector3, color: Color,
 		var swap_uv := uv_b
 		uv_b = uv_c
 		uv_c = swap_uv
-	vertices.append_array(PackedVector3Array([a, b, c]))
-	normals.append_array(PackedVector3Array([normal, normal, normal]))
-	colors.append_array(PackedColorArray([color, color, color]))
-	uvs.append_array(PackedVector2Array([uv_a, uv_b, uv_c]))
-	uv2s.append_array(PackedVector2Array([info, info, info]))
+	vertices.append(a)
+	vertices.append(b)
+	vertices.append(c)
+	normals.append(normal)
+	normals.append(normal)
+	normals.append(normal)
+	colors.append(color)
+	colors.append(color)
+	colors.append(color)
+	uvs.append(uv_a)
+	uvs.append(uv_b)
+	uvs.append(uv_c)
+	uv2s.append(info)
+	uv2s.append(info)
+	uv2s.append(info)
 	if collide:
-		collision.append_array(PackedVector3Array([a, b, c]))
+		collision.append(a)
+		collision.append(b)
+		collision.append(c)
 
 func quad(a: Vector3, b: Vector3, c: Vector3, d: Vector3, normal: Vector3, color: Color,
 		uv_a: Vector2, uv_b: Vector2, uv_c: Vector2, uv_d: Vector2, info: Vector2, collide: bool) -> void:

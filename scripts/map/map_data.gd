@@ -52,7 +52,10 @@ const NAME_KEYWORDS := {
 }
 
 const LocationCatalogData := preload("res://scripts/map/location_catalog.gd")
+const SegmentGrid := preload("res://scripts/map/segment_grid.gd")
 var location_catalog: RefCounted
+var _road_grid: RefCounted
+var _osm_road_grid: RefCounted
 
 static var _cache: Dictionary = {}
 
@@ -103,6 +106,29 @@ static func load_shared(path := DEFAULT_PATH) -> MapData:
 		data._load(path)
 		_cache[path] = data
 	return _cache[path]
+
+## Every segment of every road, TopoExport included. Owners index roads, then topoexport_roads.
+func road_grid() -> RefCounted:
+	if _road_grid == null:
+		_road_grid = SegmentGrid.new()
+		_fill_road_grid(_road_grid, roads, 0)
+		_fill_road_grid(_road_grid, topoexport_roads, roads.size())
+	return _road_grid
+
+## The OSM roads alone. Owners index roads.
+func osm_road_grid() -> RefCounted:
+	if _osm_road_grid == null:
+		_osm_road_grid = SegmentGrid.new()
+		_fill_road_grid(_osm_road_grid, roads, 0)
+	return _osm_road_grid
+
+static func _fill_road_grid(grid: RefCounted, source: Array[Dictionary], first_owner: int) -> void:
+	for road_index in source.size():
+		var road: Dictionary = source[road_index]
+		var half := RoadStyle.width(road) * 0.5
+		var points: PackedVector2Array = road.points
+		for index in range(1, points.size()):
+			grid.add(points[index - 1], points[index], half, first_owner + road_index)
 
 func _load(path: String) -> void:
 	var parsed: Variant = _read_json(path)

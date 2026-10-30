@@ -49,6 +49,7 @@ var tdm_session: Node
 var tdm_local: Node
 
 func _ready() -> void:
+	preload("res://scripts/performance/startup_profile.gd").mark("main: before _ready")
 	var environment := WorldEnvironment.new()
 	environment.name = "DayEnvironment"
 	var world_environment := Environment.new()
@@ -77,6 +78,7 @@ func _ready() -> void:
 	add_child(sun)
 
 	hud = preload("res://scenes/ui/hud.tscn").instantiate()
+	preload("res://scripts/performance/startup_profile.gd").mark("main: hud = preload('res://scenes/ui/hud.tscn').instanti")
 	add_child(hud)
 	vehicles.assign(get_tree().get_nodes_in_group("enterable_vehicle"))
 	# This node keeps running while paused to handle the map and pause keys; gameplay nodes pause.
@@ -85,23 +87,28 @@ func _ready() -> void:
 	for gameplay_node: Node in [$World, person] + vehicles:
 		gameplay_node.process_mode = Node.PROCESS_MODE_PAUSABLE
 	_place_on_real_roadsides()
+	preload("res://scripts/performance/startup_profile.gd").mark("main: _place_on_real_roadsides()")
 	for candidate in vehicles:
 		parked_transforms[candidate] = candidate.global_transform
 		candidate.set_keyboard_input_enabled(false)
 	_park_all_vehicles()
+	preload("res://scripts/performance/startup_profile.gd").mark("main: _park_all_vehicles()")
 	active_vehicle = _nearest_vehicle()
 	if active_vehicle == null and not vehicles.is_empty():
 		active_vehicle = vehicles[0]
 	hud.configure_player(person, active_vehicle, self)
 	var world := $World
 	road_network = RoadNetwork.new(world.map_data)
+	preload("res://scripts/performance/startup_profile.gd").mark("main: road_network = RoadNetwork.new(world.map_data)")
 	navigator = GpsNavigator.new()
 	navigator.name = "GpsNavigator"
 	navigator.process_mode = Node.PROCESS_MODE_PAUSABLE
 	navigator.setup(road_network, _navigation_state)
+	preload("res://scripts/performance/startup_profile.gd").mark("main: navigator.setup(road_network, _navigation_state)")
 	add_child(navigator)
 	world.buildings.focus = func() -> Vector2: return GeoProjection.world_to_map(tracked_body().global_position)
 	hud.configure_map(world.map_data, world.rendered_building_footprints, world.map_data.landmarks, navigator)
+	preload("res://scripts/performance/startup_profile.gd").mark("main: hud.configure_map(world.map_data, world.rendered_b")
 	entry = VehicleEntry.new()
 	entry.name = "VehicleEntry"
 	entry.process_mode = Node.PROCESS_MODE_PAUSABLE
@@ -112,18 +119,23 @@ func _ready() -> void:
 	city_life = CityLifeController.new()
 	add_child(city_life)
 	city_life.setup(self)
+	preload("res://scripts/performance/startup_profile.gd").mark("main: city_life.setup(self)")
 	gameplay = preload("res://scripts/gameplay/city_gameplay.gd").new()
 	add_child(gameplay)
 	gameplay.setup(self)
+	preload("res://scripts/performance/startup_profile.gd").mark("main: gameplay.setup(self)")
 	environment_controls = preload("res://scripts/ui/environment_controls.gd").new()
 	add_child(environment_controls)
 	environment_controls.setup(self)
+	preload("res://scripts/performance/startup_profile.gd").mark("main: environment_controls.setup(self)")
 	performance_controller = preload("res://scripts/performance/performance_controller.gd").new()
 	add_child(performance_controller)
 	performance_controller.setup(self)
+	preload("res://scripts/performance/startup_profile.gd").mark("main: performance_controller.setup(self)")
 	network_manager = preload("res://scripts/network/network_manager.gd").new()
 	add_child(network_manager)
 	network_manager.setup(self)
+	preload("res://scripts/performance/startup_profile.gd").mark("main: network_manager.setup(self)")
 	if hud and hud.has_method("configure_network"):
 		hud.configure_network(network_manager)
 	tdm_session = preload("res://scripts/tactical/tdm_session.gd").new()
@@ -131,8 +143,10 @@ func _ready() -> void:
 	tdm_local = preload("res://scripts/tactical/tdm_local.gd").new()
 	add_child(tdm_local)
 	tdm_local.setup(self, tdm_session)
+	preload("res://scripts/performance/startup_profile.gd").mark("main: tdm_local.setup(self, tdm_session)")
 	hud.multiplayer_panel.tdm_local = tdm_local
 	hud.set_interaction_prompt("Press [B] for Godavari River Bridge  •  Walk closer to a vehicle")
+	preload("res://scripts/performance/startup_profile.gd").report("main")
 
 ## Spawn and parked cars come from roadside spots the world picked on real roads.
 func _place_on_real_roadsides() -> void:

@@ -323,15 +323,22 @@ static func _infill_shop(builder: Node3D, data: MapData, shop: Dictionary, reser
 	var road_point := pin
 	var normal := Vector2(0, -1)
 	var nearest := INF
-	for road: Dictionary in data.roads:
-		var points: PackedVector2Array = road.points
-		for edge in range(1, points.size()):
-			var point := Geometry2D.get_closest_point_to_segment(pin, points[edge - 1], points[edge])
+	var grid: RefCounted = data.osm_road_grid()
+	var reach := 200.0
+	# Widen until a road is found: anything nearer than it is already inside the search.
+	while nearest == INF and reach < 20000.0:
+		for segment in grid.near(pin, reach):
+			var a: Vector2 = grid.starts[segment]
+			var b: Vector2 = grid.ends[segment]
+			var point := Geometry2D.get_closest_point_to_segment(pin, a, b)
 			var distance := pin.distance_to(point)
 			if distance < nearest:
 				nearest = distance
 				road_point = point
-				normal = (point - pin).normalized() if distance > 0.1 else (points[edge] - points[edge - 1]).normalized().orthogonal()
+				normal = (point - pin).normalized() if distance > 0.1 else (b - a).normalized().orthogonal()
+		if nearest > reach:
+			nearest = INF
+		reach *= 4.0
 	var tangent := Vector2(normal.y, -normal.x)
 	var anchor := pin
 	if nearest < 14.0: anchor = road_point - normal * 14.0
