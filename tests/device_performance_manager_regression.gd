@@ -197,8 +197,11 @@ func _test_profiles() -> void:
 		"aspect_ratio": 1.6 # 16:10
 	}
 	var p4_tablet := DevicePerformanceManager.get_profile_for_tier(DevicePerformanceManager.DeviceTier.TIER_4_PRO_TABLET_DESKTOP, hw_tablet_3k)
-	_check(p4_tablet.target_fps == 120, "Tier 4 target FPS must unlock to 120 on 144Hz screen")
-	_check(is_equal_approx(p4_tablet.scaling_3d_scale, 0.75), "Tier 4 3K+ tablet scale must cap at 0.75 to prevent thermal throttling")
+	_check(p4_tablet.target_fps == 60, "Tier 4 mobile tablet target FPS must cap at 60 FPS to prevent thermal throttling")
+	_check(is_equal_approx(p4_tablet.scaling_3d_scale, 0.55), "Tier 4 3K+ tablet scale must cap at 0.55 (~1080p equivalent) to prevent fillrate bottlenecks")
+	_check(p4_tablet.directional_shadow_mode == DirectionalLight3D.SHADOW_ORTHOGONAL, "Tier 4 mobile tablet must use 1-cascade orthogonal shadow")
+	_check(is_equal_approx(p4_tablet.directional_shadow_max_distance, 35.0), "Tier 4 mobile tablet shadow distance must be 35 meters")
+	_check(is_equal_approx(p4_tablet.view_distance, 550.0), "Tier 4 mobile tablet view distance must be 550 meters")
 	_check(p4_tablet.tablet_hud_inset == true, "Tier 4 tablet with 16:10 aspect ratio must enable tablet HUD inset ergonomics")
 
 	var hw_desktop_pc := {

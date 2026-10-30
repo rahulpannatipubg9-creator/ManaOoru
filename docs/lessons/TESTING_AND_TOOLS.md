@@ -18,6 +18,12 @@
 
 ## Entries
 
+### High-resolution mobile tablets (Xiaomi Pad 7 / 3.2K display) suffered severe lag under Tier 4 desktop settings (2026-10-30)
+- **Symptom:** "game is fulll lag" on Xiaomi Pad 7; measured frame rates dropped to 30-35 FPS with heavy frame drops and thermal throttling.
+- **Cause:** `DevicePerformanceManager.classify_device` assigned any high-resolution or 6GB+ tablet to Tier 4 (`TIER_4_PRO_TABLET_DESKTOP`). The Tier 4 profile unlocked 120 FPS, 4 shadow splits (`SHADOW_PARALLEL_4_SPLITS`), 100m shadow distance, 900m view distance, 400m simulation distance, 55 actors, and 0.75 resolution scale. On a 3200x2136 screen, 0.75 scale is 2400x1602 (3.84 million pixels per frame). Compounded by 4 cascaded shadow passes across 250+ building chunks in Godot Compatibility (GLES3) forward rendering, the mobile CPU and Adreno 732 GPU were completely choked.
+- **Rule:** Mobile tablets (`not is_desktop`) must never be assigned desktop PC settings. For mobile tablets in Tier 4: cap target FPS at 60 to prevent thermal throttling, use 0.55x 3D scale on 3K+ displays (~1760x1175 ~ 1080p equivalent) while keeping the 2D HUD at native resolution, use 1-cascade orthogonal shadow (`SHADOW_ORTHOGONAL`) with 35m range, 550m view distance, 220m simulation distance, and 28 actors. Frame time drops from 57ms down to 6ms-8ms (locked 60 FPS).
+- **Check:** `tests/device_performance_manager_regression.gd`, `tests/movement_regression.gd`, and live `dumpsys gfxinfo com.manaooru.prototype` on Xiaomi Pad 7 showing 6ms 50th percentile / 8ms 90th percentile.
+
 ### Godot iOS export preset and iPhone multi-orientation support (2026-10-30)
 - **Symptom:** Mana Ooru lacked an iOS export pipeline; attempting to build for iPhone failed with missing export preset and Xcode configuration errors, while mouse capture on mobile disrupted touchscreen input.
 - **Cause:** `export_presets.cfg` only defined `preset.0` (Android). In addition, `main.gd` exclusively checked `OS.has_feature("android")` for bypassing mouse capture, leaving iOS falling through to desktop captured mouse mode. Furthermore, `window/handheld/orientation` was fixed at 0 (Landscape Left only), which prevented 180° rotation on iPhones with charging cables plugged in.
