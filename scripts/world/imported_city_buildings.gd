@@ -9,6 +9,7 @@ const DEFINITIONS := [
 	{"slug":"godavarikhani_bus_station", "place":"TGSRTC  Bus Station , Godavarikhani", "lon":79.5082894,"lat":18.7601255},
 	{"slug":"stadium_with_swimming_pool", "place":"JAWAHARLAL NEHRU STADIUM STAGE", "lon":79.51853, "lat":18.7431, "scale":1.0}
 ]
+const SOFA_SCENE := preload("res://assets/models/props/furniture/sofa_modular.glb")
 var placements: Array[Dictionary] = []
 var instance_count := 0
 
@@ -102,8 +103,20 @@ func build(world: Node) -> void:
 		anchor.set_meta("placement_source", "Bundled OSM/Overture catalogue; nearest footprint fit")
 		anchor.set_meta("photo_dimensions_estimated", true)
 		_collision_and_visibility(model)
+		if slug == "sai_leela_residency" or slug == "destination_dine_in":
+			_place_lobby_sofas(anchor, factor)
 		instance_count += 1
 	print("Imported city buildings placed: ", instance_count)
+
+func _place_lobby_sofas(parent: Node3D, factor: float) -> void:
+	if SOFA_SCENE == null: return
+	var sofa := SOFA_SCENE.instantiate() as Node3D
+	sofa.name = "LobbySofaSet"
+	sofa.position = Vector3(1.8 * factor, 0.05, 1.2 * factor)
+	sofa.rotation.y = PI
+	sofa.scale = Vector3.ONE * clampf(factor, 0.85, 1.05)
+	_collision_and_visibility(sofa)
+	parent.add_child(sofa)
 
 func _bounds(root: Node3D) -> AABB:
 	var result := AABB()
