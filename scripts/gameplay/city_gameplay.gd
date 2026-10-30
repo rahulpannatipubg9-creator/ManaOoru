@@ -777,10 +777,14 @@ func _health_changed(value: float, _maximum: float) -> void:
 		armour -= absorbed
 		game.person.health += absorbed
 		# Deferred: emitting now would reach later listeners before the lower value still in flight.
-		game.person.health_changed.emit.call_deferred(game.person.health, _maximum)
+		_announce_health.call_deferred(_maximum)
 	_last_health = game.person.health
 	if game.person.health <= 0.0:
 		call_deferred("_respawn")
+
+## Reads health when it runs: a second hit in the same frame must not be overwritten by this one's older value.
+func _announce_health(maximum: float) -> void:
+	game.person.health_changed.emit(game.person.health, maximum)
 
 func _respawn() -> void:
 	if game.person.health > 0.0:

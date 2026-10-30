@@ -36,6 +36,7 @@ func run_checks() -> void:
 	await _check_shot_pool()
 	_check_ctrl_crouch()
 	_check_audit_fixes()
+	_check_export_filter()
 	game.queue_free()
 	await process_frame
 	print("save_and_feedback_regression: %d failures" % failures)
@@ -103,8 +104,17 @@ func _check_armour() -> void:
 	await process_frame
 	await process_frame
 	check(seen.size() == 2 and is_equal_approx(seen[-1], person.health), "The last health signal must carry the health after armour: %s" % str(seen))
-	person.health_changed.disconnect(record)
 	check(is_equal_approx(gameplay.armour, 26.0), "Armour must only be spent once, it is %f" % gameplay.armour)
+	# Armour runs out on the second hit of a frame: the deferred announcement must not bring the first value back.
+	person.heal_full()
+	await process_frame
+	gameplay.armour = 3.0
+	person.take_damage(10.0)
+	person.take_damage(10.0)
+	await process_frame
+	await process_frame
+	check(is_equal_approx(seen[-1], person.health), "Two hits in a frame must end on the true health: %s" % str(seen))
+	person.health_changed.disconnect(record)
 	person.heal_full()
 
 func _check_shot_pool() -> void:
@@ -149,6 +159,22 @@ func _check_ctrl_crouch() -> void:
 	check(person.prone, "Releasing Ctrl must not cancel prone")
 	person._update_stance(false, false)
 
+## BUGS 16: files that are not resources only reach the APK through include_filter, matched like this by the exporter.
+func _check_export_filter() -> void:
+	var presets := ConfigFile.new()
+	check(presets.load("res://export_presets.cfg") == OK, "export_presets.cfg must load")
+	var filters: PackedStringArray = str(presets.get_value("preset.0", "include_filter", "")).split(",")
+	var included := func(path: String) -> bool:
+		for filter: String in filters:
+			if path.matchn(filter.strip_edges()):
+				return true
+		return false
+	for path: String in ["data/trees/godavarikhani_trees.bin", "data/terrain/godavarikhani_terrain.bin",
+			"data/buildings/vidya_nagar_2_overture.geojson", "data/buildings/godavarikhani_building_heights.bin.gz"]:
+		check(FileAccess.file_exists("res://" + path), "%s must exist" % path)
+		check(included.call(path), "The APK must include %s" % path)
+	check(not included.call("data/topoexport/source/roads_Transportation_Overture.geojson"), "Source downloads must stay out of the APK")
+
 ## Fixes from reading helicopter.gd, city_environment.gd and test_character.gd.
 func _check_audit_fixes() -> void:
 	var environment: Node = life.environment
@@ -167,6 +193,12 @@ func _check_audit_fixes() -> void:
 			check(vehicle._grounded == vehicle.can_exit_safely(), "A wreck must keep the exit prompt up to date")
 			vehicle.driving_enabled = false
 			vehicle.condition = 100.0
+			# BUGS 29: parked in mid-air it must return to its landing spot.
+			var landing: Transform3D = vehicle._safe_landing
+			vehicle.driving_enabled = true
+			vehicle.global_position = landing.origin + Vector3.UP * 60.0
+			vehicle.set_driving_enabled(false)
+			check(vehicle.global_position.distance_to(landing.origin) < 0.01, "A helicopter parked in the air must recover to its landing spot")
 	var character: Node = game.person.get_node("TestCharacter")
 	game.person.peek_input = 1.0
 	character.scripted_speed = 1.8

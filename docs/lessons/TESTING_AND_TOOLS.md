@@ -44,7 +44,8 @@ in `tools/captures/`.
   then the lower value (BUGS 18).
 - **Cause:** emitting `health_changed` inside its own handler delivers the new value first; the outer emit then goes
   on to the remaining listeners with the old one.
-- **Rule:** when a handler corrects a signal's value, re-emit with `call_deferred`.
+- **Rule:** when a handler corrects a signal's value, re-emit with `call_deferred`, reading the value when the call
+  runs. A value captured at the hit would overwrite a second hit in the same frame.
 - **Check:** `save_and_feedback_regression`, which listens after `city_gameplay` does.
 
 ### Saves: keep what you cannot read (2026-10-30)

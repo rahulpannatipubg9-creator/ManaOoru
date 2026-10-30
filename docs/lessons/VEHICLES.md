@@ -17,6 +17,12 @@ Code: `scripts/vehicle/` (`vehicle_entry.gd` for getting in and out and the seat
 
 ## Entries
 
+### A helicopter parked in mid-air stayed in the sky (2026-10-30)
+- **Symptom:** dying in flight, or a match starting in flight, left the helicopter frozen in the air, out of reach.
+- **Cause:** `helicopter.gd set_driving_enabled(false)` always freezes the body where it is.
+- **Rule:** parking a craft with no ground under its skids sends it to `_safe_landing`.
+- **Check:** `save_and_feedback_regression`.
+
 ### A wrecked helicopter kept a stale exit prompt (2026-10-30)
 - **Symptom:** after a wreck the prompt stayed on "LAND TO EXIT" even on the ground, and a wreck falling out of the
   world was never recovered.
