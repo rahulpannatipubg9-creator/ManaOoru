@@ -259,12 +259,15 @@ func _fill_engine_audio() -> void:
 func _physics_process(delta: float) -> void:
 	_impact_velocity = linear_velocity
 	_impact_cooldown = maxf(0.0, _impact_cooldown - delta)
-	if condition <= 0.0:
-		return
 	if global_position.y < fall_limit:
 		recover_vehicle()
 		return
 	if not driving_enabled:
+		return
+	if condition <= 0.0:
+		# A wreck has no lift, but the exit prompt still has to follow it to the ground.
+		current_speed = linear_velocity.slide(Vector3.UP).length()
+		_grounded = can_exit_safely()
 		return
 	var allowed := input_authority and GameplayControls.allows(self)
 	var input := touch_move_input if allowed else Vector2.ZERO

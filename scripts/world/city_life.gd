@@ -5,6 +5,7 @@ const EnvironmentController := preload("res://scripts/world/city_environment.gd"
 const CommunityController := preload("res://scripts/world/city_community.gd")
 const Interior := preload("res://scripts/world/city_shop_interior.gd")
 const SAVE_PATH := "user://city_life_v1.json"
+const SAVE_VERSION := 1
 var environment: Node3D
 var community: Node3D
 var targets: Array[Dictionary] = []
@@ -517,7 +518,7 @@ func _button(parent: Node, text: String, callback: Callable) -> Button:
 func save_progress() -> bool:
 	if not save_enabled:
 		return false
-	var record := {"version": 1, "coins": _game.hud.coins_available(), "energy": energy, "discoveries": discoveries,
+	var record := {"version": SAVE_VERSION, "coins": _game.hud.coins_available(), "energy": energy, "discoveries": discoveries,
 		"achievements": achievements, "inventory": inventory, "fuel": fuel}
 	if _game.get("gameplay") != null:
 		record["gameplay"] = _game.gameplay.export_progress()
@@ -526,14 +527,24 @@ func save_progress() -> bool:
 		return false
 	file.store_string(JSON.stringify(record))
 	file.close()
+	if FileAccess.file_exists(save_path):
+		DirAccess.copy_absolute(ProjectSettings.globalize_path(save_path), ProjectSettings.globalize_path(save_path + ".bak"))
 	return DirAccess.rename_absolute(ProjectSettings.globalize_path(save_path + ".tmp"), ProjectSettings.globalize_path(save_path)) == OK
 
 func load_progress() -> bool:
-	if not save_enabled or not FileAccess.file_exists(save_path):
+	if not save_enabled:
 		return false
-	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(save_path))
-	if not parsed is Dictionary or parsed.get("version") != 1:
-		return false
+	var parsed := _read_save(save_path)
+	if parsed.is_empty():
+		if FileAccess.file_exists(save_path):
+			# Corrupt or from a newer build: move it aside so the next autosave cannot overwrite it.
+			push_warning("Unreadable save kept as %s.rejected" % save_path)
+			DirAccess.rename_absolute(ProjectSettings.globalize_path(save_path), ProjectSettings.globalize_path(save_path + ".rejected"))
+		parsed = _read_save(save_path + ".bak")
+		if parsed.is_empty():
+			return false
+		# city_gameplay reads the gameplay block from save_path, so restore the file as well.
+		DirAccess.copy_absolute(ProjectSettings.globalize_path(save_path + ".bak"), ProjectSettings.globalize_path(save_path))
 	_game.hud.set_coins(int(clampf(_safe_number(parsed.get("coins"), 8.0), 0, 999999)))
 	energy = clampf(_safe_number(parsed.get("energy"), 80.0), 0, 100)
 	for key: String in ["discoveries", "achievements"]:
@@ -553,6 +564,16 @@ func load_progress() -> bool:
 		for key: String in fuel:
 			fuel[key] = clampf(_safe_number(saved_fuel.get(key), 70.0), 0, 100)
 	return true
+
+## The record at `path`, or empty if it is missing, corrupt or newer than this build.
+## When SAVE_VERSION goes up, migrate older records here, one version at a time.
+func _read_save(path: String) -> Dictionary:
+	if not FileAccess.file_exists(path):
+		return {}
+	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(path))
+	if not parsed is Dictionary or parsed.get("version") != SAVE_VERSION:
+		return {}
+	return parsed
 
 func _safe_number(value: Variant, fallback: float) -> float:
 	if (value is int or value is float) and is_finite(float(value)):

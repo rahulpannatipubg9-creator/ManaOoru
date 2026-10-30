@@ -66,12 +66,9 @@ Safest path: unbranded fictional vehicles and rifles with original or CC0 models
 
 | Item | Action |
 |---|---|
-| `tools/__pycache__/*.pyc` (5 files) | Delete, ignore `__pycache__/` |
-| `bridge_viewport_capture.png` in the root | Delete or move to docs |
-| `tests/tmp_nav_debug.gd`, stray `tests/tmp_helicopter_debug.gd.uid` | Delete |
 | `opencode.jsonc` | Delete if nobody uses it |
 | `/Users/rahulpannati/...` paths in tools and 3 tests | Use arguments or relative paths |
-| No `.gitattributes` | Add `* text=auto eol=lf`, so Windows and Mac stop fighting over line endings |
+| `.gitattributes` added, repo not yet renormalised | See `docs/lessons/TESTING_AND_TOOLS.md` |
 | Git size is already 170 MB | Use Git LFS for `.glb`, large textures and audio now, before history grows |
 | `.gitignore` covers `*.zip` and `*.exe` | Fine, keep it |
 

@@ -16,7 +16,45 @@
   own camera, so the game camera stays current (the rifle and HUD follow the game camera).
 - The game blocks input while unfocused; captures set `GameplayControls.blocked = false` when they need input.
 
+`tools/run_tests.sh [timeout] [filter]` runs every `tests/*_regression.gd` and prints a table. Set `GODOT` to the
+binary, or `GODOT_RUNNER` to a wrapper such as `run_godot.sh`. Scripts that only take pictures or inspect a model live
+in `tools/captures/`.
+
 ## Entries
+
+### Line endings: `.gitattributes` added, repo not renormalised (2026-10-30)
+- **Symptom:** a Windows checkout with `core.autocrlf=true` turns about 890 text files to CRLF; Mac and Windows fight.
+- **Cause:** nothing in the repo set a line-ending rule.
+- **Rule:** `* text=auto eol=lf`, plus `binary` for images, audio, models and fonts. Every new checkout gets LF. Do not
+  mix `git add --renormalize .` into a feature branch.
+- **To do:** after the UI branches merge, run `git add --renormalize .` alone in one commit. Only
+  `assets/models/indian_water_tank/source/tank.mtl` and `tank.obj` should change: they are the only text files stored
+  with CRLF. Existing clones convert a file when it is next touched; a fresh clone is cleanest.
+- **Check:** `git ls-files --eol | grep i/crlf` prints nothing.
+
+### Every shot allocated a mesh and a material (2026-10-30)
+- **Symptom:** sustained fire built new resources for each tracer and flash (BUGS 25).
+- **Cause:** a tracer's length was baked into its `CylinderMesh`.
+- **Rule:** `_tracer` shares a 1 m mesh and scales `axes.y`, the column of the basis. `Basis.scaled()` would scale
+  along the world axis instead, so an angled shot would shear.
+- **Check:** `save_and_feedback_regression` measures the length, centre and direction of a pooled tracer.
+
+### A nested signal reaches later listeners out of order (2026-10-30)
+- **Symptom:** after armour absorbed a hit, a listener connected after `city_gameplay` would see the true health and
+  then the lower value (BUGS 18).
+- **Cause:** emitting `health_changed` inside its own handler delivers the new value first; the outer emit then goes
+  on to the remaining listeners with the old one.
+- **Rule:** when a handler corrects a signal's value, re-emit with `call_deferred`.
+- **Check:** `save_and_feedback_regression`, which listens after `city_gameplay` does.
+
+### Saves: keep what you cannot read (2026-10-30)
+- **Symptom:** a corrupt save, or one from a newer build, started a new game and the next autosave destroyed it
+  (BUGS 19). Android lost up to 30 s because it rarely sends a close request (BUGS 17).
+- **Cause:** `load_progress` treated "unreadable" as "no save". `main._notification` only knew the desktop close.
+- **Rule:** `save_progress` copies the old save to `.bak`. An unreadable save moves to `.rejected`, and the `.bak` is
+  restored to `save_path`, because `city_gameplay` reads that file itself. When `SAVE_VERSION` rises, add the
+  migration to `_read_save` and make `city_gameplay` read through it too.
+- **Check:** `save_and_feedback_regression`.
 
 ### Tuk-tuk driver test checks a hidden rig (2026-10-29, open)
 - **Symptom:** `tuk_tuk_driver_pose_regression` fails ("Driver wrist must contact its handlebar grip").

@@ -1,0 +1,29 @@
+name: tests
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    env:
+      GODOT: ${{ github.workspace }}/.ci/Godot_v4.7.2-stable_linux.x86_64
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch Godot
+        run: |
+          mkdir -p .ci
+          curl -fsSL -o .ci/godot.zip https://github.com/godotengine/godot/releases/download/4.7.2-stable/Godot_v4.7.2-stable_linux.x86_64.zip
+          unzip -q .ci/godot.zip -d .ci
+      - name: Import assets
+        run: '"$GODOT" --headless --import .'
+      - name: Run tests
+        run: tools/run_tests.sh 300
+      - name: Keep logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-logs
+          path: work/test_logs

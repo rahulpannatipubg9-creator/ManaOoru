@@ -2,8 +2,8 @@
 
 ## Godavarikhani Open World
 
-MANA OORU is an offline, single-player, third-person exploration game set in a
-procedural recreation of Godavarikhani, Telangana, India.
+MANA OORU is a third-person open-world game set in a procedural recreation of
+Godavarikhani, Telangana, India.
 
 The first playable experience focuses on:
 
@@ -16,14 +16,12 @@ The first playable experience focuses on:
 - Minimap, full-screen map and GPS waypoint routing over real OpenStreetMap roads
   (see [Map and GPS Navigation](docs/MAP_AND_NAVIGATION.md)).
 
-There is no combat or mission system in the initial release.
-
 ## Current engine and technology
 
 - **Engine:** Godot 4.7.2
 - **Language:** GDScript
 - **Renderer:** Compatibility / OpenGL
-- **Runtime:** Offline; no backend, account, analytics, or network dependency
+- **Runtime:** No backend, account or analytics; multiplayer runs over LAN
 - **World:** Procedural geometry plus a local OpenStreetMap-derived JSON extract
 - **Android architecture:** arm64-v8a
 - **Primary desktop validation:** macOS Apple Silicon
@@ -57,16 +55,21 @@ godot --path .
 | Mouse movement | Rotate the third-person camera |
 | Left Shift | Sprint while held |
 | Space | Jump |
-| Left Ctrl | Crouch / move slowly |
+| Left Ctrl (hold) | Crouch |
+| C | Crouch on / off |
 | E | Enter a nearby vehicle |
 | E | Interact with nearby objects |
 | V | Switch first-person / third-person view |
-| C (hold) | Look behind |
+| B (hold) | Look behind |
+| X | Fire mode |
+| F7 | Activities |
+| Home | Return to safe ground |
+| F9 | Teleport to the bridge (dev only) |
 | Mouse wheel | Zoom camera (third person) |
 | M | Open / close the full-screen map |
 | = / − | Minimap zoom |
 | N | Minimap north-up / heading-up |
-| Tab | Quick information |
+| Tab | Switch character |
 | Esc | Close map, or pause / resume |
 
 ### Driving
@@ -81,7 +84,7 @@ godot --path .
 | Space | Handbrake |
 | F | Exit the vehicle |
 | V | Switch first-person (driver's seat) / third-person view |
-| C (hold) | Look behind (rear view) |
+| B (hold) | Look behind (rear view) |
 | Mouse movement | Move the driving camera independently |
 | H | Horn |
 | R | Recover a stuck vehicle |
@@ -200,7 +203,7 @@ vehicle interface.
 
 ## Tests and validation
 
-Run the existing offline checks from this directory:
+Run every regression test with `tools/run_tests.sh`, or one at a time from this directory:
 
 ```sh
 godot --headless --editor --quit
@@ -214,7 +217,7 @@ godot --headless --path . --script tests/engine_sound_regression.gd
 godot --headless --path . --quit-after 8
 ```
 
-Refresh map data (build time only; the game stays offline):
+Refresh map data (build time only):
 
 ```sh
 tools/fetch_osm.sh

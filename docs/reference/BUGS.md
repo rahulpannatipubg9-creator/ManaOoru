@@ -161,3 +161,29 @@ Fix the High items first, and add a `docs/lessons/` entry with each fix, as `AGE
 - Hidden ambient actors do come back: `pedestrian.gd:88` and `traffic_vehicle.gd:47` restore visibility.
 - `chowrasta_city.gd:1065` has a way back to the main scene.
 - `_job_points` mixing world and map coordinates is safe, because the map plane is `Vector2(x, z)`.
+
+## Fixed on `ui/fixes`
+
+11, 16 (filter only, see below), 17, 18, 19, 21, 22, 25, 28.
+
+## Found reading the vehicle, helicopter, character and environment code (2026-10-30)
+
+These come from reading the code, not from a running game. Already fixed on `ui/fixes`:
+
+- A wrecked helicopter never updated its exit prompt and skipped the fall-out-of-world recovery (`helicopter.gd`).
+- Weather set back to Automatic held forced rain for up to 180 s (`city_environment.gd`).
+- Street lamps were sorted four times a second by day, when none can show (`city_environment.gd`).
+- A held lean stayed on the driver for the whole drive, and Rahul's fingers stayed open on handlebars
+  (`test_character.gd`).
+
+Still open:
+
+| # | Rating | Where | Issue |
+|---|---|---|---|
+| 29 | Medium, Certain | `gameplay/city_gameplay.gd:790`, `tactical/tdm_local.gd:136`, `vehicle/helicopter.gd:109` | Dying in the air, or a match starting in flight, calls `set_driving_enabled(false)`, which freezes the helicopter where it is. It stays in the sky out of reach. Recover it to `_safe_landing` when it is not grounded |
+| 30 | Medium, Likely | `player/test_character.gd:379`, `:1225` | `_pose_male_face` runs after the clips and sets `CC_Base_Head` from rest, which wipes the head from the gait and `Rifle_ADS_Idle` clips and the `HEADING_HEAD` twist. Running it first looks right, but the rifle head turn was tuned on top of the wiped pose, so check it in a render |
+| 31 | Low, Certain | `world/city_environment.gd:91`, `gameplay/city_gameplay.gd:998` | Headlights are only built at setup, so bought vehicles never get any |
+| 32 | Low, Certain | `player/test_character.gd:286` | `hip_height()` reads `_hip`, which only the test lady sets. Rahul sits at the 0.95 fallback in a shipped build, but at her hip height on a desktop that has her model |
+| 33 | Low, Likely | `world/city_environment.gd:178-179` | Lightning holds the sun at full energy until the next `apply_state`, and at night it lights the town from below the ground |
+| 34 | Low, Certain | `vehicle/vehicle_entry.gd:154` | Boarding from the far side walks the player straight through the vehicle, because the walk is a position change with no collision |
+| 35 | Low, Certain | `vehicle/helicopter.gd:47`, `:181`, `:249` | `_collective` is never read, the quiet-engine branch cannot run, and the comment on `entry_door_position` is wrong: `vehicle_entry.gd` does not call it |

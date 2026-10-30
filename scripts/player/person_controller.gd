@@ -81,7 +81,7 @@ var _aim_blend := 0.0
 var _carry_blend := 0.0
 var weapon_draw_time := 0.0
 var weapon_reload_time := 0.0
-var _crouch_toggle := false
+var _ctrl_crouch := false
 var _safe_walk_position := Vector3.ZERO
 var _safe_walk_timer := 0.0
 
@@ -239,13 +239,21 @@ func _physics_process(delta: float) -> void:
 		_update_stance(false, not prone)
 	_prev_z = z_pressed
 
+	var ctrl_held := allowed and not downed and not prone and Input.is_key_pressed(KEY_CTRL)
 	if allowed and not downed and Input.is_action_just_pressed("crouch"):
+		_ctrl_crouch = false
 		if prone:
 			_update_stance(true, false)
 		else:
 			_update_stance(not crouching, false)
-	elif allowed and not downed and Input.is_key_pressed(KEY_CTRL) and not prone:
+	elif ctrl_held and not crouching:
+		_ctrl_crouch = true
 		_update_stance(true, false)
+	elif _ctrl_crouch and not ctrl_held and not downed:
+		# Stays set under a low ceiling, so the player stands as soon as there is headroom.
+		if crouching:
+			_update_stance(false, false)
+		_ctrl_crouch = crouching
 
 	var key_peek := 0.0
 	if allowed and not downed:

@@ -599,25 +599,27 @@ func attack() -> bool:
 	report_crime(8.0 if armed else (12.0 if closest else 0.0))
 	return true
 
+const SHOT_POOL_SIZE := 16
+var _tracer_mesh: CylinderMesh
+var _flash_mesh: SphereMesh
+var _tracers: Array[MeshInstance3D] = []
+var _flashes: Array[MeshInstance3D] = []
+
 func _tracer(from: Vector3, to: Vector3) -> void:
 	var distance := from.distance_to(to)
 	if distance < 0.01: return
-	var line := MeshInstance3D.new()
-	var mesh := CylinderMesh.new()
-	mesh.top_radius = 0.009
-	mesh.bottom_radius = 0.009
-	mesh.height = distance
-	mesh.radial_segments = 4
-	var material := StandardMaterial3D.new()
-	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	material.albedo_color = Color("ffe29a")
-	mesh.material = material
-	line.mesh = mesh
-	add_child(line)
-	line.global_position = (from + to) * 0.5
-	var direction := (to - from).normalized()
-	line.global_basis = Basis(Quaternion(Vector3.UP, direction))
-	get_tree().create_timer(0.10, false).timeout.connect(line.queue_free)
+	if _tracer_mesh == null:
+		_tracer_mesh = CylinderMesh.new()
+		_tracer_mesh.top_radius = 0.009
+		_tracer_mesh.bottom_radius = 0.009
+		_tracer_mesh.height = 1.0
+		_tracer_mesh.radial_segments = 4
+		_tracer_mesh.material = _shot_material(Color("ffe29a"))
+	var line := _next_shot_node(_tracers, _tracer_mesh)
+	var axes := Basis(Quaternion(Vector3.UP, (to - from).normalized()))
+	axes.y *= distance
+	line.global_transform = Transform3D(axes, (from + to) * 0.5)
+	get_tree().create_timer(0.10, false).timeout.connect(line.hide)
 
 func try_loot_nearby() -> bool:
 	if game.control_state != game.ControlState.ON_FOOT or not GameplayControls.allows(game.person):
@@ -774,6 +776,8 @@ func _health_changed(value: float, _maximum: float) -> void:
 		var absorbed := minf(armour, (_last_health - value) * 0.6)
 		armour -= absorbed
 		game.person.health += absorbed
+		# Deferred: emitting now would reach later listeners before the lower value still in flight.
+		game.person.health_changed.emit.call_deferred(game.person.health, _maximum)
 	_last_health = game.person.health
 	if game.person.health <= 0.0:
 		call_deferred("_respawn")
@@ -1178,15 +1182,30 @@ func _speak(text: String) -> void:
 	DisplayServer.tts_speak(text, voices[0].id, 60, 1.0, 1.0, 0, true)
 
 func _shot_flash(at: Vector3) -> void:
-	var flash := MeshInstance3D.new()
-	var mesh := SphereMesh.new()
-	mesh.radius = 0.065
-	mesh.height = 0.13
+	if _flash_mesh == null:
+		_flash_mesh = SphereMesh.new()
+		_flash_mesh.radius = 0.065
+		_flash_mesh.height = 0.13
+		_flash_mesh.material = _shot_material(Color(1.0, 0.78, 0.18))
+	var flash := _next_shot_node(_flashes, _flash_mesh)
+	flash.global_position = at
+	get_tree().create_timer(0.055, false).timeout.connect(flash.hide)
+
+func _shot_material(color: Color) -> StandardMaterial3D:
 	var material := StandardMaterial3D.new()
 	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	material.albedo_color = Color(1.0, 0.78, 0.18)
-	mesh.material = material
-	flash.mesh = mesh
-	add_child(flash)
-	flash.global_position = at
-	get_tree().create_timer(0.055, false).timeout.connect(flash.queue_free)
+	material.albedo_color = color
+	return material
+
+## Oldest node of a fixed ring, so sustained fire reuses meshes instead of allocating them.
+func _next_shot_node(pool: Array[MeshInstance3D], mesh: Mesh) -> MeshInstance3D:
+	var node: MeshInstance3D
+	if pool.size() < SHOT_POOL_SIZE:
+		node = MeshInstance3D.new()
+		node.mesh = mesh
+		add_child(node)
+	else:
+		node = pool.pop_front()
+	pool.append(node)
+	node.visible = true
+	return node

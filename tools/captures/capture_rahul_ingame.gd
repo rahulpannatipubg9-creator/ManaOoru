@@ -1,7 +1,7 @@
 extends SceneTree
 
 ## Windowed capture of Rahul (tools/rahul_character) in the real game scene, unarmed and with the AK-47:
-##   caffeinate -d -i godot --path . --script tests/capture_rahul_ingame.gd
+##   caffeinate -d -i godot --path . --script tools/captures/capture_rahul_ingame.gd
 ## Writes outputs/character_previews/rahul_ingame/*.png. The pictures are taken through a SubViewport that
 ## shares the game's world, so the game camera stays current and the rifle keeps its camera-relative hold
 ## (docs/lessons/TESTING_AND_TOOLS.md).
@@ -26,7 +26,7 @@ func run() -> void:
 	var person: CharacterBody3D = game.person
 	var character = person.get_node_or_null("TestCharacter")
 	print("CAPTURE model ", character.male_model.scene_file_path if character and character.male_model else "none")
-	# an open stretch of road (as tests/codex_combat_capture.gd), away from the spawn's tuk tuk and NPCs
+	# an open stretch of road (as tools/captures/codex_combat_capture.gd), away from the spawn's tuk tuk and NPCs
 	person.global_position = Vector3(116.0, 1.2, -105.0)
 	person.combat_mode = true
 	await frames(30)
