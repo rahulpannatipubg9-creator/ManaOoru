@@ -1,0 +1,43 @@
+[remap]
+
+importer="texture"
+type="CompressedTexture2D"
+uid="uid://d4h4v2un1hrak"
+path="res://.godot/imported/house_1_tile house 2 diffuse, displacement,reflection,glossines.jpg-ee5389a666e94b81234575f5f2d04e4a.ctex"
+metadata={
+"vram_texture": false
+}
+generator_parameters={
+"md5": "8064cf4746a15720b77a34e5d0c66f44"
+}
+
+[deps]
+
+source_file="res://assets/models/houses/house_1_tile house 2 diffuse, displacement,reflection,glossines.jpg"
+dest_files=["res://.godot/imported/house_1_tile house 2 diffuse, displacement,reflection,glossines.jpg-ee5389a666e94b81234575f5f2d04e4a.ctex"]
+
+[params]
+
+compress/mode=0
+compress/high_quality=false
+compress/lossy_quality=0.7
+compress/uastc_level=0
+compress/rdo_quality_loss=0.0
+compress/hdr_compression=1
+compress/normal_map=0
+compress/channel_pack=0
+mipmaps/generate=true
+mipmaps/limit=-1
+roughness/mode=0
+roughness/src_normal=""
+process/channel_remap/red=0
+process/channel_remap/green=1
+process/channel_remap/blue=2
+process/channel_remap/alpha=3
+process/fix_alpha_border=true
+process/premult_alpha=false
+process/normal_map_invert_y=false
+process/hdr_as_srgb=false
+process/hdr_clamp_exposure=false
+process/size_limit=0
+detect_3d/compress_to=1

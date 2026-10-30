@@ -64,7 +64,7 @@ const STATS := {
 		"offset": Vector3(0.098, 0.082, -0.08),
 		"muzzle": Vector3(0.097, 0.109, 0.503),
 		"grip_right": Vector3(0.085, 0.033, -0.08),
-		"grip_left": Vector3(0.110, 0.030, 0.20),
+		"grip_left": Vector3(0.125, -0.01, 0.23),
 		"auto_interval": 0.11,
 		"single_interval": 0.20,
 		"body_damage": 30.0,
