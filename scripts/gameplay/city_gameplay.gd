@@ -58,7 +58,6 @@ var _income_time := 0.0
 var _npc_timer := 0.0
 var _npcs: Array[Node] = []
 var _marker: MeshInstance3D
-var _status: Label
 var _crosshair: Label
 var _radio: AudioStreamPlayer
 var _radio_station := 0
@@ -66,6 +65,14 @@ var _audio: Dictionary = {}
 var _last_health := 100.0
 var _last_driving := false
 var _vehicle_claims: Dictionary = {}
+## The last values sent to each HUD method, so an unchanged readout is not redrawn every frame.
+var _hud_sent: Dictionary = {}
+## The objective line for each job's first leg.
+const START_STAGES := {"story": "Collect the parcel", "delivery": "Collect the parcel", "taxi": "Pick up the passenger", "race": "Checkpoint 1",
+	"ambulance": "Reach the patient", "firefighter": "Reach the fire", "vigilante": "Find the suspect", "gang": "Find the gang"}
+## The objective line after the first stop; a job not listed is delivering a parcel.
+const NEXT_STAGES := {"taxi": "Drive to the drop-off", "ambulance": "Take the patient in", "firefighter": "Return to dispatch",
+	"market_delivery": "Deliver to Chai Corner"}
 
 func setup(owner_game: Node) -> void:
 	game = owner_game
@@ -99,7 +106,7 @@ func setup(owner_game: Node) -> void:
 	market = preload("res://scripts/gameplay/market_street.gd").new()
 	add_child(market)
 	market.setup(game)
-	_refresh_status()
+	_sync_hud()
 
 func _build_ui() -> void:
 	var layer := CanvasLayer.new()
@@ -111,19 +118,10 @@ func _build_ui() -> void:
 	button.custom_minimum_size = Vector2(160, 44)
 	button.pressed.connect(open_board)
 	button.queue_free()
-	_status = Label.new()
-	_status.position = Vector2(22, 310)
-	_status.add_theme_color_override("font_color", Color("edf4f7"))
-	_status.add_theme_color_override("font_shadow_color", Color.BLACK)
-	_status.add_theme_constant_override("shadow_offset_x", 2)
-	_status.add_theme_constant_override("shadow_offset_y", 2)
-	_status.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	layer.add_child(_status)
-	if OS.has_feature("mobile") and game and game.hud and game.hud._touch_overlay_enabled:
-		_status.visible = false
 	_crosshair = Label.new()
 	_crosshair.text = "+"
 	_crosshair.add_theme_font_size_override("font_size", 30)
+	_crosshair.add_theme_color_override("font_color", UiTheme.TEXT)
 	_crosshair.add_theme_color_override("font_shadow_color", Color.BLACK)
 	_crosshair.add_theme_constant_override("shadow_offset_x", 2)
 	_crosshair.add_theme_constant_override("shadow_offset_y", 2)
@@ -185,7 +183,7 @@ func _process(delta: float) -> void:
 	# Without a looted rifle there is nothing to draw.
 	if game.person.is_weapon_equipped() and not has_rifle:
 		game.person.set_weapon_equipped(false)
-		life.toast("No rifle yet • pick one up at Chowrastha")
+		life.toast("No rifle yet, find one at Chowrastha")
 	elif not action_mode and game.person.is_weapon_equipped():
 		set_action_mode(true)
 	_shot_cooldown = maxf(0.0, _shot_cooldown - delta)
@@ -201,7 +199,7 @@ func _process(delta: float) -> void:
 	if not mission.is_empty():
 		mission.time -= delta
 		if mission.time <= 0.0:
-			end_mission(false, "Time expired")
+			end_mission(false, "Out of time")
 		else:
 			_update_mission(delta)
 	_update_police(delta)
@@ -219,14 +217,14 @@ func _process(delta: float) -> void:
 		_income_time = 0.0
 		if not properties.is_empty():
 			game.hud.add_coins(properties.size() * 3)
-			life.toast("Property income +%d coins" % (properties.size() * 3))
+			life.toast("Business income: %d coins" % (properties.size() * 3))
 	var driving: bool = game.control_state == game.ControlState.DRIVING
 	if driving and not _last_driving and action_mode:
 		var id := str(game.active_vehicle.name)
 		if not _vehicle_claims.has(id):
 			_vehicle_claims[id] = true
 			report_crime(18.0)
-			life.toast("Vehicle taken • police alerted")
+			life.toast("Police alerted")
 	_last_driving = driving
 	_radio.stream_paused = not driving
 	if game.control_state == game.ControlState.ON_FOOT and game.person.is_on_floor() and game.person.velocity.length() > 0.5:
@@ -235,18 +233,22 @@ func _process(delta: float) -> void:
 			_foot_timer = 0.28 if game.person.is_running else 0.45
 			_audio.step.pitch_scale = randf_range(0.9, 1.1)
 			_audio.step.play()
-	_refresh_status()
+	_sync_hud()
 
-func _refresh_status() -> void:
-	var vehicle := ""
-	if game.control_state == game.ControlState.DRIVING and game.active_vehicle.has_method("repair"):
-		vehicle = " • Vehicle %d%%" % game.active_vehicle.condition
-	_status.text = "Health %d • Armour %d • Coins %d%s\n%s • Ammo %d/%d%s • Grenades %d • [%s]\n%s" % [game.person.health, armour, game.hud.coins_available(), vehicle,
-		"ACTION" if action_mode else "EXPLORE", ammo, reserve, " (reloading)" if _reload_time > 0.0 else "", grenades, "AUTO" if fire_mode == FireMode.AUTO else "SINGLE",
-		("Wanted " + str(wanted_level) + "/5 • Escape %.0fs" % escape_time) if wanted_level > 0 else "1 Rifle • P Fire mode • B Auto/Single • R Reload • J Talk • F7 Activities"]
-	if not mission.is_empty():
-		_status.text += "\n%s • %s • %ds" % [mission.title, mission.stage, ceili(mission.time)]
+## Hands the readouts to the HUD, which decides when to show them.
+func _sync_hud() -> void:
 	_crosshair.visible = action_mode and game.control_state == game.ControlState.ON_FOOT and not game.is_map_open()
+	_send_hud("set_vitals", [game.person.health, game.person.max_health, armour])
+	_send_hud("set_ammo", [ammo, reserve, action_mode and game.person.is_weapon_equipped()])
+	_send_hud("set_wanted", [wanted_level])
+	_send_hud("set_objective", [str(mission.stage), ceilf(mission.time)] if not mission.is_empty() else ["", 0.0])
+
+## Calls `method` on the HUD when it exists and `values` differ from the last call.
+func _send_hud(method: String, values: Array) -> void:
+	if _hud_sent.get(method) == values or not game.hud.has_method(method):
+		return
+	_hud_sent[method] = values
+	game.hud.callv(method, values)
 
 func _open(title: String, width: float = 0.0) -> VBoxContainer:
 	if life.has_modal() or get_tree().paused or game.is_map_open():
@@ -363,24 +365,22 @@ func start_mission(kind: String) -> bool:
 	if tdm_active:
 		return false
 	if not mission.is_empty():
-		life.toast("Finish or cancel your current activity first")
+		life.toast("Finish your current job first")
 		return false
 	if kind not in ["story", "delivery", "taxi", "race", "ambulance", "firefighter", "vigilante", "gang"]:
 		return false
 	if kind == "story" and story_step >= 3:
-		life.toast("All three neighbourhood chapters completed • try repeatable city jobs")
+		life.toast("All chapters complete")
 		return false
 	if kind in ["vigilante", "gang"] and not action_mode:
-		life.toast("Enable Action mode for vigilante activities")
+		life.toast("Turn on Action mode first")
 		return false
 	var points := _job_points()
 	if points.size() < 2:
-		life.toast("No reachable activity here. Return to the city roads.")
+		life.toast("No job reachable, return to the roads")
 		return false
 	var titles := {"story": "Neighbourhood chapter %d" % (story_step + 1), "delivery": "Local parcel delivery", "taxi": "Taxi fare", "race": "City checkpoint trial", "ambulance": "Medical supply response", "firefighter": "Fire response", "vigilante": "Wanted suspect patrol", "gang": "Gang hideout response"}
-	mission = {"kind": kind, "title": titles[kind], "points": points, "index": 0, "stage": "Pickup", "time": 300.0 if kind != "race" else 240.0, "reward": 20 if kind != "race" else 30, "hold": 0.0}
-	if kind in ["race", "ambulance", "firefighter", "vigilante", "gang"]:
-		mission.stage = "Checkpoint" if kind == "race" else "Respond"
+	mission = {"kind": kind, "title": titles[kind], "points": points, "index": 0, "stage": START_STAGES[kind], "time": 300.0 if kind != "race" else 240.0, "reward": 20 if kind != "race" else 30, "hold": 0.0}
 	if kind != "race":
 		mission.points = [points[story_step % points.size()] if kind == "story" else points[0], points[(story_step + 1) % points.size()] if kind == "story" else points[1]]
 	if kind == "story":
@@ -398,7 +398,6 @@ func start_mission(kind: String) -> bool:
 		add_child(passenger)
 		passenger.setup(game, mission.points[0])
 	_set_mission_target()
-	life.toast("%s started • follow GPS" % mission.title)
 	return true
 
 func _set_mission_target() -> void:
@@ -406,7 +405,7 @@ func _set_mission_target() -> void:
 	_marker.global_position = at + Vector3.UP * 0.25
 	_marker.show()
 	_build_service_scene(at)
-	game.navigator.set_destination(Vector2(at.x, at.z), mission.title + " • " + mission.stage)
+	game.navigator.set_destination(Vector2(at.x, at.z), mission.title)
 
 func _update_mission(delta: float) -> void:
 	var at: Vector3 = mission.points[mission.index]
@@ -423,24 +422,24 @@ func _update_mission(delta: float) -> void:
 	if mission.kind == "taxi" and is_instance_valid(passenger):
 		if mission.index == 0:
 			if game.active_vehicle is GdkHelicopter or game.active_vehicle.get("kind") in ["motorcycle", "scooter", "boat", "plane"]:
-				life.toast("Use a car or tuk-tuk with a passenger seat")
+				life.toast("Needs a car or tuk-tuk")
 				return
 			if passenger.state == "waiting": passenger.board(game.active_vehicle)
-			mission.stage = "Passenger boarding • wait"
+			mission.stage = "Passenger boarding"
 			if passenger.state != "riding": return
 		elif passenger.state == "riding":
 			if game.active_vehicle != passenger.vehicle:
 				life.toast("Return to the passenger's vehicle")
 				return
 			passenger.alight()
-			mission.stage = "Passenger alighting • wait"
+			mission.stage = "Passenger leaving"
 			return
 		elif passenger.state != "complete": return
 	if mission.kind in ["ambulance", "firefighter"] and mission.index == 0:
 		if driving:
-			mission.stage = "Exit vehicle and hold O to help"
+			mission.stage = "Get out, then hold O"
 			return
-		mission.stage = "Hold O to " + ("give first aid" if mission.kind == "ambulance" else "extinguish fire")
+		mission.stage = "Hold O for first aid" if mission.kind == "ambulance" else "Hold O to put out the fire"
 		if Input.is_action_pressed("service"):
 			mission.hold += delta
 			if is_instance_valid(_service_visual) and mission.kind == "firefighter":
@@ -449,7 +448,7 @@ func _update_mission(delta: float) -> void:
 			mission.hold = maxf(0.0, mission.hold - delta)
 		if mission.hold < 5.0:
 			return
-		life.toast("First aid complete • deliver patient to the next stop" if mission.kind == "ambulance" else "Fire extinguished • return to dispatch")
+		life.toast("Patient stable" if mission.kind == "ambulance" else "Fire out")
 	if mission.kind in ["vigilante", "gang"] and mission.index == 0:
 		mission.stage = "Stop the armed suspect"
 		for enemy in _enemies:
@@ -459,9 +458,8 @@ func _update_mission(delta: float) -> void:
 	if mission.index >= mission.points.size():
 		end_mission(true)
 	else:
-		mission.stage = "Checkpoint %d" % (mission.index + 1) if mission.kind == "race" else "Drop-off"
+		mission.stage = "Checkpoint %d" % (mission.index + 1) if mission.kind == "race" else NEXT_STAGES.get(mission.kind, "Deliver the parcel")
 		_set_mission_target()
-		life.toast("Pickup complete • next stop marked")
 
 func end_mission(success: bool, reason := "") -> void:
 	if mission.is_empty():
@@ -471,7 +469,7 @@ func end_mission(success: bool, reason := "") -> void:
 		completed += 1
 		if mission.kind == "story":
 			story_step += 1
-		life.toast("%s complete • +%d coins" % [mission.title, mission.reward])
+		life.toast("%s complete: %d coins" % [mission.title, mission.reward])
 	else:
 		life.toast(reason)
 	mission.clear()
@@ -483,14 +481,14 @@ func end_mission(success: bool, reason := "") -> void:
 	game.navigator.clear()
 	life.save_progress()
 
-## P: fire mode on/off. Turning it on draws the rifle when you have one.
+## Action mode on or off. Turning it on draws the rifle when you have one.
 func toggle_action() -> void:
 	if action_mode:
 		set_action_mode(false)
 		return
 	set_action_mode(true)
 	if not has_rifle:
-		life.toast("Fire mode on • pick up a rifle at Chowrastha")
+		life.toast("No rifle yet, find one at Chowrastha")
 	elif game.control_state == game.ControlState.ON_FOOT:
 		game.person.set_weapon_equipped(true)
 
@@ -501,11 +499,10 @@ func set_action_mode(enabled: bool) -> void:
 		heat = 0.0
 		wanted_level = 0
 		game.person.set_weapon_equipped(false)
-	life.toast("Action mode enabled" if enabled else "Peaceful exploration enabled")
 
 func toggle_fire_mode() -> void:
 	fire_mode = FireMode.SINGLE if fire_mode == FireMode.AUTO else FireMode.AUTO
-	life.toast("Firing Mode: " + ("FULL AUTO" if fire_mode == FireMode.AUTO else "SINGLE SHOT"))
+	life.toast("Full auto" if fire_mode == FireMode.AUTO else "Single shot")
 
 ## The rifles this player can draw: what they have looted (or, in Team Deathmatch, been given).
 func rifles() -> Array[int]:
@@ -765,7 +762,7 @@ func _update_police(delta: float) -> void:
 		wanted_level = ceili(heat / 20.0)
 		escape_time = 0.0
 		if wanted_level == 0:
-			life.toast("Police pursuit escaped")
+			life.toast("You escaped")
 
 func _spawn_police() -> void:
 	var target: Vector3 = game.tracked_body().global_position
@@ -790,7 +787,7 @@ func surrender() -> bool:
 	game.hud.spend_coins(fine)
 	wanted_level = 0
 	heat = 0.0
-	life.toast("Surrendered • fine %d coins" % fine)
+	life.toast("Surrendered, fined %d coins" % fine)
 	return true
 
 func _vehicle_impact(other: Node, speed: float, _normal: Vector3, _at: Vector3, source: Node) -> void:
@@ -832,8 +829,8 @@ func _respawn() -> void:
 	heat = 0.0
 	var fee := mini(10, game.hud.coins_available())
 	game.hud.spend_coins(fee)
-	end_mission(false, "Activity ended • recovered at home")
-	life.toast("Recovered • medical fee %d coins" % fee)
+	end_mission(false, "Job failed")
+	life.toast("Back home, paid %d coins" % fee)
 
 func buy_supply(kind: String) -> bool:
 	var prices := {"medkit": 5, "ammo": 4, "armour": 8, "grenades": 6}
@@ -856,7 +853,6 @@ func use_medkit() -> bool:
 		return false
 	medkits -= 1
 	game.person.heal_full()
-	life.toast("Medkit used")
 	return true
 
 func repair_nearby() -> bool:
@@ -865,7 +861,7 @@ func repair_nearby() -> bool:
 		life.toast("Stand beside a repairable vehicle")
 		return false
 	if car.condition >= 100.0:
-		life.toast("Vehicle is already fully repaired")
+		life.toast("Vehicle needs no repair")
 		return false
 	if not game.hud.spend_coins(5):
 		life.toast("Repair costs 5 coins")
@@ -877,7 +873,7 @@ func repair_nearby() -> bool:
 func buy_property() -> bool:
 	var shop: Dictionary = life.nearby_shop()
 	if shop.is_empty():
-		life.toast("Stand outside a shop to buy that business")
+		life.toast("Stand outside a shop first")
 		return false
 	var id := str(shop.name)
 	if properties.has(id):
@@ -887,7 +883,7 @@ func buy_property() -> bool:
 		life.toast("Business costs 80 coins")
 		return false
 	properties[id] = true
-	life.toast("Business purchased • +3 coins every 3 active minutes")
+	life.toast("Business bought, earns 3 coins every 3 minutes")
 	life.save_progress()
 	return true
 
@@ -929,7 +925,7 @@ func cycle_radio() -> void:
 		if _radio.stream is AudioStreamWAV:
 			_radio.stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
 		_radio.play()
-	life.toast(["Radio off", "Godavari FM • original electronic loop", "Colony FM • original mellow loop"][_radio_station])
+	life.toast(["Radio off", "Godavari FM", "Colony FM"][_radio_station])
 
 func try_vault() -> bool:
 	if tdm_active:
@@ -997,13 +993,13 @@ func spawn_extra_vehicle(kind: String) -> Node3D:
 	for existing in extra_vehicles:
 		if is_instance_valid(existing) and existing.kind == kind:
 			game.navigator.set_destination(Vector2(existing.global_position.x, existing.global_position.z), existing.name)
-			life.toast("Existing vehicle marked on GPS")
+			life.toast("Vehicle marked on map")
 			return existing
 	var at: Vector3 = game.person.global_position + game.person.global_basis.z * 5.0 + Vector3.UP
 	if kind == "boat":
 		var point: Variant = water.boat_spawn()
 		if point == null:
-			life.toast("No mapped water large enough for a boat in this district")
+			life.toast("No water nearby for a boat")
 			return null
 		at = point
 	else:
@@ -1014,7 +1010,7 @@ func spawn_extra_vehicle(kind: String) -> Node3D:
 		query.transform.origin = at + Vector3.UP
 		query.exclude = [game.person.get_rid()]
 		if not get_world_3d().direct_space_state.intersect_shape(query, 1).is_empty():
-			life.toast("Move to an open area with space for the vehicle")
+			life.toast("Need more open space")
 			return null
 	var vehicle := preload("res://scripts/gameplay/arcade_vehicle.gd").new()
 	vehicle.kind = kind
@@ -1035,7 +1031,7 @@ func spawn_extra_vehicle(kind: String) -> Node3D:
 	_attach_vehicle_effects(vehicle)
 	life.fuel[str(vehicle.name)] = 70.0
 	game.navigator.set_destination(Vector2(at.x, at.z), vehicle.name)
-	life.toast("Plane: W throttle, I/K pitch, Q/E bank; reach flying speed" if kind == "plane" else "Vehicle ready • walk alongside and press E")
+	life.toast("Vehicle ready")
 	return vehicle
 
 func _clear_service_scene() -> void:
@@ -1067,7 +1063,6 @@ func _build_service_scene(at: Vector3) -> void:
 		CityAssets.stretcher(_service_visual)
 		var ambulance := CityAssets.vehicle(_service_visual, "ambulance")
 		ambulance.position = Vector3(3,0,0)
-		CityAssets.label(_service_visual,"PATIENT • HOLD O FOR FIRST AID",Vector3(0,2.5,0),24)
 	elif mission.kind == "firefighter":
 		CityAssets.box(_service_visual,Vector3(0,.5,0),Vector3(1.4,1,1),Color("46382e"))
 		for i in 5:
@@ -1077,10 +1072,8 @@ func _build_service_scene(at: Vector3) -> void:
 			material.emission = Color("ff5a0a")
 		var equipment := CityAssets.extinguisher(_service_visual)
 		equipment.position.x = 1.4
-		CityAssets.label(_service_visual,"HOLD O TO EXTINGUISH",Vector3(0,3,0),24)
 	else:
 		CityAssets.box(_service_visual,Vector3(0,.3,0),Vector3(.6,.6,.6),Color("b4864a"))
-		CityAssets.label(_service_visual,"PARCEL PICKUP",Vector3(0,1.3,0),24)
 
 func _build_roadblock() -> void:
 	var body: Node3D = game.tracked_body()
@@ -1110,7 +1103,7 @@ func _build_roadblock() -> void:
 	var officer := preload("res://scripts/gameplay/resident_details.gd").officer(block)
 	officer.position = Vector3(3,-.5,0)
 	_roadblocks.append(block)
-	life.toast("Police roadblock deployed")
+	life.toast("Roadblock ahead")
 
 func _build_touch_controls(layer: CanvasLayer) -> void:
 	var panel := GridContainer.new()
@@ -1211,7 +1204,7 @@ func _speak(text: String) -> void:
 		return
 	var voices := DisplayServer.tts_get_voices()
 	if voices.is_empty():
-		life.toast("No installed system voice • dialogue remains available as text")
+		life.toast("No system voice found")
 		return
 	DisplayServer.tts_speak(text, voices[0].id, 60, 1.0, 1.0, 0, true)
 

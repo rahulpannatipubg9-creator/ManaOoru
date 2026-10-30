@@ -507,7 +507,7 @@ func _on_server_disconnected() -> void:
 		closed.emit("Connection lost. Trying to rejoin…")
 	else:
 		_reset()
-		closed.emit("Host closed the room or lost connection.")
+		closed.emit("Room closed")
 
 func _tick_reconnect(delta: float) -> void:
 	if _reconnect_left <= 0.0:
@@ -515,7 +515,7 @@ func _tick_reconnect(delta: float) -> void:
 	_reconnect_left -= delta
 	if _reconnect_left <= 0.0:
 		_reset()
-		closed.emit("Could not rejoin the match.")
+		closed.emit("Could not rejoin")
 		return
 	_reconnect_retry -= delta
 	if _reconnect_retry <= 0.0 and network_manager != null:

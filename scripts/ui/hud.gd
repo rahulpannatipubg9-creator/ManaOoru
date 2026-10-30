@@ -841,7 +841,7 @@ func _toggle_scope() -> void:
 	var pivot: Node = player.camera_pivot
 	if not pivot.touch_aim and _game.gameplay.get("has_rifle") == false:
 		if _game.city_life and _game.city_life.has_method("toast"):
-			_game.city_life.toast("No rifle yet • pick one up at Chowrastha")
+			_game.city_life.toast("No rifle yet, find one at Chowrastha")
 		return
 	if not pivot.touch_aim:
 		if not _game.gameplay.action_mode:

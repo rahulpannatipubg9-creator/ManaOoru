@@ -217,7 +217,9 @@ preload("res://scripts/performance/startup_profile.gd").mark("  setup: head")
 	preload("res://scripts/performance/startup_profile.gd").mark("  setup: assign boards")
 	preload("res://scripts/world/user_shop_facades.gd").build(self, data)
 	preload("res://scripts/performance/startup_profile.gd").mark("  setup: user shop facades")
-	_add_historical_shop_reference_panels()
+	# Research notes, not signboards: developer runs only.
+	if "--dev-panels" in OS.get_cmdline_user_args():
+		_add_historical_shop_reference_panels()
 	preload("res://scripts/performance/startup_profile.gd").mark("  setup: historical")
 
 ## True when this real place's name is already on its building's shop front.

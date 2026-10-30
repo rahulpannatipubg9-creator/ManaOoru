@@ -156,13 +156,11 @@ func _save_free_roam() -> void:
 		game.hud.minimap.visible = true
 		game.hud.minimap.markers = _minimap_markers
 
-## The free-roam info panel, clock bar, status line and vehicle prompts would sit on top of the match HUD.
+## The free-roam info panel and vehicle prompts would sit on top of the match HUD.
 func _hide_free_roam_ui() -> void:
 	_hidden_ui.clear()
-	var bar: Node = game.city_life.get("_bar")
-	var clock_panel: Node = bar.get_parent().get_parent() if bar != null else null
 	var nodes: Array = [game.hud.get_node_or_null("Panel"), game.hud.get_node_or_null("Offline"),
-		game.hud.get_node_or_null("InteractionPrompt"), clock_panel, game.gameplay.get("_status")]
+		game.hud.get_node_or_null("InteractionPrompt")]
 	for node in nodes:
 		if node is CanvasItem:
 			_hidden_ui.append({"node": node, "visible": node.visible})
