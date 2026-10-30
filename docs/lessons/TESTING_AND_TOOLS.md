@@ -18,6 +18,23 @@
 
 ## Entries
 
+### A real click reached a capture window (2026-10-30)
+- **Symptom:** `credits_mid.png` from `tests/capture_front_door.gd --screens` showed the loading screen, and Godot
+  segfaulted on exit.
+- **Cause:** most likely a real mouse click on the window. A traced rerun logged real clicks and wheel events
+  reaching `title_screen.gd`, though that rerun did not start loading. The segfault was not reproduced; it fits
+  `quit()` during the threaded load.
+- **Rule:** when a windowed capture shows an impossible state, log its input before blaming the UI. Don't use the
+  mouse over capture windows.
+- **Check:** view the PNGs; `credits_mid.png` must show credits.
+
+### A check ran one frame after the state it guards (2026-10-30)
+- **Symptom:** `front_door_regression` failed "the player must not fall" although the player had not fallen.
+- **Cause:** the `while world.building` loop checks after its `await`, and by the last pass `main.gd` had rightly
+  moved the player to the spawn.
+- **Rule:** after an `await` in a polling loop, test the loop's condition again before asserting.
+- **Check:** `tests/front_door_regression.gd`.
+
 ### Tuk-tuk driver test checks a hidden rig (2026-10-29, open)
 - **Symptom:** `tuk_tuk_driver_pose_regression` fails ("Driver wrist must contact its handlebar grip").
 - **Cause:** written on 2026-10-27 for the old `DEF-` rig (`character.skeleton`). Since Rahul became the default,
