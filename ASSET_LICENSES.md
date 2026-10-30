@@ -443,3 +443,8 @@ suppressor, and red-dot sight. Playable weapon in free roam and multiplayer (Wea
 - **Licence: not confirmed.** User-supplied download. Confirm original author and licence before any public release.
 
 
+
+## UI fonts (`assets/fonts/`)
+
+Noto Sans Bold and Noto Sans Telugu Bold by the Noto Project Authors, under the SIL Open Font License 1.1. Copied from
+`tools/signboards/fonts/`.
