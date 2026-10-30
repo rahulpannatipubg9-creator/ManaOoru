@@ -397,7 +397,7 @@ func _new_modal(title: String) -> VBoxContainer:
 	close_modal()
 	_mouse_before = Input.mouse_mode
 	_game._clear_control_inputs()
-	_game.get_tree().paused = true
+	_game.pause_tree(true)
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	_modal_root = ColorRect.new()
 	_modal_root.color = Color(0.02, 0.03, 0.045, 0.78)
@@ -440,7 +440,7 @@ func close_modal() -> void:
 	_modal_root.queue_free()
 	_modal = null
 	_modal_root = null
-	_game.get_tree().paused = false
+	_game.pause_tree(false)
 	_game._clear_control_inputs()
 	Input.mouse_mode = _mouse_before
 	_game._sync_input_context()
@@ -515,7 +515,8 @@ func _button(parent: Node, text: String, callback: Callable) -> Button:
 	return button
 
 func save_progress() -> bool:
-	if not save_enabled:
+	# A match hands out rifles and 9999 rounds that are not the player's to keep.
+	if not save_enabled or (_game.get("gameplay") != null and _game.gameplay.tdm_active):
 		return false
 	var record := {"version": 1, "coins": _game.hud.coins_available(), "energy": energy, "discoveries": discoveries,
 		"achievements": achievements, "inventory": inventory, "fuel": fuel}

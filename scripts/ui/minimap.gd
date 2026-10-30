@@ -103,6 +103,12 @@ func _process(delta: float) -> void:
 	if markers.is_valid():
 		_overlay.queue_redraw()
 
+## A match has no route or zoom to manage: just the map and its markers.
+func set_compact(value: bool) -> void:
+	for button_name in ["ZoomIn", "ZoomOut", "Orientation"]:
+		_buttons[button_name].visible = not value
+	_status.visible = not value
+
 ## Pulls the latest tracked position/heading and redraws if anything visible changed.
 func refresh() -> void:
 	if _game == null:

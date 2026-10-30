@@ -443,3 +443,8 @@ suppressor, and red-dot sight. Playable weapon in free roam and multiplayer (Wea
 - **Licence: not confirmed.** User-supplied download. Confirm original author and licence before any public release.
 
 
+## Gun sounds (`assets/audio/guns/`)
+
+Original work. Synthesised by `tools/generate_gun_audio.py` with the Python standard library, using no recorded or
+downloaded audio. Rifle shots, distant shots, a passing-round crack, dry fire, reload sounds and hit feedback.
+- **Licence:** project-owned, redistributable with the game.

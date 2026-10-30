@@ -249,8 +249,10 @@ func _physics_process(delta: float) -> void:
 
 	var key_peek := 0.0
 	if allowed and not downed:
-		if Input.is_action_pressed("lean_left"): key_peek -= 1.0
-		if Input.is_action_pressed("lean_right"): key_peek += 1.0
+		# Q and E are free-roam keys too (E interacts), so they only lean with a rifle out.
+		if is_weapon_equipped():
+			if Input.is_action_pressed("lean_left"): key_peek -= 1.0
+			if Input.is_action_pressed("lean_right"): key_peek += 1.0
 	peek_input = (key_peek if absf(key_peek) > 0.0 else touch_peek_input) if (allowed and not downed) else 0.0
 	if camera_pivot and "target_peek" in camera_pivot:
 		camera_pivot.target_peek = peek_input
