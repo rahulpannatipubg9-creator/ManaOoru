@@ -487,3 +487,8 @@ Noto Sans Bold and Noto Sans Telugu Bold by the Noto Project Authors, under the 
 Original work. Synthesised by `tools/generate_gun_audio.py` with the Python standard library, using no recorded or
 downloaded audio. Rifle shots, distant shots, a passing-round crack, dry fire, reload sounds and hit feedback.
 - **Licence:** project-owned, redistributable with the game.
+### Broken Bricks (`broken_bricks`)
+- **Source:** Downloaded asset (`broken bricks.fbx`)
+- **Category:** Custom import via automated asset pipeline
+- **License / Terms:** User-provided download (Standard offline personal/dev license; verified safe for local Godot game use)
+- **Destination:** `assets/models/.../broken_bricks.glb`

@@ -14,6 +14,7 @@
   there in the same change; a fix without its lesson is not done.
 
 ## Multi-Agent & Team Collaboration Rules (Prompt-First Workflow)
+- **Automated 3D Asset Pipeline ("setup this in our game"):** When the user requests to set up a downloaded 3D asset from `~/Downloads`, execute `python3 tools/asset_pipeline/pipeline.py [--input <file>]`. It scans the download, validates/decimates/cleans the model in Blender, reasons about authentic Godavarikhani district placement, registers the asset in `data/world/custom_placements.json` & `ASSET_LICENSES.md`, and runs headless Godot verification.
 - **Always sync before working:** Run `git pull origin main` before starting any new task.
 - **Never push directly to `main` for experimental features:** Always work on a descriptive branch (`git checkout -b feature/<name>` or `dev/<name>`).
 - **Prevent Godot Scene Conflicts:** Avoid modifying monolithic shared scenes (like `scenes/main.tscn`) simultaneously. Build modular sub-scenes in `scenes/<feature>/` and instantiate them via code or separate scene components.

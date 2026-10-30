@@ -306,6 +306,7 @@ The detailed design and engineering documents are in [`docs/`](docs/):
 - [Vehicle Physics Specification](docs/VEHICLE_PHYSICS_SPECIFICATION.md)
 - [Mobile UI Specification](docs/MOBILE_UI_SPECIFICATION.md)
 - [Platform Compatibility Matrix](docs/PLATFORM_COMPATIBILITY_MATRIX.md)
+- [3D Asset Import & Placement Pipeline](docs/3D_ASSET_PIPELINE.md)
 - [Asset Requirements](docs/ASSET_REQUIREMENTS.md)
 - [Performance Budgets](docs/PERFORMANCE_BUDGETS.md)
 - [Testing and Release Checklist](docs/TESTING_AND_RELEASE_CHECKLIST.md)
