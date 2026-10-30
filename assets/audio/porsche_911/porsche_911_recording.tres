@@ -1,0 +1,12 @@
+[gd_resource type="Resource" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/player/engine_recording.gd" id="1_recording"]
+[ext_resource type="AudioStream" uid="uid://by35j50wwglkv" path="res://assets/audio/porsche_911/idle_1150rpm.wav" id="2_loop"]
+[ext_resource type="AudioStream" uid="uid://bwv2hul658nhu" path="res://assets/audio/porsche_911/rev_2600rpm.wav" id="3_loop"]
+[ext_resource type="AudioStream" uid="uid://dgim2sg8vrs3c" path="res://assets/audio/porsche_911/start.wav" id="4_start"]
+
+[resource]
+script = ExtResource("1_recording")
+loops = Array[AudioStream]([ExtResource("2_loop"), ExtResource("3_loop")])
+loop_rpms = Array[float]([1150.0, 2600.0])
+start_sound = ExtResource("4_start")
