@@ -16,13 +16,105 @@
   own camera, so the game camera stays current (the rifle and HUD follow the game camera).
 - The game blocks input while unfocused; captures set `GameplayControls.blocked = false` when they need input.
 
+`tools/run_tests.sh [timeout] [filter]` runs every `tests/*_regression.gd` and prints a table. Set `GODOT` to the
+binary, or `GODOT_RUNNER` to a wrapper such as `run_godot.sh`. Scripts that only take pictures or inspect a model live
+in `tools/captures/`.
+
 ## Entries
 
+### Line endings: `.gitattributes` added, repo not renormalised (2026-10-30)
+- **Symptom:** a Windows checkout with `core.autocrlf=true` turns about 890 text files to CRLF; Mac and Windows fight.
+- **Cause:** nothing in the repo set a line-ending rule.
+- **Rule:** `* text=auto eol=lf`, plus `binary` for images, audio, models and fonts. Every new checkout gets LF. Do not
+  mix `git add --renormalize .` into a feature branch.
+- **To do:** after the UI branches merge, run `git add --renormalize .` alone in one commit. Only
+  `assets/models/indian_water_tank/source/tank.mtl` and `tank.obj` should change: they are the only text files stored
+  with CRLF. Existing clones convert a file when it is next touched; a fresh clone is cleanest.
+- **Check:** `git ls-files --eol | grep i/crlf` prints nothing.
+
+### Every shot allocated a mesh and a material (2026-10-30)
+- **Symptom:** sustained fire built new resources for each tracer and flash (BUGS 25).
+- **Cause:** a tracer's length was baked into its `CylinderMesh`.
+- **Rule:** `_tracer` shares a 1 m mesh and scales `axes.y`, the column of the basis. `Basis.scaled()` would scale
+  along the world axis instead, so an angled shot would shear.
+- **Check:** `save_and_feedback_regression` measures the length, centre and direction of a pooled tracer.
+
+### A nested signal reaches later listeners out of order (2026-10-30)
+- **Symptom:** after armour absorbed a hit, a listener connected after `city_gameplay` would see the true health and
+  then the lower value (BUGS 18).
+- **Cause:** emitting `health_changed` inside its own handler delivers the new value first; the outer emit then goes
+  on to the remaining listeners with the old one.
+- **Rule:** when a handler corrects a signal's value, re-emit with `call_deferred`, reading the value when the call
+  runs. A value captured at the hit would overwrite a second hit in the same frame.
+- **Check:** `save_and_feedback_regression`, which listens after `city_gameplay` does.
+
+### Saves: keep what you cannot read (2026-10-30)
+- **Symptom:** a corrupt save, or one from a newer build, started a new game and the next autosave destroyed it
+  (BUGS 19). Android lost up to 30 s because it rarely sends a close request (BUGS 17).
+- **Cause:** `load_progress` treated "unreadable" as "no save". `main._notification` only knew the desktop close.
+- **Rule:** `save_progress` copies the old save to `.bak`. An unreadable save moves to `.rejected`, and the `.bak` is
+  restored to `save_path`, because `city_gameplay` reads that file itself. When `SAVE_VERSION` rises, add the
+  migration to `_read_save` and make `city_gameplay` read through it too.
+- **Check:** `save_and_feedback_regression`.
+### Feel checks that counted frames failed on a busy machine (2026-10-30)
+- **Symptom:** `feel_regression` passed or failed on ADS, landing and reload depending on what else was running.
+- **Cause:** waiting a number of `process_frame`s assumed 60 fps. Headless draws faster when idle and slower under load.
+- **Rule:** wait `physics_frame`s for a fixed time, or measure real seconds and metres per second.
+- **Check:** `feel_regression` while another worker runs Godot.
+### A test printed PASS over a script error (2026-10-30)
+- **Symptom:** `pause_menu_regression` and `environment_modes_regression` printed PASS and exited 0, and the same
+  output held `Invalid access to property or key 'city_life'`.
+- **Cause:** `main._handle_menu_input` calls `pause_menu.owns_keys()` before the menu's first `_process` had set
+  `_game` (`scripts/ui/pause_menu.gd`). The menu's touch-bridge wiring also waited for the first `open_menu()`, so
+  Settings opened directly over a live match got no touch.
+- **Rule:** anything another node may call checks its own setup first, and setup must not wait for one particular
+  screen to open. Read test output for `SCRIPT ERROR`: an exit code or a PASS line does not rule it out.
+- **Check:** `tests/pause_menu_regression.gd` asserts the bridge is wired before the first open; its output must hold
+  no `SCRIPT ERROR`.
+### Pushing to a HUD another worker was writing (2026-10-30)
+- **Symptom:** none yet when found: `city_gameplay.gd` `_send_hud` would have failed on every ammo or mission change,
+  and the guarded calls hid it from the compiler. `main.gd` also blanked the prompt pill for 2 s on V or a stray E.
+- **Cause:** `_send_hud` called `set_ammo` with a bool and `set_objective` with a float by `callv`, written against a
+  brief, while `hud.gd` takes Strings and already reads this state itself in `_read_game_state`. An empty
+  `_show_control_hint("")` still started the hint timer.
+- **Rule:** read the other branch's signatures before calling across workers. `has_method` proves a name, not its
+  arguments, and `callv` defers the failure to play. One owner per readout: the HUD pulls, gameplay does not push.
+- **Check:** `tests/on_screen_text_regression.gd` (`_test_no_hud_push`, `_test_control_hints`).
+### A test can print PASS after a script error (2026-10-30)
+- **Symptom:** `hud_states_regression` and `hud_layout_profiles_regression` printed PASS and exited 0 while most of a
+  test function never ran.
+- **Cause:** a SCRIPT ERROR aborts only the current GDScript function; the caller carries on to its PASS line. Here it
+  was assigning an untyped array to an `Array[int]` stub (`_play.owned = [0, 1]`) and a removed `PeekLeft` slot.
+- **Rule:** read test output for SCRIPT ERROR, never only the last line. Fill typed arrays with `.assign()`.
+- **Check:** `grep -E "SCRIPT ERROR|^FAIL|^PASS"` on the output of each run.
+
+### Compass letters drawn as blocks (2026-10-30)
+- **Symptom:** in `capture_hud` the desktop compass showed pale blocks instead of NW and NE.
+- **Likely cause:** `hud_compass.gd` `_draw` only ran when the heading moved, and recorded `draw_string` glyphs seem to
+  go stale when the font atlas grows. Not proven by isolating the atlas; the capture is the evidence.
+- **Rule:** custom `_draw` text must redraw from time to time; prefer a Label where one will do.
+- **Check:** `hud_states_regression` (periodic redraw) and `tests/capture_hud.gd`, desktop shots.
 ### Hardware-aware device tier classification & settings persistence (2026-10-30)
 - **Symptom:** Different mobile devices and tablets either stuttered or overheated when running uniform graphics presets without hardware inspection.
 - **Cause:** GPU, CPU cores, RAM, and screen refresh rate were not inspected at boot to choose appropriate viewport scaling, shadow cascades, and frame rates.
 - **Rule:** Use `DevicePerformanceManager` at boot to classify into Tier 1 (Budget Mobile 30 FPS, 0.65x scale, no shadows), Tier 2 (Mid-Range 60 FPS, 0.80x scale, 1-cascade 35m shadow), Tier 3 (Flagship Killer 90 FPS, 0.85x scale), and Tier 4 (Pro Tablet/Desktop, 0.75x scale on 3K+ tablets to prevent throttling, 1.0x native on PC/Mac, with tablet ergonomics insetting HUD on 4:3 and 16:10 screens). Persist device profiles to `user://settings.cfg`.
 - **Check:** `tests/device_performance_manager_regression.gd`, `tests/scene_regression.gd`, and `tests/performance_integration_regression.gd`.
+### A real click reached a capture window (2026-10-30)
+- **Symptom:** `credits_mid.png` from `tests/capture_front_door.gd --screens` showed the loading screen, and Godot
+  segfaulted on exit.
+- **Cause:** most likely a real mouse click on the window. A traced rerun logged real clicks and wheel events
+  reaching `title_screen.gd`, though that rerun did not start loading. The segfault was not reproduced; it fits
+  `quit()` during the threaded load.
+- **Rule:** when a windowed capture shows an impossible state, log its input before blaming the UI. Don't use the
+  mouse over capture windows.
+- **Check:** view the PNGs; `credits_mid.png` must show credits.
+
+### A check ran one frame after the state it guards (2026-10-30)
+- **Symptom:** `front_door_regression` failed "the player must not fall" although the player had not fallen.
+- **Cause:** the `while world.building` loop checks after its `await`, and by the last pass `main.gd` had rightly
+  moved the player to the spawn.
+- **Rule:** after an `await` in a polling loop, test the loop's condition again before asserting.
+- **Check:** `tests/front_door_regression.gd`.
 
 ### Tuk-tuk driver test checks a hidden rig (2026-10-29, open)
 - **Symptom:** `tuk_tuk_driver_pose_regression` fails ("Driver wrist must contact its handlebar grip").

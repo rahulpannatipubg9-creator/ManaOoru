@@ -8,6 +8,7 @@ extends SceneTree
 ##   godot --headless --path . --script tests/mobile_hud_audit.gd [-- --strict --hud-script=/abs/hud.gd]
 
 const ClawLayout := preload("res://scripts/mobile/claw_layout.gd")
+## Tapped with a rifle out, the fullest screen. Rarer actions live in the wheel (action_wheel_regression.gd).
 const VIEWPORTS := [Vector2i(1280, 720), Vector2i(1600, 720), Vector2i(1280, 800)]
 const PLAYER_STUB := """extends CharacterBody3D
 var is_running := false
@@ -17,10 +18,12 @@ var touch_peek_input := 0.0
 var crouching := false
 var prone := false
 var camera_pivot: Node3D
+var equipped := true
 var run_calls: Array[bool] = []
 var move_calls: Array[Vector2] = []
 func set_touch_move_input(value: Vector2) -> void: move_calls.append(value)
 func set_touch_run_pressed(value: bool) -> void: run_calls.append(value)
+func is_weapon_equipped() -> bool: return equipped
 func _update_stance(wants_crouch: bool, wants_prone: bool) -> void:
 	crouching = wants_crouch
 	prone = wants_prone
@@ -30,6 +33,29 @@ var touch_aim := false
 var is_aiming := false
 var gyro_mode := 0
 func clear_touch_look() -> void: touch_aim = false
+"""
+
+const GAMEPLAY_STUB := """extends Node
+var action_mode := true
+var has_rifle := true
+var ammo := 24
+var reserve := 120
+var medkits := 0
+var grenades := 3
+var fire_mode := 0
+var touch_fire_pressed := false
+func rifles() -> Array[int]: return [0, 1]
+func attack() -> bool: return true
+func reload_weapon() -> void: pass
+func switch_weapon() -> bool: return true
+func try_vault() -> bool: return false
+"""
+const GAME_STUB := """extends Node
+enum ControlState { ON_FOOT, DRIVING }
+var control_state := ControlState.ON_FOOT
+var gameplay: Node
+var city_life: Node
+var first_person_view := false
 """
 
 var _issues: Array[String] = []
@@ -63,7 +89,12 @@ func _audit(size: Vector2i) -> void:
 	viewport.size = size
 	root.add_child(viewport)
 	var host := Node.new()
+	host.set_script(_script(GAME_STUB))
 	viewport.add_child(host)
+	var gameplay := Node.new()
+	gameplay.set_script(_script(GAMEPLAY_STUB))
+	host.add_child(gameplay)
+	host.gameplay = gameplay
 	var player := CharacterBody3D.new()
 	player.set_script(_script(PLAYER_STUB))
 	player.name = "Player"
@@ -77,6 +108,9 @@ func _audit(size: Vector2i) -> void:
 		hud.set_script(_hud_script)
 	host.add_child(hud)
 	await process_frame
+	hud._game = host
+	# The menu is tested elsewhere; here a tap only has to reach the button.
+	hud.settings_menu = null
 	# Headless has no touchscreen; force the overlay the way a phone build shows it.
 	hud._touch_overlay_enabled = true
 	hud.get_node("TouchControls").visible = true
@@ -86,26 +120,22 @@ func _audit(size: Vector2i) -> void:
 	var buttons := _on_foot_buttons(hud)
 	_audit_geometry(tag, hud, buttons)
 	await _audit_taps(tag, viewport, player, buttons)
-	# The SQUAD tap opened the lobby modal; close it so it cannot mask later checks.
-	if is_instance_valid(hud.multiplayer_panel):
-		hud.multiplayer_panel.visible = false
+	# The wheel button claims its finger itself: a tap there must open the wheel.
+	hud.action_wheel.close()
+	await _audit_wheel(tag, viewport, hud)
+	# The tap audit above already latched run once; this one starts from off.
+	hud._run_latched = false
 	await _audit_run_toggle(tag, viewport, player, buttons[&"Run"])
-	await _audit_two_fingers(tag, viewport, hud, player, buttons[&"Prone"])
+	await _audit_two_fingers(tag, viewport, hud, player, buttons[&"Crouch"])
 	viewport.queue_free()
 	await process_frame
 
 func _on_foot_buttons(hud: CanvasLayer) -> Dictionary:
 	var controls: Control = hud.get_node("TouchControls")
 	return {
-		&"Run": controls.get_node("Run"), &"Jump": controls.get_node("Jump"), &"Reset": controls.get_node("Reset"),
-		&"Fire": hud.btn_fire_right, &"FireLeft": hud.btn_fire_left, &"Scope": hud.btn_scope,
-		&"PeekLeft": hud.btn_peek_left, &"PeekRight": hud.btn_peek_right, &"Crouch": hud.btn_crouch,
-		&"Prone": hud.btn_prone, &"FireMode": hud.btn_fire_mode, &"Gyro": hud.btn_gyro_mode,
-		&"Reload": hud.btn_reload, &"Equip": hud.btn_equip, &"Medkit": hud.btn_medkit, &"Grenade": hud.btn_grenade,
-		&"Talk": hud.btn_talk, &"Surrender": hud.btn_surrender, &"Help": hud.btn_help, &"FreeLook": hud.btn_free_look,
-		&"Mode": hud.btn_mode, &"Character": hud.btn_character, &"View": hud.btn_view,
-		# Last: SQUAD opens the lobby modal over the centre of the screen.
-		&"Squad": hud.btn_multiplayer_toggle,
+		&"Run": controls.get_node("Run"), &"Jump": controls.get_node("Jump"),
+		&"Fire": hud.btn_fire_right, &"Scope": hud.btn_scope, &"Crouch": hud.btn_crouch,
+		&"Reload": hud.btn_reload, &"Swap": hud.btn_swap, &"Menu": hud.btn_menu, &"Wheel": hud.btn_wheel,
 	}
 
 func _audit_geometry(tag: String, hud: CanvasLayer, buttons: Dictionary) -> void:
@@ -113,7 +143,6 @@ func _audit_geometry(tag: String, hud: CanvasLayer, buttons: Dictionary) -> void
 	for slot in buttons:
 		var button: Control = buttons[slot]
 		rects[slot] = button.get_global_rect()
-	rects[&"StatusPanel"] = (hud.get_node("Panel") as Control).get_global_rect()
 	var names := rects.keys()
 	for i in names.size():
 		for j in range(i + 1, names.size()):
@@ -143,13 +172,23 @@ func _audit_taps(tag: String, viewport: SubViewport, player: CharacterBody3D, bu
 		jumped = jumped or Input.is_action_pressed("jump")
 		await physics_frame
 		button.button_down.disconnect(on_down)
-		if downs[0] != 1 and slot not in [&"Run", &"Jump", &"Reset"]:
+		if downs[0] != 1 and slot not in [&"Run", &"Jump", &"Wheel"]:
 			_issue(tag, "tapping %s never reaches the button (button_down x%d)" % [slot, downs[0]])
 		if jumped and slot != &"Jump":
 			_issue(tag, "tapping %s makes the player jump" % slot)
-		if player.global_position.y < -900.0 and slot != &"Reset":
+		if player.global_position.y < -900.0:
 			_issue(tag, "tapping %s teleports the player to the respawn point" % slot)
 		_clear_input(player)
+
+func _audit_wheel(tag: String, viewport: SubViewport, hud: CanvasLayer) -> void:
+	var centre: Vector2 = hud.btn_wheel.get_global_rect().get_center()
+	_touch(viewport, 0, centre, true)
+	await process_frame
+	if not hud.action_wheel.is_open():
+		_issue(tag, "pressing the wheel button does not open the wheel")
+	_touch(viewport, 0, centre, false)
+	await process_frame
+	hud.action_wheel.close()
 
 func _audit_run_toggle(tag: String, viewport: SubViewport, player: CharacterBody3D, run: Control) -> void:
 	player.run_calls.clear()
@@ -163,7 +202,7 @@ func _audit_run_toggle(tag: String, viewport: SubViewport, player: CharacterBody
 	_clear_input(player)
 
 ## Joystick on finger 0 and a stance button on finger 1 must work together and release independently.
-func _audit_two_fingers(tag: String, viewport: SubViewport, hud: CanvasLayer, player: CharacterBody3D, prone: BaseButton) -> void:
+func _audit_two_fingers(tag: String, viewport: SubViewport, hud: CanvasLayer, player: CharacterBody3D, held: BaseButton) -> void:
 	var stick: Control = hud.get_node("TouchControls/JoystickBase")
 	var stick_centre := stick.get_global_rect().get_center()
 	player.move_calls.clear()
@@ -172,19 +211,19 @@ func _audit_two_fingers(tag: String, viewport: SubViewport, hud: CanvasLayer, pl
 	_drag(viewport, 0, stick_centre + Vector2(0.0, -80.0), Vector2(0.0, -80.0))
 	await process_frame
 	var moving: bool = not player.move_calls.is_empty() and player.move_calls.back().y < -0.5
-	var prone_centre := prone.get_global_rect().get_center()
-	_touch(viewport, 1, prone_centre, true)
+	var held_centre := held.get_global_rect().get_center()
+	_touch(viewport, 1, held_centre, true)
 	await process_frame
-	var prone_held := prone.button_pressed
+	var was_held := held.button_pressed
 	_touch(viewport, 0, stick_centre, false)
 	await process_frame
-	var prone_survives := prone.button_pressed
-	_touch(viewport, 1, prone_centre, false)
+	var still_held := held.button_pressed
+	_touch(viewport, 1, held_centre, false)
 	await process_frame
 	if not moving:
 		_issue(tag, "joystick drag on finger 0 does not move the player")
-	if not prone_held or not prone_survives:
-		_issue(tag, "a second finger on PRONE is lost while the joystick is held (held %s, after stick release %s)" % [prone_held, prone_survives])
+	if not was_held or not still_held:
+		_issue(tag, "a second finger on CROUCH is lost while the joystick is held (held %s, after stick release %s)" % [was_held, still_held])
 	_clear_input(player)
 
 func _touch(viewport: SubViewport, index: int, position: Vector2, pressed: bool) -> void:

@@ -4,7 +4,17 @@ extends Node3D
 const EnvironmentController := preload("res://scripts/world/city_environment.gd")
 const CommunityController := preload("res://scripts/world/city_community.gd")
 const Interior := preload("res://scripts/world/city_shop_interior.gd")
+const ToastQueue := preload("res://scripts/ui/toast_queue.gd")
+const FirstUseHints := preload("res://scripts/ui/first_use_hints.gd")
 const SAVE_PATH := "user://city_life_v1.json"
+const SAVE_VERSION := 1
+const MODAL_WIDTH := 420.0
+const JOURNAL_LIST_HEIGHT := 400.0
+const JOURNAL_SHOPS := 6
+## Where Esc and Back lead, when a pop-up was opened from another screen.
+var modal_back: Callable
+## Fuel percentage at or below which the HUD is told to show it.
+const LOW_FUEL := 20.0
 var environment: Node3D
 var community: Node3D
 var targets: Array[Dictionary] = []
@@ -19,9 +29,10 @@ var inside_shop := false
 var _game: Node
 var _world: Node
 var _ui: CanvasLayer
-var _bar: Label
 var _modal: PanelContainer
 var _modal_root: ColorRect
+var _modal_header: HBoxContainer
+var _modal_back_button: Button
 var _shop_feedback: Label
 var _interior: Node3D
 var _inside_record: Dictionary = {}
@@ -36,11 +47,9 @@ var _last_wallet := -1
 var _last_vehicle_position := Vector3.ZERO
 var _last_vehicle: Node3D
 var _fuel_stops: Array[Dictionary] = []
-var _intro_time := 1.0
-var _loaded_progress := false
 var _interior_cooldown := 0.0
-var _toast: Label
-var _toast_timer := 0.0
+var _toasts: Control
+var _hints: RefCounted
 
 func setup(game: Node) -> void:
 	_game = game
@@ -51,7 +60,8 @@ func setup(game: Node) -> void:
 	_game.hud.set_coins(8)
 	for vehicle: Node3D in game.vehicles:
 		fuel[str(vehicle.name)] = 70.0
-	_loaded_progress = load_progress()
+	_hints = FirstUseHints.new(FirstUseHints.PATH if save_enabled else "")
+	load_progress()
 	community = CommunityController.new()
 	add_child(community)
 	community.setup(_world)
@@ -66,15 +76,8 @@ func setup(game: Node) -> void:
 	_build_ui()
 	_last_wallet = _game.hud.coins_available()
 	_last_vehicle_position = game.tracked_body().global_position
-	_refresh_bar()
 
 func _process(delta: float) -> void:
-	if _intro_time > 0.0:
-		_intro_time -= delta
-		if _intro_time <= 0.0:
-			toast("Welcome back • E to interact • F5 City journal" if _loaded_progress else "Welcome home • 8 starter coins • E to interact • F5 City journal")
-	_toast_timer = maxf(0.0, _toast_timer - delta)
-	_toast.visible = _toast_timer > 0.0
 	_interior_cooldown = maxf(0.0, _interior_cooldown - delta)
 	if inside_shop:
 		var local: Vector3 = _interior.to_local(_game.person.global_position)
@@ -90,7 +93,7 @@ func _process(delta: float) -> void:
 	_timer = 0.0
 	_update_fuel()
 	_check_discoveries()
-	_refresh_bar()
+	_check_hints()
 	if _save_timer > 30.0 or _last_wallet != _game.hud.coins_available():
 		_save_timer = 0.0
 		_last_wallet = _game.hud.coins_available()
@@ -124,9 +127,11 @@ func nearby_shop() -> Dictionary:
 
 func prompt_text() -> String:
 	if inside_shop:
-		return "[E] LEAVE SHOP" if _interior.to_local(_game.person.global_position).z > 1.4 else "[E] BROWSE COUNTER"
+		return "[E] Leave shop" if _interior.to_local(_game.person.global_position).z > 1.4 else "[E] Browse"
 	var shop := nearby_shop()
-	return "[E] %s • %s" % [str(shop.name).to_upper(), "REFUEL" if str(shop.get("kind", "")) == "fuel" else "BROWSE SHOP"] if not shop.is_empty() else ""
+	if shop.is_empty():
+		return ""
+	return "[E] Refuel" if str(shop.get("kind", "")) == "fuel" else "[E] Browse shop"
 
 func interact() -> bool:
 	if inside_shop and _interior.to_local(_game.person.global_position).z > 1.4:
@@ -154,13 +159,11 @@ func purchase(product: String) -> bool:
 		if vehicle != null:
 			fuel[str(vehicle.name)] = minf(100.0, float(fuel.get(str(vehicle.name), 70.0)) + 35.0)
 	_game.person.health_changed.emit(_game.person.health, _game.person.max_health)
-	_refresh_bar()
 	save_progress()
 	return true
 
 func _buy(product: String) -> void:
-	var success := purchase(product)
-	_shop_feedback.text = "%s purchased • %d coins left" % [product.capitalize(), _game.hud.coins_available()] if success else "Not enough coins • explore for rewards"
+	_refresh_wallet(_shop_feedback, purchase(product))
 
 func enter_interior(shop: Dictionary) -> void:
 	if inside_shop:
@@ -184,7 +187,6 @@ func enter_interior(shop: Dictionary) -> void:
 	_interior_cooldown = 1.0
 	if not _game.first_person_view:
 		_game.toggle_camera_view()
-	toast("%s • Browse at the counter • Walk through the door to leave" % str(shop.name))
 
 func leave_interior(teleport := true) -> void:
 	if not inside_shop:
@@ -201,7 +203,6 @@ func leave_interior(teleport := true) -> void:
 	_interior.position.y = -1000.0
 	if _game.first_person_view != _return_first_person:
 		_game.toggle_camera_view()
-	toast("Back on the street")
 
 func _build_fuel_stops() -> void:
 	for poi: Dictionary in _world.map_data.pois:
@@ -226,13 +227,6 @@ func _build_fuel_stops() -> void:
 		material.albedo_color = Color("#b74f36")
 		pump.material_override = material
 		add_child(pump)
-		var label := Label3D.new()
-		label.text = "FUEL\n[E]"
-		label.font_size = 32
-		label.pixel_size = 0.008
-		label.position.y = 0.95
-		label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-		pump.add_child(label)
 		if _fuel_stops.size() >= 6:
 			break
 
@@ -284,15 +278,6 @@ func _add_target(title: String, at: Vector3, kind: String) -> void:
 	marker.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(marker)
 	marker.visible = not discoveries.has(id)
-	if kind != "token":
-		var label := Label3D.new()
-		label.text = title
-		label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-		label.font_size = 32
-		label.pixel_size = 0.009
-		label.position.y = 0.65
-		label.visibility_range_end = 45.0
-		marker.add_child(label)
 	targets.append({"id": id, "name": title, "position": at, "kind": kind, "marker": marker})
 
 func _check_discoveries() -> void:
@@ -315,11 +300,13 @@ func discover(id: String) -> bool:
 		discoveries[id] = true
 		target.marker.visible = false
 		_game.hud.add_coins(3 if target.kind == "token" else 5)
-		toast("Discovered: %s • +%d coins" % [target.name, 3 if target.kind == "token" else 5])
+		toast("Found %s" % target.name)
+		if not _touch_controls():
+			hint("journal", "F5 opens your journal")
 		if discoveries.size() >= 3 and not achievements.has("local_explorer"):
 			achievements.local_explorer = true
 			_game.hud.add_coins(10)
-			toast("Local explorer • 3 discoveries • +10 bonus coins")
+			toast("Local explorer bonus: 10 coins")
 		if environment.night > 0.7:
 			_award("night_walker", "Night walker")
 		if environment.rain > 0.4:
@@ -333,117 +320,171 @@ func _award(id: String, title: String) -> void:
 		return
 	achievements[id] = true
 	_game.hud.add_coins(3)
-	toast("%s • +3 coins" % title)
+	toast("%s: 3 coins" % title)
 
 func _build_ui() -> void:
 	_ui = CanvasLayer.new()
 	_ui.layer = 12
 	_ui.process_mode = Node.PROCESS_MODE_ALWAYS
 	add_child(_ui)
-	var panel := PanelContainer.new()
-	var background := StyleBoxFlat.new()
-	background.bg_color = Color(0.035, 0.055, 0.08, 0.9)
-	background.set_corner_radius_all(8)
-	panel.add_theme_stylebox_override("panel", background)
-	panel.anchor_left = 0.5
-	panel.anchor_right = 0.5
-	panel.offset_left = -210
-	panel.offset_right = 210
-	panel.offset_top = 70
-	panel.offset_bottom = 130
-	_ui.add_child(panel)
-	var row := VBoxContainer.new()
-	panel.add_child(row)
-	_bar = Label.new()
-	_bar.add_theme_color_override("font_color", Color("edf4f7"))
-	_bar.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_bar.add_theme_font_size_override("font_size", 14)
-	row.add_child(_bar)
-	var buttons := HBoxContainer.new()
-	row.add_child(buttons)
-	buttons.hide()
-	_toast = Label.new()
-	_toast.anchor_left = 0.5
-	_toast.anchor_right = 0.5
-	_toast.offset_left = -350
-	_toast.offset_right = 350
-	_toast.offset_top = 140
-	_toast.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_toast.add_theme_font_size_override("font_size", 19)
-	_toast.add_theme_color_override("font_color", Color("#ffe6a1"))
-	_toast.add_theme_color_override("font_shadow_color", Color.BLACK)
-	_toast.add_theme_constant_override("shadow_offset_x", 2)
-	_toast.add_theme_constant_override("shadow_offset_y", 2)
-	_ui.add_child(_toast)
+	_toasts = ToastQueue.new()
+	_ui.add_child(_toasts)
 
-func _refresh_bar() -> void:
-	if _bar == null:
-		return
-	var vehicle: Node3D = _game.active_vehicle
-	var fuel_text := ""
-	if vehicle != null and not vehicle is GdkHelicopter:
-		fuel_text = " • Fuel %d%%" % int(fuel.get(str(vehicle.name), 70.0))
-	_bar.text = "%s • %s • Energy %d%s" % [environment.clock_text(), "Rain" if environment.rain > 0.2 else "Clear", int(energy), fuel_text]
-
+## Queues a short message. See scripts/ui/toast_queue.gd.
 func toast(text: String) -> void:
-	if _toast:
-		_toast.text = text
-		_toast_timer = 5.0
+	if _toasts:
+		_toasts.push(text)
+
+## Shows `text` once ever, the first time `id` comes up.
+func hint(id: String, text: String) -> bool:
+	if _hints == null or not _hints.claim(id):
+		return false
+	toast(text)
+	return true
+
+## First-use hints that follow from what the player is doing. Touch has its own buttons, so key hints skip it.
+func _check_hints() -> void:
+	var gameplay: Node = _game.get("gameplay")
+	if gameplay == null:
+		return
+	if gameplay.wanted_level > 0:
+		hint("wanted", "Stay out of sight to lose police")
+	if _touch_controls():
+		return
+	if _game.control_state == _game.ControlState.DRIVING:
+		var vehicle: Node3D = _game.active_vehicle
+		if vehicle is GdkHelicopter:
+			hint("helicopter", "Space climbs, Shift descends")
+		elif vehicle != null and vehicle.get("kind") == "plane":
+			hint("plane", "W for throttle, I and K for pitch")
+		else:
+			hint("vehicle_exit", "F gets you out")
+	elif _game.person.is_weapon_equipped():
+		hint("rifle", "R reloads, X switches fire mode")
+
+func _touch_controls() -> bool:
+	return _game.hud.get("_touch_overlay_enabled") == true
 
 func has_modal() -> bool:
 	return is_instance_valid(_modal)
 
-func _new_modal(title: String) -> VBoxContainer:
+## Builds the shared pop-up: a dim screen, a card sized to its content, a title and Back.
+## Callers fill the returned column. Esc and Back both go through back_modal.
+func _new_modal(title: String, width := MODAL_WIDTH) -> VBoxContainer:
 	close_modal()
 	_mouse_before = Input.mouse_mode
 	_game._clear_control_inputs()
-	_game.get_tree().paused = true
+	_game.pause_tree(true)
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	_modal_root = ColorRect.new()
-	_modal_root.color = Color(0.02, 0.03, 0.045, 0.78)
-	_modal_root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_modal_root.theme = UiTheme.theme()
+	UiTheme.make_dim(_modal_root)
 	_ui.add_child(_modal_root)
 	_modal = PanelContainer.new()
-	var background := StyleBoxFlat.new()
-	background.bg_color = Color(0.035, 0.055, 0.08, 0.98)
-	background.set_corner_radius_all(12)
-	background.border_color = Color(0.2, 0.38, 0.47)
-	background.set_border_width_all(1)
-	_modal.add_theme_stylebox_override("panel", background)
-	var theme := Theme.new()
-	theme.set_color("font_color", "Label", Color("edf4f7"))
-	theme.set_color("font_color", "Button", Color("edf4f7"))
-	_modal.theme = theme
+	_modal.custom_minimum_size.x = width
 	_modal.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
-	_modal.offset_left = -235
-	_modal.offset_right = 235
-	_modal.offset_top = -245
-	_modal.offset_bottom = 245
+	_modal.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	_modal.grow_vertical = Control.GROW_DIRECTION_BOTH
 	_modal_root.add_child(_modal)
 	var margin := MarginContainer.new()
 	for side: String in ["left", "right", "top", "bottom"]:
-		margin.add_theme_constant_override("margin_" + side, 18)
+		margin.add_theme_constant_override("margin_" + side, UiTheme.SPACE_S)
 	_modal.add_child(margin)
-	var column := VBoxContainer.new()
-	column.add_theme_constant_override("separation", 10)
-	margin.add_child(column)
+	var page := VBoxContainer.new()
+	page.add_theme_constant_override("separation", UiTheme.SPACE_M)
+	margin.add_child(page)
+	_modal_header = HBoxContainer.new()
+	_modal_header.add_theme_constant_override("separation", UiTheme.SPACE_S)
+	page.add_child(_modal_header)
 	var heading := Label.new()
 	heading.text = title
-	heading.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	heading.add_theme_font_size_override("font_size", 22)
-	column.add_child(heading)
+	heading.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	heading.add_theme_font_size_override("font_size", UiTheme.FONT_TITLE)
+	_modal_header.add_child(heading)
+	_modal_back_button = _button(_modal_header, "Back", back_modal)
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", UiTheme.SPACE_S)
+	page.add_child(column)
+	_focus_modal.call_deferred(column)
+	_modal_root.create_tween().tween_property(_modal_root, "modulate:a", 1.0, UiTheme.MOTION_FAST).from(0.01)
 	return column
 
+## Keyboard players start on the first choice, or on Back when there is none.
+func _focus_modal(column: VBoxContainer) -> void:
+	if not is_instance_valid(column):
+		return
+	for found: Node in column.find_children("*", "BaseButton", true, false):
+		if found.is_visible_in_tree() and not found.disabled:
+			found.grab_focus()
+			return
+	_modal_back_button.grab_focus()
+
+## Closes the pop-up to the game. Choices that act on the world use this.
 func close_modal() -> void:
 	if not has_modal():
 		return
 	_modal_root.queue_free()
 	_modal = null
 	_modal_root = null
-	_game.get_tree().paused = false
+	modal_back = Callable()
+	_game.pause_tree(false)
 	_game._clear_control_inputs()
 	Input.mouse_mode = _mouse_before
 	_game._sync_input_context()
+
+## Esc and Back: closes the pop-up and returns to the screen that opened it, if any.
+func back_modal() -> void:
+	var previous := modal_back
+	close_modal()
+	if previous.is_valid():
+		previous.call()
+
+## A small marigold value such as a price. Used in rows and modal headers.
+func _chip(text: String) -> Label:
+	var chip := Label.new()
+	chip.text = text
+	chip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	chip.add_theme_font_size_override("font_size", UiTheme.FONT_SMALL)
+	chip.add_theme_color_override("font_color", UiTheme.ACCENT)
+	var style := UiTheme.box(UiTheme.INK, UiTheme.RADIUS_PILL)
+	style.set_content_margin(SIDE_LEFT, UiTheme.SPACE_S + UiTheme.SPACE_XS)
+	style.set_content_margin(SIDE_RIGHT, UiTheme.SPACE_S + UiTheme.SPACE_XS)
+	style.set_content_margin(SIDE_TOP, UiTheme.SPACE_XS)
+	style.set_content_margin(SIDE_BOTTOM, UiTheme.SPACE_XS)
+	chip.add_theme_stylebox_override("normal", style)
+	return chip
+
+## A chip in the modal's title row, left of Back.
+func _header_chip(text: String) -> Label:
+	var chip := _chip(text)
+	chip.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_modal_header.add_child(chip)
+	_modal_header.move_child(chip, _modal_back_button.get_index())
+	return chip
+
+## A button in the modal's title row, left of Back.
+func _header_button(text: String, callback: Callable) -> Button:
+	var button := _button(_modal_header, text, callback)
+	_modal_header.move_child(button, _modal_back_button.get_index())
+	return button
+
+## The wallet chip. It turns red when a purchase fails.
+func _refresh_wallet(chip: Label, afforded := true) -> void:
+	chip.text = "%d coins" % _game.hud.coins_available()
+	chip.add_theme_color_override("font_color", UiTheme.ACCENT if afforded else UiTheme.DANGER)
+
+## A short choice: a name on the left and, when given, a chip on the right.
+func _row(parent: Node, text: String, chip_text: String, callback: Callable) -> Button:
+	var button := _button(parent, text, callback)
+	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	if not chip_text.is_empty():
+		var chip := _chip(chip_text)
+		button.add_child(chip)
+		chip.set_anchors_and_offsets_preset(Control.PRESET_CENTER_RIGHT, Control.PRESET_MODE_MINSIZE, UiTheme.SPACE_S)
+		chip.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+		chip.grow_vertical = Control.GROW_DIRECTION_BOTH
+	return button
 
 func open_shop(shop: Dictionary) -> void:
 	if shop.has("market_id") and _game.gameplay and _game.gameplay.market:
@@ -452,72 +493,64 @@ func open_shop(shop: Dictionary) -> void:
 	if has_modal() or _game.control_state != _game.ControlState.ON_FOOT:
 		return
 	var column := _new_modal(str(shop.name))
-	_shop_feedback = Label.new()
-	_shop_feedback.text = "Wallet: %d coins" % _game.hud.coins_available()
-	column.add_child(_shop_feedback)
-	_button(column, "Tea • 1 coin • +15 energy", func() -> void: _buy("tea"))
-	_button(column, "Snack • 2 coins • +30 energy", func() -> void: _buy("snack"))
+	_shop_feedback = _header_chip("")
+	_refresh_wallet(_shop_feedback)
+	_row(column, "Tea", "1", func() -> void: _buy("tea"))
+	_row(column, "Snack", "2", func() -> void: _buy("snack"))
 	if str(shop.get("kind", "")) in ["fuel", "car_wash"]:
-		_button(column, "Refuel • 3 coins • +35% fuel", func() -> void: _buy("fuel"))
+		_row(column, "Refuel", "3", func() -> void: _buy("fuel"))
 	if not inside_shop:
-		_button(column, "Step inside", func() -> void: enter_interior(shop))
-	_button(column, "Back to street" if not inside_shop else "Back to counter", close_modal)
+		_row(column, "Step inside", "", func() -> void: enter_interior(shop))
 
 func open_journal() -> void:
 	if has_modal() or _game.get_tree().paused:
 		return
-	var column := _new_modal("Your Godavarikhani journal")
-	var summary := Label.new()
-	summary.text = "%d discoveries • %d coins • %d achievements\nExplore three places for a 10-coin bonus." % [discoveries.size(), _game.hud.coins_available(), achievements.size()]
-	summary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	column.add_child(summary)
+	var column := _new_modal("Journal", MODAL_WIDTH + UiTheme.SPACE_XL)
+	_header_chip("%d found" % discoveries.size())
 	var scroll := ScrollContainer.new()
-	scroll.custom_minimum_size.y = 190
+	scroll.custom_minimum_size.y = JOURNAL_LIST_HEIGHT
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.follow_focus = true
 	column.add_child(scroll)
 	var list := VBoxContainer.new()
+	list.add_theme_constant_override("separation", UiTheme.SPACE_XS)
 	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.add_child(list)
 	for target: Dictionary in targets:
 		if target.kind == "token" and not discoveries.has(target.id):
 			continue
-		var record: Dictionary = target
-		_button(list, ("✓ " if discoveries.has(target.id) else "○ ") + str(target.name), func() -> void:
-			close_modal()
-			_game.navigator.set_destination(Vector2(record.position.x, record.position.z), record.name)
-			toast("GPS set: %s" % record.name))
-	for entry: Dictionary in _world.local_activity.shop_entries + _fuel_stops:
-		var shop: Dictionary = entry
-		_button(list, "Shop: " + str(shop.name), func() -> void:
-			close_modal()
-			_game.navigator.set_destination(Vector2(shop.position.x, shop.position.z), shop.name)
-			toast("Shop route set: %s" % shop.name))
-	var times := HBoxContainer.new()
-	column.add_child(times)
-	for value: int in [8, 17, 21]:
-		var h := value
-		_button(times, "Wait until %02d:00" % h, func() -> void: environment.set_hour(h))
-	var volume := HSlider.new()
-	volume.min_value = 0
-	volume.max_value = 1
-	volume.step = 0.05
-	volume.value = environment.ambience.volume
-	volume.tooltip_text = "City ambience volume"
-	volume.value_changed.connect(func(value: float) -> void: environment.ambience.volume = value)
-	column.add_child(volume)
-	_button(column, "Return to city", close_modal)
+		var found := discoveries.has(target.id)
+		var row := _gps_row(list, target, "" if found else "+%d" % (3 if target.kind == "token" else 5))
+		if found:
+			row.add_theme_color_override("font_color", UiTheme.TEXT_MUTED)
+	var here: Vector3 = _game.tracked_body().global_position
+	var shops: Array[Dictionary] = []
+	shops.append_array(_world.local_activity.shop_entries)
+	shops.append_array(_fuel_stops)
+	shops.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		return here.distance_squared_to(a.position) < here.distance_squared_to(b.position))
+	for shop: Dictionary in shops.slice(0, JOURNAL_SHOPS):
+		_gps_row(list, shop, "Shop")
+
+func _gps_row(list: Node, place: Dictionary, chip: String) -> Button:
+	return _row(list, str(place.name), chip, func() -> void:
+		close_modal()
+		_game.navigator.set_destination(Vector2(place.position.x, place.position.z), place.name)
+		toast("GPS set: %s" % place.name))
 
 func _button(parent: Node, text: String, callback: Callable) -> Button:
 	var button := Button.new()
 	button.text = text
-	button.custom_minimum_size.y = 34
+	button.custom_minimum_size.y = UiTheme.TOUCH_TARGET
 	button.pressed.connect(callback)
 	parent.add_child(button)
 	return button
 
 func save_progress() -> bool:
-	if not save_enabled:
+	# A match hands out rifles and 9999 rounds that are not the player's to keep.
+	if not save_enabled or (_game.get("gameplay") != null and _game.gameplay.tdm_active):
 		return false
-	var record := {"version": 1, "coins": _game.hud.coins_available(), "energy": energy, "discoveries": discoveries,
+	var record := {"version": SAVE_VERSION, "coins": _game.hud.coins_available(), "energy": energy, "discoveries": discoveries,
 		"achievements": achievements, "inventory": inventory, "fuel": fuel}
 	if _game.get("gameplay") != null:
 		record["gameplay"] = _game.gameplay.export_progress()
@@ -526,14 +559,24 @@ func save_progress() -> bool:
 		return false
 	file.store_string(JSON.stringify(record))
 	file.close()
+	if FileAccess.file_exists(save_path):
+		DirAccess.copy_absolute(ProjectSettings.globalize_path(save_path), ProjectSettings.globalize_path(save_path + ".bak"))
 	return DirAccess.rename_absolute(ProjectSettings.globalize_path(save_path + ".tmp"), ProjectSettings.globalize_path(save_path)) == OK
 
 func load_progress() -> bool:
-	if not save_enabled or not FileAccess.file_exists(save_path):
+	if not save_enabled:
 		return false
-	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(save_path))
-	if not parsed is Dictionary or parsed.get("version") != 1:
-		return false
+	var parsed := _read_save(save_path)
+	if parsed.is_empty():
+		if FileAccess.file_exists(save_path):
+			# Corrupt or from a newer build: move it aside so the next autosave cannot overwrite it.
+			push_warning("Unreadable save kept as %s.rejected" % save_path)
+			DirAccess.rename_absolute(ProjectSettings.globalize_path(save_path), ProjectSettings.globalize_path(save_path + ".rejected"))
+		parsed = _read_save(save_path + ".bak")
+		if parsed.is_empty():
+			return false
+		# city_gameplay reads the gameplay block from save_path, so restore the file as well.
+		DirAccess.copy_absolute(ProjectSettings.globalize_path(save_path + ".bak"), ProjectSettings.globalize_path(save_path))
 	_game.hud.set_coins(int(clampf(_safe_number(parsed.get("coins"), 8.0), 0, 999999)))
 	energy = clampf(_safe_number(parsed.get("energy"), 80.0), 0, 100)
 	for key: String in ["discoveries", "achievements"]:
@@ -554,6 +597,16 @@ func load_progress() -> bool:
 			fuel[key] = clampf(_safe_number(saved_fuel.get(key), 70.0), 0, 100)
 	return true
 
+## The record at `path`, or empty if it is missing, corrupt or newer than this build.
+## When SAVE_VERSION goes up, migrate older records here, one version at a time.
+func _read_save(path: String) -> Dictionary:
+	if not FileAccess.file_exists(path):
+		return {}
+	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(path))
+	if not parsed is Dictionary or parsed.get("version") != SAVE_VERSION:
+		return {}
+	return parsed
+
 func _safe_number(value: Variant, fallback: float) -> float:
 	if (value is int or value is float) and is_finite(float(value)):
 		return float(value)
@@ -561,3 +614,4 @@ func _safe_number(value: Variant, fallback: float) -> float:
 
 func set_map_visibility(map_open: bool) -> void:
 	_ui.visible = not map_open
+	_toasts.held = map_open

@@ -15,6 +15,15 @@ notes are in [characters/](characters/). Code: `scripts/player/test_character.gd
 
 ## Entries
 
+### Lean and open hands carried into the driver's seat (2026-10-30)
+- **Symptom:** a lean held while the player boarded stayed on the driver for the whole drive, and Rahul's fingers
+  stayed open on handlebars.
+- **Cause:** `person_controller.gd` stops updating `peek_input` during a scripted move, and `_pose_static_male`
+  returns early when seated, so `male_model.rotation` kept its last value. `_pose_male_driving` only curled the
+  fingers on the fallback wheel, not on vehicle grips.
+- **Rule:** anything a pose function sets every frame must be reset on the path that returns early.
+- **Check:** `save_and_feedback_regression` covers the lean. The fingers have no test, so look at a render.
+
 ### Crouch refused under a low ceiling: the headroom query hit the floor (2026-10-29)
 - **Symptom:** `character_physics_regression` failed "Crouch must shrink the collider". A player squeezed
   under a low roof could not crouch out of it.

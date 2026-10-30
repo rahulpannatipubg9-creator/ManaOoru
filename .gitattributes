@@ -1,3 +1,7 @@
+# Everything text uses LF, on every OS. Not yet renormalised: see docs/lessons/TESTING_AND_TOOLS.md.
+* text=auto eol=lf
+
+# Images
 # Mana Ooru — Git Attributes Configuration
 # Standardizes line endings and ensures 3D models, textures, and audio are treated as binary.
 
@@ -31,6 +35,25 @@
 *.jpg binary
 *.jpeg binary
 *.webp binary
+*.tga binary
+*.bmp binary
+*.hdr binary
+*.exr binary
+*.ico binary
+
+# Audio
+*.wav binary
+*.ogg binary
+*.mp3 binary
+*.flac binary
+
+# Models
+*.glb binary
+*.fbx binary
+*.blend binary
+*.usdz binary
+
+# Fonts
 *.hdr binary
 *.exr binary
 
@@ -45,6 +68,11 @@
 *.woff binary
 *.woff2 binary
 
+# Godot and game data
+*.res binary
+*.scn binary
+*.bin binary
+*.gz binary
 # Compiled Godot binary resources
 *.res binary
 *.scn binary

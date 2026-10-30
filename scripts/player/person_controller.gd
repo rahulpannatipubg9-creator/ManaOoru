@@ -10,6 +10,7 @@ signal knocked_down
 
 const DEFAULT_SPAWN := Vector3(116.0, 1.2, -105.0)
 const Weapons := preload("res://scripts/gameplay/weapon_catalog.gd")
+const FOOTSTEP_SOUND := "res://assets/audio/gameplay/step.wav"
 ## Where to put the body back if it ever falls out of the world; set from the map at start-up.
 var respawn_position := DEFAULT_SPAWN
 ## Below this height the body is treated as fallen out of the world; lowered for deep terrain.
@@ -26,6 +27,38 @@ var fall_limit := -10.0
 @export var aim_turn_rate := 14.0
 @export var air_control: float = 0.35
 @export var jump_velocity: float = 7.0
+@export_group("Movement feel")
+## Pick-up into a sprint; lower than `acceleration` so a sprint builds instead of snapping on.
+@export var sprint_acceleration := 18.0
+## Grip when the input points against the motion, so a reversal plants the feet instead of drifting round.
+@export var reverse_acceleration := 30.0
+## Share of the acceleration lost on reaching the target speed: the body eases into its pace (0 = linear).
+@export_range(0.0, 0.9) var top_speed_ease := 0.35
+## Fraction of the walking speed while aiming down the sight, as in other shooters.
+@export var aim_speed_scale := 0.62
+## With a rifle out, sprinting needs the motion this far toward where the body faces (1 = dead ahead).
+@export_range(-1.0, 1.0) var sprint_facing_limit := 0.35
+## Getting down or up from prone costs a moment, during which the body moves at this fraction of its speed.
+@export var stance_settle_seconds := 0.45
+@export var stance_settle_speed_scale := 0.35
+## How fast (per second) the model and the camera catch up after a kerb or stair step lifts the capsule.
+@export var step_smooth_rate := 14.0
+@export var camera_height_rate := 16.0
+## The camera trails a step or a slope by at most this many metres.
+@export var camera_height_lag_limit := 0.4
+## Fall speed (m/s) that gives the full landing dip; smaller drops dip less, under 2 m/s not at all.
+@export var landing_dip_full_speed := 13.0
+@export_group("Slide")
+## Crouching out of a sprint slides: speed kept at the start, loss per second, longest time, and how far the
+## direction bends toward the input (per second).
+@export var slide_boost := 1.1
+@export var slide_friction := 7.0
+@export var slide_seconds := 0.75
+@export var slide_steer := 1.2
+@export_group("Footsteps")
+@export var footstep_quiet_db := -20.0
+@export var footstep_loud_db := -9.0
+@export var footstep_crouch_db := -8.0
 @export_group("Body")
 @export var stand_height := 1.8
 @export var crouch_height := 1.15
@@ -35,6 +68,10 @@ var fall_limit := -10.0
 @export var step_height := 0.4
 @export_group("Weapon")
 @export var weapon_hold_offset := Vector3(0.24, 1.18, 0.22)
+## Metres the rifle trails per rad/s of view turn, its limit, and how fast it follows.
+@export var weapon_sway := 0.012
+@export var weapon_sway_limit := 0.035
+@export var weapon_sway_rate := 12.0
 @export_group("Health")
 ## Damage is only applied in combat modes; reactions (knockback, stagger) always happen.
 @export var combat_mode := false
@@ -81,9 +118,25 @@ var _aim_blend := 0.0
 var _carry_blend := 0.0
 var weapon_draw_time := 0.0
 var weapon_reload_time := 0.0
-var _crouch_toggle := false
+var _ctrl_crouch := false
 var _safe_walk_position := Vector3.ZERO
 var _safe_walk_timer := 0.0
+## Metres the model is drawn below the capsule after a step up, eased away (see _try_step_up).
+var step_visual_offset := 0.0
+## Metres the camera sits away from the capsule's height, eased away, so steps and slopes never jolt it.
+var camera_height_lag := 0.0
+var _stance_settle := 0.0
+var _slide_time := 0.0
+var _slide_direction := Vector2.ZERO
+var _footstep_player: AudioStreamPlayer
+## Which reload the hands are in: its full length, read when weapon_reload_time is set.
+var _reload_total := 0.0
+var _reload_last := 0.0
+## Eased hump 0..1 of a reload: the rifle comes down, stays down while the hands work, and comes back.
+var _reload_blend := 0.0
+var _last_aim_forward := Vector3.ZERO
+var _sway := 0.0
+var _last_health := 100.0
 
 func recover_person() -> bool:
 	for target in [_safe_walk_position, respawn_position]:
@@ -118,6 +171,77 @@ func _ready() -> void:
 	floor_constant_speed = true
 	floor_stop_on_slope = true
 	safe_margin = 0.02
+	_last_health = health
+	health_changed.connect(_on_health_changed)
+	var character := get_node_or_null("TestCharacter")
+	if character != null and character.has_signal("foot_planted"):
+		character.foot_planted.connect(_on_foot_planted)
+
+## Health is also set directly by the Team Deathmatch host (tdm_local.gd), so any drop flinches the body.
+func _on_health_changed(value: float, _maximum: float) -> void:
+	var character := get_node_or_null("TestCharacter")
+	if value < _last_health and character != null and character.has_method("play_hit"):
+		character.play_hit(global_position + global_basis.z)
+	_last_health = value
+
+## A foot came down, on the character's own stride. Louder with speed, quieter crouched, silent prone or swimming.
+func _on_foot_planted(_side: int, speed: float) -> void:
+	if not input_authority or swimming or prone or not is_on_floor():
+		return
+	if _footstep_player == null:
+		_footstep_player = AudioStreamPlayer.new()
+		_footstep_player.stream = load(FOOTSTEP_SOUND)
+		add_child(_footstep_player)
+	_footstep_player.volume_db = lerpf(footstep_quiet_db, footstep_loud_db, clampf(speed / run_speed, 0.0, 1.0)) \
+		+ (footstep_crouch_db if crouching else 0.0)
+	_footstep_player.pitch_scale = randf_range(0.92, 1.08)
+	_footstep_player.play()
+
+## One tick of ground velocity on the flat: eased into top speed, firm when stopping or reversing. Vector, not per
+## axis, so a diagonal keeps its direction while the speed builds.
+static func step_ground_velocity(current: Vector2, target: Vector2, pickup: float, stopping: float, reversing: float,
+		ease_share: float, delta: float) -> Vector2:
+	var target_speed := target.length()
+	if target_speed < 0.001:
+		return current.move_toward(Vector2.ZERO, stopping * delta)
+	var along := current.dot(target / target_speed)
+	var rate := pickup
+	if along < 0.0:
+		rate = reversing
+	elif current.length() > target_speed + 0.05:
+		rate = stopping
+	else:
+		var fill := clampf(along / target_speed, 0.0, 1.0)
+		rate = pickup * (1.0 - ease_share * fill * fill)
+	return current.move_toward(target, rate * delta)
+
+func is_sliding() -> bool:
+	return _slide_time > 0.0
+
+## One tick of a slide: the body carries on, slowing, and the input bends its path only a little. It ends in the
+## crouch walk, in the air, or when a wall takes the speed away.
+func _step_slide(braked: Vector2, wanted: Vector2, crouch_speed: float, grounded: bool, delta: float) -> Vector2:
+	_slide_time -= delta
+	if wanted.length_squared() > 0.01:
+		_slide_direction = _slide_direction.slerp(wanted.normalized(), minf(slide_steer * delta, 1.0)).normalized()
+	var speed := Vector2(velocity.x, velocity.z).length() - slide_friction * delta
+	if not grounded or speed <= crouch_speed:
+		_slide_time = 0.0
+		return braked
+	return _slide_direction * speed
+
+## 0..1 through the current stride, for anything that keeps time with the feet; negative without a character.
+func stride_phase() -> float:
+	var character := get_node_or_null("TestCharacter")
+	return character.stride_phase() if character != null and character.has_method("stride_phase") else -1.0
+
+## Where the upper body should look up or down (radians, + is up): the camera's pitch.
+func aim_pitch() -> float:
+	return camera_pivot.aim_pitch() if camera_pivot != null and camera_pivot.has_method("aim_pitch") else 0.0
+
+## 0..1 through the reload, or -1 when not reloading.
+func reload_progress() -> float:
+	return 1.0 - weapon_reload_time / _reload_total if weapon_reload_time > 0.0 and _reload_total > 0.0 else -1.0
 
 static func resolve_keyboard_input() -> Vector2:
 	return GameplayControls.movement()
@@ -239,13 +363,21 @@ func _physics_process(delta: float) -> void:
 		_update_stance(false, not prone)
 	_prev_z = z_pressed
 
+	var ctrl_held := allowed and not downed and not prone and Input.is_key_pressed(KEY_CTRL)
 	if allowed and not downed and Input.is_action_just_pressed("crouch"):
+		_ctrl_crouch = false
 		if prone:
 			_update_stance(true, false)
 		else:
 			_update_stance(not crouching, false)
-	elif allowed and not downed and Input.is_key_pressed(KEY_CTRL) and not prone:
+	elif ctrl_held and not crouching:
+		_ctrl_crouch = true
 		_update_stance(true, false)
+	elif _ctrl_crouch and not ctrl_held and not downed:
+		# Stays set under a low ceiling, so the player stands as soon as there is headroom.
+		if crouching:
+			_update_stance(false, false)
+		_ctrl_crouch = crouching
 
 	var key_peek := 0.0
 	if allowed and not downed:
@@ -258,7 +390,13 @@ func _physics_process(delta: float) -> void:
 	if allowed and not downed and Input.is_action_just_pressed("weapon_toggle"):
 		set_weapon_equipped(not is_weapon_equipped())
 
-	var target_speed := run_speed if allowed and (touch_run_pressed or Input.is_action_pressed("run")) else walk_speed
+	var armed_facing := combat_mode and is_weapon_equipped()
+	var aiming: bool = armed_facing and camera_pivot.is_aiming
+	var wants_sprint: bool = allowed and (touch_run_pressed or Input.is_action_pressed("run")) and not aiming
+	# A rifle out faces the aim: no sprinting sideways or backwards.
+	if wants_sprint and armed_facing and direction.length_squared() > 0.01 and direction.dot(global_basis.z) < sprint_facing_limit:
+		wants_sprint = false
+	var target_speed := run_speed if wants_sprint else walk_speed
 	if downed:
 		target_speed = walk_speed * 0.15
 	elif prone:
@@ -270,23 +408,33 @@ func _physics_process(delta: float) -> void:
 	if combat_mode and is_weapon_equipped() and direction.length_squared() > 0.01:
 		var along := direction.normalized().dot(global_basis.z)
 		speed_factor *= lerpf(strafe_speed_scale, 1.0, along) if along >= 0.0 else lerpf(strafe_speed_scale, backward_speed_scale, -along)
+	if aiming and not prone:
+		speed_factor *= aim_speed_scale
+	_stance_settle = maxf(_stance_settle - delta, 0.0)
+	if _stance_settle > 0.0:
+		speed_factor *= stance_settle_speed_scale
 	var target_velocity := direction * (target_speed * speed_factor)
-	var movement_acceleration := acceleration if direction.length_squared() > 0.01 else stopping_acceleration
-	if not was_on_floor or stagger_time > 0.0:
-		# Little control in the air or while reeling, so knockback and jumps carry momentum.
-		movement_acceleration *= air_control
-	velocity.x = move_toward(velocity.x, target_velocity.x, movement_acceleration * delta)
-	velocity.z = move_toward(velocity.z, target_velocity.z, movement_acceleration * delta)
+	# Little control in the air or while reeling, so knockback and jumps carry momentum.
+	var control := air_control if not was_on_floor or stagger_time > 0.0 else 1.0
+	var flat := step_ground_velocity(Vector2(velocity.x, velocity.z), Vector2(target_velocity.x, target_velocity.z),
+		(sprint_acceleration if is_running else acceleration) * control, stopping_acceleration * control,
+		reverse_acceleration * control, top_speed_ease, delta)
+	if is_sliding():
+		flat = _step_slide(flat, Vector2(direction.x, direction.z), target_speed, was_on_floor, delta)
+	velocity.x = flat.x
+	velocity.z = flat.y
 	if combat_mode and is_weapon_equipped() and not camera_pivot.touch_free_look and not Input.is_action_pressed("free_look"):
 		rotation.y = lerp_angle(rotation.y, camera_pivot.movement_yaw() + PI, minf(1.0, delta * aim_turn_rate))
 	elif direction.length_squared() > 0.01 and stagger_time <= 0.0:
 		rotation.y = lerp_angle(rotation.y, atan2(direction.x, direction.z), minf(1.0, delta * 10.0))
 	var horizontal := Vector3(velocity.x, 0.0, velocity.z)
+	var height_before := global_position.y
 	move_and_slide()
 	if is_on_floor() and is_on_wall() and horizontal.length_squared() > 0.01:
 		_try_step_up(horizontal * delta)
 	if is_on_floor() and not was_on_floor:
 		_land()
+	_settle_height(global_position.y - height_before, was_on_floor and is_on_floor(), delta)
 	_safe_walk_timer += delta
 	if is_on_floor() and not is_on_wall() and _safe_walk_timer >= 2.0:
 		_safe_walk_position = global_position
@@ -318,10 +466,21 @@ func _try_step_up(motion: Vector3) -> void:
 	if tread.is_empty() or (tread.normal as Vector3).angle_to(Vector3.UP) > floor_max_angle:
 		return
 	global_transform = landing
+	# The capsule took the step in one tick; the model keeps its height and rises into it.
+	step_visual_offset = clampf(step_visual_offset - rise, -step_height, 0.0)
+
+## Lets the capsule change height at once while what the player sees eases after it.
+func _settle_height(rise: float, grounded: bool, delta: float) -> void:
+	if grounded:
+		camera_height_lag = clampf(camera_height_lag - rise, -camera_height_lag_limit, camera_height_lag_limit)
+	camera_height_lag *= exp(-camera_height_rate * delta)
+	step_visual_offset *= exp(-step_smooth_rate * delta)
 
 func _land() -> void:
 	var impact_speed := _fall_speed
 	_fall_speed = 0.0
+	if impact_speed > 2.0 and camera_pivot != null and camera_pivot.has_method("add_landing_dip"):
+		camera_pivot.add_landing_dip(clampf(impact_speed / landing_dip_full_speed, 0.0, 1.0))
 	if impact_speed > safe_landing_speed:
 		var severity := clampf((impact_speed - safe_landing_speed) / 10.0, 0.0, 1.0)
 		take_damage((impact_speed - safe_landing_speed) * fall_damage_per_speed)
@@ -334,6 +493,16 @@ func _update_stance(wants_crouch: bool, wants_prone: bool) -> void:
 	# the floor, so a headroom query would hit the ground and keep it standing in the ceiling.
 	if target_h > _capsule.height + 0.001 and not _has_headroom(target_h):
 		return
+	if wants_prone != prone:
+		_stance_settle = stance_settle_seconds
+	var flat_speed := Vector2(velocity.x, velocity.z).length()
+	if wants_crouch and not crouching and not wants_prone and is_running and is_on_floor() and flat_speed > walk_speed:
+		_slide_time = slide_seconds
+		_slide_direction = Vector2(velocity.x, velocity.z) / flat_speed
+		velocity.x *= slide_boost
+		velocity.z *= slide_boost
+	elif not wants_crouch or wants_prone:
+		_slide_time = 0.0
 	prone = wants_prone
 	crouching = wants_crouch and not wants_prone
 	_capsule.radius = minf(_stand_radius, target_h * 0.45)
@@ -397,16 +566,21 @@ func _update_weapon_presentation(delta: float) -> void:
 	var camera := get_viewport().get_camera_3d()
 	if not camera: return
 	weapon_draw_time = maxf(0.0, weapon_draw_time - delta)
+	if weapon_reload_time > _reload_last:
+		_reload_total = weapon_reload_time
 	weapon_reload_time = maxf(0.0, weapon_reload_time - delta)
+	_reload_last = weapon_reload_time
 	weapon_kick = move_toward(weapon_kick, 0.0, delta * 0.35)
 	var aiming: bool = camera_pivot.is_aiming
-	var first: bool = camera_pivot.is_first_person()
+	var first: bool = camera_pivot.hides_body()
 	var forward := -camera.global_basis.z
 	var right := camera.global_basis.x
 	var up := camera.global_basis.y
 	var sprinting := is_running and not aiming and Vector2(velocity.x, velocity.z).length() > 4.0
-	_aim_blend = move_toward(_aim_blend, 1.0 if aiming else 0.0, delta / 0.16)
-	_carry_blend = move_toward(_carry_blend, 1.0 if sprinting else 0.0, delta / 0.22)
+	_aim_blend = move_toward(_aim_blend, 1.0 if aiming else 0.0, delta / 0.12)
+	_carry_blend = move_toward(_carry_blend, 1.0 if sprinting else 0.0, delta / (0.12 if aiming else 0.22))
+	var aim_ease := smoothstep(0.0, 1.0, _aim_blend)
+	var carry_ease := smoothstep(0.0, 1.0, _carry_blend)
 	var base: Vector3
 	var pitch_down := 0.0
 	if first:
@@ -429,13 +603,20 @@ func _update_weapon_presentation(delta: float) -> void:
 			ready = chest + body_forward * 0.5 + body_right * 0.12
 			shouldered = ready
 			lowered = ready
-		base = ready.lerp(shouldered, _aim_blend).lerp(lowered, _carry_blend)
-		pitch_down = lerpf(deg_to_rad(8.0), 0.0, _aim_blend) + deg_to_rad(28.0) * _carry_blend
+		base = ready.lerp(shouldered, aim_ease).lerp(lowered, carry_ease)
+		pitch_down = lerpf(deg_to_rad(8.0), 0.0, aim_ease) + deg_to_rad(28.0) * carry_ease
 	var draw := weapon_draw_time / 0.35
-	var reload_blend := sin(PI * clampf(weapon_reload_time / 2.0, 0.0, 1.0))
-	pitch_down += reload_blend * 0.35 - weapon_kick * 1.6
-	weapon.global_position = base - forward * weapon_kick - up * (draw * 0.35 + reload_blend * 0.12)
-	weapon.global_basis = camera.global_basis * Basis(Vector3.UP, PI) * Basis(Vector3.RIGHT, pitch_down) * Basis(Vector3.FORWARD, reload_blend * 0.45)
+	var progress := reload_progress()
+	_reload_blend = smoothstep(0.0, 0.18, progress) * (1.0 - smoothstep(0.82, 1.0, progress)) if progress >= 0.0 else 0.0
+	pitch_down += _reload_blend * 0.35 - weapon_kick * 1.6
+	# The rifle's weight: it trails a turn of the view a little, except on the shoulder.
+	if _last_aim_forward != Vector3.ZERO:
+		var turn := _last_aim_forward.signed_angle_to(forward, Vector3.UP) / maxf(delta, 0.001)
+		_sway = lerpf(_sway, clampf(-turn * weapon_sway, -weapon_sway_limit, weapon_sway_limit), 1.0 - exp(-weapon_sway_rate * delta))
+	_last_aim_forward = forward
+	base += right * _sway * (1.0 - aim_ease)
+	weapon.global_position = base - forward * weapon_kick - up * (draw * 0.35 + _reload_blend * 0.12)
+	weapon.global_basis = camera.global_basis * Basis(Vector3.UP, PI) * Basis(Vector3.RIGHT, pitch_down) * Basis(Vector3.FORWARD, _reload_blend * 0.45)
 	var character := get_node_or_null("TestCharacter")
 	if character:
 		character.visible = not first

@@ -15,7 +15,6 @@ var _exit_was_pressed := false
 var _interact_was_pressed := false
 var _camera_was_pressed := false
 var _map_was_pressed := false
-var _info_was_pressed := false
 var _recover_was_pressed := false
 var _character_was_pressed := false
 var _pause_was_pressed := false
@@ -30,8 +29,6 @@ var first_person_view := false
 var navigator: GpsNavigator
 const VehicleEntry := preload("res://scripts/vehicle/vehicle_entry.gd")
 var entry: VehicleEntry
-const HINT_DURATION_MSEC := 2000
-var _hint_until_msec := 0
 var _window_unfocused := false
 var _input_suspended := false
 var _transition_camera: Camera3D
@@ -51,6 +48,9 @@ var tdm_session: Node
 var tdm_local: Node
 
 func _ready() -> void:
+	# A staged world finishes after this runs; everything below needs it whole.
+	if $World.building:
+		await $World.built
 	var environment := WorldEnvironment.new()
 	environment.name = "DayEnvironment"
 	var world_environment := Environment.new()
@@ -79,6 +79,7 @@ func _ready() -> void:
 	add_child(sun)
 
 	hud = preload("res://scenes/ui/hud.tscn").instantiate()
+	preload("res://scripts/performance/startup_profile.gd").mark("main: hud = preload('res://scenes/ui/hud.tscn').instanti")
 	add_child(hud)
 	vehicles.assign(get_tree().get_nodes_in_group("enterable_vehicle"))
 	# This node keeps running while paused to handle the map and pause keys; gameplay nodes pause.
@@ -87,26 +88,31 @@ func _ready() -> void:
 	for gameplay_node: Node in [$World, person] + vehicles:
 		gameplay_node.process_mode = Node.PROCESS_MODE_PAUSABLE
 	_place_on_real_roadsides()
+	preload("res://scripts/performance/startup_profile.gd").mark("main: _place_on_real_roadsides()")
 	for candidate in vehicles:
 		parked_transforms[candidate] = candidate.global_transform
 		candidate.set_keyboard_input_enabled(false)
 	_park_all_vehicles()
+	preload("res://scripts/performance/startup_profile.gd").mark("main: _park_all_vehicles()")
 	active_vehicle = _nearest_vehicle()
 	if active_vehicle == null and not vehicles.is_empty():
 		active_vehicle = vehicles[0]
 	hud.configure_player(person, active_vehicle, self)
 	var world := $World
 	road_network = RoadNetwork.new(world.map_data)
+	preload("res://scripts/performance/startup_profile.gd").mark("main: road_network = RoadNetwork.new(world.map_data)")
 	navigator = GpsNavigator.new()
 	navigator.name = "GpsNavigator"
 	navigator.process_mode = Node.PROCESS_MODE_PAUSABLE
 	navigator.setup(road_network, _navigation_state)
+	preload("res://scripts/performance/startup_profile.gd").mark("main: navigator.setup(road_network, _navigation_state)")
 	add_child(navigator)
 	var player_focus := func() -> Vector2: return GeoProjection.world_to_map(tracked_body().global_position)
 	world.buildings.focus = player_focus
 	if world.roads:
 		world.roads.focus = player_focus
 	hud.configure_map(world.map_data, world.rendered_building_footprints, world.map_data.landmarks, navigator)
+	preload("res://scripts/performance/startup_profile.gd").mark("main: hud.configure_map(world.map_data, world.rendered_b")
 	entry = VehicleEntry.new()
 	entry.name = "VehicleEntry"
 	entry.process_mode = Node.PROCESS_MODE_PAUSABLE
@@ -117,15 +123,19 @@ func _ready() -> void:
 	city_life = CityLifeController.new()
 	add_child(city_life)
 	city_life.setup(self)
+	preload("res://scripts/performance/startup_profile.gd").mark("main: city_life.setup(self)")
 	gameplay = preload("res://scripts/gameplay/city_gameplay.gd").new()
 	add_child(gameplay)
 	gameplay.setup(self)
+	preload("res://scripts/performance/startup_profile.gd").mark("main: gameplay.setup(self)")
 	environment_controls = preload("res://scripts/ui/environment_controls.gd").new()
 	add_child(environment_controls)
 	environment_controls.setup(self)
+	preload("res://scripts/performance/startup_profile.gd").mark("main: environment_controls.setup(self)")
 	performance_controller = preload("res://scripts/performance/performance_controller.gd").new()
 	add_child(performance_controller)
 	performance_controller.setup(self)
+	preload("res://scripts/performance/startup_profile.gd").mark("main: performance_controller.setup(self)")
 	device_performance_manager = preload("res://scripts/core/device_performance_manager.gd").new()
 	device_performance_manager.name = "DevicePerformanceManager"
 	add_child(device_performance_manager)
@@ -133,6 +143,7 @@ func _ready() -> void:
 	network_manager = preload("res://scripts/network/network_manager.gd").new()
 	add_child(network_manager)
 	network_manager.setup(self)
+	preload("res://scripts/performance/startup_profile.gd").mark("main: network_manager.setup(self)")
 	if hud and hud.has_method("configure_network"):
 		hud.configure_network(network_manager)
 	tdm_session = preload("res://scripts/tactical/tdm_session.gd").new()
@@ -140,8 +151,9 @@ func _ready() -> void:
 	tdm_local = preload("res://scripts/tactical/tdm_local.gd").new()
 	add_child(tdm_local)
 	tdm_local.setup(self, tdm_session)
+	preload("res://scripts/performance/startup_profile.gd").mark("main: tdm_local.setup(self, tdm_session)")
 	hud.multiplayer_panel.tdm_local = tdm_local
-	hud.set_interaction_prompt("Press [B] for Godavari River Bridge  •  Walk closer to a vehicle")
+	preload("res://scripts/performance/startup_profile.gd").report("main")
 
 ## Spawn and parked cars come from roadside spots the world picked on real roads.
 func _place_on_real_roadsides() -> void:
@@ -213,9 +225,12 @@ func _process(_delta: float) -> void:
 		_activate_only(active_vehicle)
 	elif control_state == ControlState.ON_FOOT:
 		_park_all_vehicles()
+	var in_match := _in_match()
 	var enter_pressed := Input.is_action_pressed("vehicle_enter") or Input.is_key_pressed(KEY_E)
 	var exit_pressed := Input.is_action_pressed("vehicle_exit") or Input.is_key_pressed(KEY_F)
-	if enter_pressed and not _enter_was_pressed and control_state == ControlState.ON_FOOT:
+	# E is also lean right, so a player aiming round a corner never opens a shop.
+	var aiming: bool = person.is_weapon_equipped() and Input.is_action_pressed("aim")
+	if enter_pressed and not _enter_was_pressed and control_state == ControlState.ON_FOOT and not in_match and not aiming:
 		_try_on_foot_interaction()
 	if exit_pressed and not _exit_was_pressed and control_state == ControlState.DRIVING:
 		exit_vehicle()
@@ -223,35 +238,34 @@ func _process(_delta: float) -> void:
 		if active_vehicle and control_state == ControlState.DRIVING:
 			var recovered: Variant = active_vehicle.recover_vehicle()
 			_show_control_hint("No clear recovery spot" if recovered == false else "Vehicle recovered")
-		elif control_state == ControlState.ON_FOOT:
+		elif control_state == ControlState.ON_FOOT and not in_match:
 			if person.has_method("recover_person"):
 				_show_control_hint("Returned to safe ground" if person.recover_person() else "No clear recovery spot")
-	if Input.is_key_pressed(KEY_TAB) and not _info_was_pressed:
-		_show_control_hint("MANA OORU - Godavarikhani exploration")
 	_interact_was_pressed = false
 	var camera_pressed := Input.is_action_pressed("vehicle_camera")
 	if camera_pressed and not _camera_was_pressed:
 		toggle_camera_view()
 	_camera_was_pressed = camera_pressed
-	_info_was_pressed = Input.is_key_pressed(KEY_TAB)
 	_enter_was_pressed = enter_pressed
 	_exit_was_pressed = exit_pressed
 	_recover_was_pressed = Input.is_action_pressed("vehicle_recover")
 	var nearby_vehicle := _nearest_vehicle()
-	if control_state == ControlState.ON_FOOT and nearby_vehicle:
+	if in_match:
+		pass
+	elif control_state == ControlState.ON_FOOT and nearby_vehicle:
 		active_vehicle = nearby_vehicle
 		hud.set_active_vehicle(active_vehicle)
 		hud.set_enter_available(true)
-		_set_prompt("[E]  ENTER %s" % active_vehicle.name)
+		_set_prompt("[E] Enter %s" % active_vehicle.name)
 	elif control_state == ControlState.ON_FOOT:
 		hud.set_enter_available(false)
 		var shop := _nearby_shop()
 		if not shop.is_empty():
-			_set_prompt(city_life.prompt_text() if city_life else "[E]  SHOP: %s  •  1 coin" % str(shop.name).to_upper())
+			_set_prompt(city_life.prompt_text() if city_life else "[E] Shop")
 		elif not _nearby_terminal().is_empty():
-			_set_prompt("[E]  TGSRTC BUS STATION  •  VIEW ROUTES")
+			_set_prompt("[E] Bus routes")
 		else:
-			_set_prompt("Walk closer to a vehicle or shop")
+			_set_prompt("")
 	# The driver stays visible in the seat, except in first person where the
 	# camera sits inside their head.
 	if control_state != ControlState.ON_FOOT:
@@ -264,12 +278,18 @@ func _process(_delta: float) -> void:
 			hud.set_flight_altitude(float(flight_state.get("altitude", 0.0)))
 		else:
 			hud.set_gear(active_vehicle.gearbox.label(), active_vehicle.gearbox.rpm, active_vehicle.is_automatic())
-		_set_prompt("[F]  LAND TO EXIT" if active_vehicle is GdkHelicopter and not active_vehicle._grounded else "[F]  EXIT VEHICLE")
+		# Silent while moving: the pill only appears when getting out is a real option.
+		var airborne: bool = active_vehicle is GdkHelicopter and not active_vehicle._grounded
+		var stopped: bool = absf(active_vehicle.current_speed) < 1.0
+		_set_prompt("" if not stopped else ("[F]  LAND TO EXIT" if airborne else "[F]  EXIT VEHICLE"))
 
 func _input(event: InputEvent) -> void:
 	if get_tree().paused or _input_suspended or GameplayControls.text_focused(get_viewport()) or not event is InputEventKey or not event.pressed or event.echo:
 		return
 	var key_event := event as InputEventKey
+	# Free-roam shortcuts stay out of a match: each one would teleport, pause or pull a player out of the fight.
+	if _in_match():
+		return
 	if city_life and key_event.keycode == KEY_F5:
 		city_life.open_journal()
 		get_viewport().set_input_as_handled()
@@ -278,12 +298,12 @@ func _input(event: InputEvent) -> void:
 		environment_controls.open_menu()
 		get_viewport().set_input_as_handled()
 		return
-	if key_event.keycode == KEY_F7:
-		get_tree().change_scene_to_file("res://scenes/world/chowrasta_city.tscn")
+	if key_event.keycode == KEY_F9:
+		_teleport_to_godavari_bridge()
 		get_viewport().set_input_as_handled()
 		return
-	if key_event.keycode == KEY_B:
-		_teleport_to_godavari_bridge()
+	if key_event.keycode == KEY_HOME and control_state == ControlState.ON_FOOT:
+		_show_control_hint("Returned to safe ground" if person.recover_person() else "No clear recovery spot")
 		get_viewport().set_input_as_handled()
 		return
 	if _is_key(key_event, KEY_E, 101):
@@ -303,9 +323,14 @@ func _switch_character() -> void:
 	var character := person.get_node_or_null("TestCharacter")
 	if character and character.has_method("toggle_character"):
 		var selected: String = character.toggle_character()
-		_show_control_hint("CHARACTER: %s  •  Tab to switch" % selected)
+		_show_control_hint(selected)
 
 func _handle_menu_input() -> void:
+	var pause_menu: CanvasLayer = hud.settings_menu.pause_menu
+	if pause_menu.owns_keys():
+		_pause_was_pressed = Input.is_action_pressed("pause")
+		_map_was_pressed = Input.is_action_pressed("map_toggle")
+		return
 	if city_life and city_life.has_modal():
 		var close_pressed := Input.is_action_pressed("pause")
 		if close_pressed and not _pause_was_pressed:
@@ -323,7 +348,10 @@ func _handle_menu_input() -> void:
 		if _map_open:
 			set_map_open(false)
 		else:
-			_set_menu_paused(not _paused)
+			if _in_match() and tdm_local.has_method("toggle_menu"):
+				tdm_local.toggle_menu()
+			else:
+				pause_menu.open_menu()
 	_pause_was_pressed = pause_pressed
 	var zoom_in := Input.is_action_pressed("minimap_zoom_in")
 	var zoom_out := Input.is_action_pressed("minimap_zoom_out")
@@ -365,17 +393,35 @@ func pause_tree(value: bool) -> void:
 func _set_menu_paused(value: bool) -> void:
 	_paused = value
 	pause_tree(value)
-	hud.set_interaction_prompt("PAUSED  -  Esc to resume  •  M for map" if value else "")
+	hud.set_interaction_prompt("Paused" if value else "")
 	_update_mouse_mode()
+
+## Hosting or joining usually happens from the pause screen; a match must never start paused.
+func prepare_for_match() -> void:
+	_paused = false
+	get_tree().paused = false
+	hud.set_interaction_prompt("")
+	_update_mouse_mode()
+
+func refresh_mouse_mode() -> void:
+	_update_mouse_mode()
+
+func _in_match() -> bool:
+	return tdm_local != null and tdm_local.in_match
+
+## The lobby, end screen and in-match menu need a cursor, and clicks on them must not fire the rifle.
+func _match_needs_cursor() -> bool:
+	return _in_match() and tdm_local.has_method("needs_cursor") and tdm_local.needs_cursor()
 
 func _update_mouse_mode() -> void:
 	if OS.has_feature("android"):
 		return
-	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if get_tree().paused else Input.MOUSE_MODE_CAPTURED
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if get_tree().paused or _match_needs_cursor() else Input.MOUSE_MODE_CAPTURED
 	_clear_control_inputs()
 
 func _notification(what: int) -> void:
-	if what == NOTIFICATION_WM_CLOSE_REQUEST and is_instance_valid(city_life):
+	# Android rarely sends a close request: it pauses the app or asks to go back instead.
+	if what in [NOTIFICATION_WM_CLOSE_REQUEST, NOTIFICATION_WM_GO_BACK_REQUEST, NOTIFICATION_APPLICATION_PAUSED] and is_instance_valid(city_life):
 		city_life.save_progress()
 	if what == NOTIFICATION_WM_WINDOW_FOCUS_OUT:
 		_window_unfocused = true
@@ -398,14 +444,15 @@ func _clear_control_inputs() -> void:
 
 func _sync_input_context() -> void:
 	var text := GameplayControls.text_focused(get_viewport())
-	var suspended := _window_unfocused or text or get_tree().paused
+	var cursor := _match_needs_cursor()
+	var suspended := _window_unfocused or text or get_tree().paused or cursor
 	if suspended and not _input_suspended:
 		_clear_control_inputs()
 	_input_suspended = suspended
 	GameplayControls.blocked = suspended
 	if get_tree().paused:
 		GameplayControls.mode = GameplayControls.Mode.PAUSED
-	elif text or _window_unfocused:
+	elif text or _window_unfocused or cursor:
 		GameplayControls.mode = GameplayControls.Mode.UI_FOCUSED
 	elif control_state == ControlState.ON_FOOT:
 		GameplayControls.mode = GameplayControls.Mode.ON_FOOT
@@ -453,13 +500,6 @@ func _activate_only(selected: PhysicsBody3D) -> void:
 		candidate.set_driving_enabled(is_selected)
 		candidate.set_keyboard_input_enabled(is_selected)
 
-func _interact() -> void:
-	if control_state != ControlState.ON_FOOT:
-		return
-	var nearby_vehicle := _nearest_vehicle()
-	if nearby_vehicle == null:
-		_show_control_hint("E - no nearby object to interact with")
-
 func _nearby_shop() -> Dictionary:
 	if city_life:
 		return city_life.nearby_shop()
@@ -487,15 +527,13 @@ func _try_on_foot_interaction() -> void:
 	var shop := _nearby_shop()
 	if not shop.is_empty():
 		if hud.spend_coins(1):
-			_show_control_hint("Purchased at %s" % str(shop.name).to_upper())
+			_show_control_hint("Purchased")
 		else:
-			_show_control_hint("Need 1 coin to buy at %s" % str(shop.name).to_upper())
+			_show_control_hint("Need 1 coin")
 		return
 	var terminal := _nearby_terminal()
 	if not terminal.is_empty():
-		_show_control_hint("%s: MANCHERIAL → RAMAGUNDAM → KARIMNAGAR" % str(terminal.name).to_upper())
-		return
-	_show_control_hint("Walk closer to a vehicle, shop, or bus station")
+		_show_control_hint("Mancherial, Ramagundam, Karimnagar")
 
 ## V switches every camera between first and third person, so the choice
 ## carries over when getting in or out of a vehicle.
@@ -506,7 +544,6 @@ func toggle_camera_view() -> void:
 		var camera := node.get_node_or_null("CameraPivot")
 		if camera and camera.has_method("set_view_mode"):
 			camera.set_view_mode(mode)
-	_show_control_hint("FIRST-PERSON VIEW  -  V for third person" if first_person_view else "THIRD-PERSON VIEW  -  V for first person")
 
 func _toggle_camera_shoulder() -> void:
 	var target: Node3D = active_vehicle if control_state == ControlState.DRIVING else person
@@ -514,10 +551,10 @@ func _toggle_camera_shoulder() -> void:
 	if camera and camera.has_method("toggle_shoulder"):
 		camera.toggle_shoulder()
 
+## Action feedback goes to the one toast queue; the prompt pill only says what a key will do next.
 func _show_control_hint(message: String) -> void:
-	_hint_until_msec = Time.get_ticks_msec() + HINT_DURATION_MSEC
-	if hud:
-		hud.set_interaction_prompt(message)
+	if city_life:
+		city_life.toast(message)
 
 func _teleport_to_godavari_bridge() -> void:
 	var bridge_target := Vector3(751.15, -24.8, -3275.0)
@@ -536,11 +573,11 @@ func _teleport_to_godavari_bridge() -> void:
 			active_vehicle.respawn_position = chowrastha_target
 			if active_vehicle.has_method("settle_on_ground"):
 				active_vehicle.settle_on_ground()
-			_show_control_hint("Teleported back to Chowrastha Junction")
+			_show_control_hint("Back at Chowrastha")
 		elif control_state == ControlState.ON_FOOT and person:
 			person.global_position = chowrastha_target
 			person.rotation.y = chowrastha_yaw
-			_show_control_hint("Teleported back to Chowrastha Junction")
+			_show_control_hint("Back at Chowrastha")
 	else:
 		if control_state == ControlState.DRIVING and active_vehicle:
 			active_vehicle.global_position = bridge_target
@@ -550,7 +587,7 @@ func _teleport_to_godavari_bridge() -> void:
 			active_vehicle.respawn_position = bridge_target
 			if active_vehicle.has_method("settle_on_ground"):
 				active_vehicle.settle_on_ground()
-			_show_control_hint("Teleported to Godavari River Bridge (1,100 m)")
+			_show_control_hint("At Godavari bridge")
 		elif control_state == ControlState.ON_FOOT and person:
 			# Also bring the active vehicle to the bridge approach so the player can drive immediately!
 			if active_vehicle:
@@ -563,11 +600,10 @@ func _teleport_to_godavari_bridge() -> void:
 					active_vehicle.settle_on_ground()
 			person.global_position = bridge_target + Vector3(2.5, 0.2, 0.0)
 			person.rotation.y = bridge_yaw
-			_show_control_hint("Teleported to Godavari River Bridge (1,100 m)  •  [E] Drive across")
+			_show_control_hint("At Godavari bridge")
 
 func _set_prompt(message: String) -> void:
-	if Time.get_ticks_msec() >= _hint_until_msec:
-		hud.set_interaction_prompt(message)
+	hud.set_interaction_prompt(message)
 
 func enter_vehicle(vehicle_override: PhysicsBody3D = null) -> void:
 	if tdm_local != null and tdm_local.in_match:
@@ -596,11 +632,11 @@ func exit_vehicle() -> void:
 		_show_control_hint("Slow down before exiting")
 		return
 	if active_vehicle.has_method("can_exit_safely") and not active_vehicle.can_exit_safely():
-		_show_control_hint("Land the helicopter before exiting")
+		_show_control_hint("Land before exiting")
 		return
 	var exit_position: Variant = _safe_exit_position()
 	if exit_position == null:
-		_show_control_hint("No space to exit here")
+		_show_control_hint("No space to exit")
 		return
 	parked_transforms[active_vehicle] = active_vehicle.global_transform
 	control_state = ControlState.EXITING

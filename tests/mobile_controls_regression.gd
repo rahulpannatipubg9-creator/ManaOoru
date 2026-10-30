@@ -58,7 +58,7 @@ func _test_layouts() -> void:
 
 func _check_layout(label: String, rects: Dictionary, safe: Rect2, upm: float) -> void:
 	var occupied: Array[StringName] = ClawLayout.button_slots()
-	occupied.append_array([&"Compass", &"StatusPanel", &"Minimap", &"JoystickZone"])
+	occupied.append_array(ClawLayout.display_slots())
 	for slot in occupied:
 		_check(rects.has(slot), "%s: slot %s missing" % [label, slot])
 	for slot in rects:

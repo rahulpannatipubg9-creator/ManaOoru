@@ -23,12 +23,36 @@ var aiming := false
 var _aim_blend := 0.0
 var _alive := true
 var _hide_at_msec := -1
+## Squad: when an eliminated player may reappear; -1 while they are not eliminated.
+var _return_at_msec := -1
 ## How long a dead player's body stays on the ground before it disappears.
 const BODY_SECONDS := 2.5
 
 var network_manager: Node = null
 
+## Other players are drawn this many seconds in the past, between two received states, so a late packet does not
+## show. About three 30 Hz ticks.
+@export var interpolation_delay := 0.1
+## With no newer state the body carries on along its last motion for this long, then waits where it is.
+@export var extrapolation_cap := 0.15
+## A jump this long between two states is a respawn or a teleport: cut to it, do not run there.
+@export var snap_distance := 6.0
+## How fast (per second) what is drawn closes on the sampled position, hiding the join after an extrapolation.
+@export var position_settle_rate := 30.0
+## How fast (per second) the speed that drives the feet follows the sampled motion.
+@export var motion_settle_rate := 14.0
+## Oldest states are dropped past this count.
+const SNAPSHOT_LIMIT := 16
+## A packet arriving this far from its expected time is taken at face value instead of being smoothed.
+const ARRIVAL_JITTER_LIMIT := 0.06
+
 # Interpolation targets
+## Received states, oldest first: {time, position, yaw, pitch, peek}.
+var _snapshots: Array[Dictionary] = []
+var _last_arrival := -1.0
+var _arrival_interval := 1.0 / 30.0
+var _render_pitch := 0.0
+var _carry_blend := 0.0
 var _target_position: Vector3 = Vector3.ZERO
 var _target_yaw: float = 0.0
 var _target_pitch: float = 0.0
@@ -60,6 +84,13 @@ const TDM_HEAD_ZONE := 0.35
 var tdm_mode := false
 var tdm_team := -1
 var tdm_show_name := false
+## Above a teammate only: small health ticks under the name, seen through walls, fading with distance.
+const TDM_MARKER_NEAR := 40.0
+const TDM_MARKER_FAR := 140.0
+const TDM_MARKER_MIN_ALPHA := 0.35
+const TDM_HEALTH_TICKS := 20
+var _tdm_marker_alpha := 1.0
+var _tdm_health: Label3D
 var _body_material: StandardMaterial3D
 var _armband: MeshInstance3D
 ## Gunshots carry about 120 m, footsteps about 25 m (docs/TDM_DESIGN.md); both fade with distance.
@@ -83,6 +114,8 @@ const STAND_RADIUS := 0.42
 func _ready() -> void:
 	add_to_group("network_players")
 	add_to_group("combat_target")
+	# Moved every rendered frame from the buffer below, not by physics ticks; engine interpolation would step it.
+	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
 	collision_layer = 1
 	collision_mask = 1
 	_target_position = global_position
@@ -181,6 +214,7 @@ func _setup_character() -> void:
 		return
 	_character = CharacterScript.new()
 	_character.male_only = true
+	_character.foot_planted.connect(_on_foot_planted)
 	_character.name = "TestCharacter"
 	add_child(_character)
 	if _character.male_skeleton == null:
@@ -224,6 +258,10 @@ func is_weapon_equipped() -> bool:
 func puppet_on_floor() -> bool:
 	return absf(velocity.y) < 1.5
 
+## Where their upper body looks (radians, + is up), as drawn.
+func aim_pitch() -> float:
+	return _render_pitch
+
 func _setup_overhead_ui() -> void:
 	_overhead_label = Label3D.new()
 	_overhead_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
@@ -253,13 +291,17 @@ func _update_overhead_display() -> void:
 		# Teammates get a name in their team colour; enemies show nothing. No HP bars.
 		_overhead_label.text = nickname
 		_overhead_label.visible = tdm_show_name
-		_overhead_label.modulate = TDM_TEAM_COLORS[tdm_team] if tdm_team >= 0 else Color.WHITE
+		_overhead_label.fixed_size = tdm_show_name
+		_overhead_label.modulate = Color(TDM_TEAM_COLORS[tdm_team], _tdm_marker_alpha) if tdm_team >= 0 else Color.WHITE
 		_overhead_status.visible = false
 		return
+	_overhead_label.fixed_size = false
+	if _tdm_health != null:
+		_tdm_health.visible = false
 	_overhead_label.text = nickname
 	if is_downed:
 		_overhead_label.modulate = Color(1.0, 0.25, 0.25, 1.0)
-		_overhead_status.text = "⚠️ DOWNED (%.0fs) • HOLD [H] TO REVIVE" % bleedout_time
+		_overhead_status.text = "Down %.0fs  [H] Revive" % bleedout_time
 		_overhead_status.modulate = Color(1.0, 0.3, 0.3, 1.0)
 	else:
 		_overhead_label.modulate = Color(0.4, 0.85, 1.0, 1.0)
@@ -275,6 +317,7 @@ func update_network_state(pos: Vector3, yaw: float, pitch: float, target_stance:
 	_target_position = pos
 	_target_yaw = yaw
 	_target_pitch = pitch
+	push_snapshot(Time.get_ticks_usec() / 1000000.0, pos, yaw, pitch, peek)
 	stance = target_stance
 	_target_peek = peek
 	self.armed = armed
@@ -288,10 +331,73 @@ func update_network_state(pos: Vector3, yaw: float, pitch: float, target_stance:
 	if firing:
 		trigger_firing_effect()
 
+## Stores a received state. Wi-Fi delivers packets unevenly and sometimes in pairs, so the arrival time is eased
+## onto the steady rate they were sent at; only a real gap passes through.
+func push_snapshot(arrival: float, pos: Vector3, yaw: float, pitch: float, peek: float) -> void:
+	var stamp := arrival
+	if not _snapshots.is_empty():
+		var newest: Dictionary = _snapshots.back()
+		if newest.position.distance_to(pos) > snap_distance:
+			_snapshots.clear()
+			global_position = pos
+			_previous_position = pos
+			velocity = Vector3.ZERO
+		else:
+			_arrival_interval = lerpf(_arrival_interval, clampf(arrival - _last_arrival, 0.005, 0.2), 0.1)
+			var expected: float = newest.time + _arrival_interval
+			stamp = lerpf(expected, arrival, 0.1) if absf(arrival - expected) < ARRIVAL_JITTER_LIMIT else arrival
+			stamp = maxf(stamp, newest.time + 0.001)
+	_last_arrival = arrival
+	_snapshots.append({"time": stamp, "position": pos, "yaw": yaw, "pitch": pitch, "peek": peek})
+	if _snapshots.size() > SNAPSHOT_LIMIT:
+		_snapshots.pop_front()
+
+## The state to draw at `time`: {position, yaw, pitch, peek, motion}. Between two received states it interpolates;
+## past the newest it extrapolates up to extrapolation_cap and then holds with no motion, so a lost connection
+## neither runs a body through walls nor freezes it with its legs still stepping.
+func sample_snapshots(time: float) -> Dictionary:
+	var newest: Dictionary = _snapshots.back()
+	if _snapshots.size() == 1 or time <= _snapshots[0].time:
+		var first: Dictionary = _snapshots[0] if time <= _snapshots[0].time else newest
+		return {"position": first.position, "yaw": first.yaw, "pitch": first.pitch, "peek": first.peek, "motion": Vector3.ZERO}
+	if time >= newest.time:
+		var before: Dictionary = _snapshots[_snapshots.size() - 2]
+		var motion: Vector3 = (newest.position - before.position) / maxf(newest.time - before.time, 0.001)
+		var late: float = time - newest.time
+		return {"position": newest.position + motion * minf(late, extrapolation_cap), "yaw": newest.yaw, "pitch": newest.pitch,
+			"peek": newest.peek, "motion": motion if late < extrapolation_cap else Vector3.ZERO}
+	for index in range(_snapshots.size() - 1, 0, -1):
+		var older: Dictionary = _snapshots[index - 1]
+		if time >= older.time:
+			var newer: Dictionary = _snapshots[index]
+			var span: float = maxf(newer.time - older.time, 0.001)
+			var weight: float = (time - older.time) / span
+			return {"position": (older.position as Vector3).lerp(newer.position, weight), "yaw": lerp_angle(older.yaw, newer.yaw, weight),
+				"pitch": lerpf(older.pitch, newer.pitch, weight), "peek": lerpf(older.peek, newer.peek, weight),
+				"motion": (newer.position - older.position) / span}
+	return {"position": newest.position, "yaw": newest.yaw, "pitch": newest.pitch, "peek": newest.peek, "motion": Vector3.ZERO}
+
+## Draws the body where it was interpolation_delay ago.
+func _follow_snapshots(delta: float) -> void:
+	if _snapshots.is_empty():
+		global_position = global_position.lerp(_target_position, 1.0 - exp(-position_settle_rate * delta))
+		return
+	var time := Time.get_ticks_usec() / 1000000.0 - interpolation_delay
+	var state := sample_snapshots(time)
+	global_position = global_position.lerp(state.position, 1.0 - exp(-position_settle_rate * delta))
+	rotation.y = lerp_angle(rotation.y, state.yaw, 1.0 - exp(-position_settle_rate * delta))
+	_render_pitch = state.pitch
+	_current_peek = state.peek
+	velocity = velocity.lerp(state.motion, 1.0 - exp(-motion_settle_rate * delta))
+	while _snapshots.size() > 2 and _snapshots[1].time < time:
+		_snapshots.pop_front()
+
 func trigger_firing_effect() -> void:
 	last_fired_msec = Time.get_ticks_msec()
 	if tdm_mode:
-		_play_tdm_sound(true)
+		var feel: Node = get_tree().get_first_node_in_group("gun_feel")
+		if feel == null or not feel.remote_shot(weapon_id, global_position + Vector3.UP * 1.4, global_basis.z):
+			_play_tdm_sound(true)
 	if _muzzle_flash:
 		_muzzle_flash.visible = true
 		_flash_timer = 0.06
@@ -303,17 +409,12 @@ func _process(delta: float) -> void:
 		if _flash_timer <= 0.0 and _muzzle_flash:
 			_muzzle_flash.visible = false
 
-	# Smooth interpolation
-	global_position = global_position.lerp(_target_position, 1.0 - exp(-20.0 * delta))
-	rotation.y = lerp_angle(rotation.y, _target_yaw, 1.0 - exp(-18.0 * delta))
-	_current_peek = lerpf(_current_peek, _target_peek, 1.0 - exp(-16.0 * delta))
+	_follow_snapshots(delta)
 
 	if _weapon_mesh:
 		_weapon_mesh.visible = armed and not is_downed
 	if _character != null:
-		var step := global_position - _previous_position
 		_previous_position = global_position
-		velocity = velocity.lerp(step / maxf(delta, 0.0001), 1.0 - exp(-10.0 * delta))
 		_update_rifle(delta)
 		_update_animation_range(delta)
 		if not _alive and _hide_at_msec > 0 and Time.get_ticks_msec() >= _hide_at_msec:
@@ -322,15 +423,15 @@ func _process(delta: float) -> void:
 
 	# Downed bleedout handling
 	if is_downed:
+		# Only a countdown for the name tag: the host decides when they are out (network_manager.gd).
 		bleedout_time = maxf(0.0, bleedout_time - delta)
-		if bleedout_time <= 0.0 and network_manager and network_manager.has_method("notify_player_eliminated"):
-			network_manager.notify_player_eliminated(peer_id)
 
 	if tdm_mode:
+		# With a character the feet make the sound (_on_foot_planted); this covers a body without one.
 		_step_timer -= delta
 		var moved := global_position.distance_to(_last_step_position)
 		_last_step_position = global_position
-		if _step_timer <= 0.0 and moved > 0.06 and stance == 0:
+		if _step_timer <= 0.0 and moved > 0.06 and stance == 0 and _character == null:
 			_step_timer = 0.4
 			_play_tdm_sound(false)
 	_apply_stance_visuals(delta)
@@ -344,6 +445,9 @@ func _update_rifle(_delta: float) -> void:
 	weapon.visible = armed and not is_downed and _alive
 	var sprinting := Vector2(velocity.x, velocity.z).length() > 4.0 and not aiming
 	_aim_blend = move_toward(_aim_blend, 1.0 if aiming else 0.0, _delta / 0.16)
+	_carry_blend = move_toward(_carry_blend, 1.0 if sprinting else 0.0, _delta / 0.22)
+	var aim_ease := smoothstep(0.0, 1.0, _aim_blend)
+	var carry_ease := smoothstep(0.0, 1.0, _carry_blend)
 	var body_forward := global_basis.z
 	var body_right := -global_basis.x
 	var chest: Vector3 = _character.chest_position()
@@ -357,9 +461,9 @@ func _update_rifle(_delta: float) -> void:
 		ready = chest + body_forward * 0.5 + body_right * 0.12
 		shouldered = ready
 		lowered = ready
-	weapon.global_position = ready.lerp(shouldered, _aim_blend).lerp(lowered, 1.0 if sprinting else 0.0)
-	var camera_basis := Basis(Vector3.UP, rotation.y - PI) * Basis(Vector3.RIGHT, _target_pitch)
-	var pitch_down := lerpf(deg_to_rad(28.0) if sprinting else deg_to_rad(8.0), 0.0, _aim_blend)
+	weapon.global_position = ready.lerp(shouldered, aim_ease).lerp(lowered, carry_ease)
+	var camera_basis := Basis(Vector3.UP, rotation.y - PI) * Basis(Vector3.RIGHT, _render_pitch)
+	var pitch_down := lerpf(deg_to_rad(8.0), 0.0, aim_ease) + deg_to_rad(28.0) * carry_ease
 	weapon.global_basis = camera_basis * Basis(Vector3.UP, PI) * Basis(Vector3.RIGHT, pitch_down)
 
 ## The rig only animates while it is near the camera.
@@ -400,6 +504,32 @@ func _apply_stance_visuals(delta: float) -> void:
 		_overhead_label.position.y = target_h + 0.45
 		_overhead_status.position.y = target_h + 0.25
 
+## Called every frame for each puppet. Enemies never show anything through walls.
+func tdm_update_marker(camera_position: Vector3, health_fraction: float) -> void:
+	if not tdm_show_name:
+		if _tdm_health != null:
+			_tdm_health.visible = false
+		return
+	if _tdm_health == null:
+		_tdm_health = Label3D.new()
+		_tdm_health.name = "TeamHealth"
+		_tdm_health.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		_tdm_health.fixed_size = true
+		_tdm_health.no_depth_test = true
+		_tdm_health.pixel_size = _overhead_label.pixel_size
+		_tdm_health.font_size = 10
+		_tdm_health.outline_size = 2
+		_tdm_health.position = _overhead_label.position
+		_tdm_health.offset = Vector2(0.0, -22.0)
+		add_child(_tdm_health)
+	var fade := inverse_lerp(TDM_MARKER_FAR, TDM_MARKER_NEAR, global_position.distance_to(camera_position))
+	_tdm_marker_alpha = lerpf(TDM_MARKER_MIN_ALPHA, 1.0, clampf(fade, 0.0, 1.0))
+	_overhead_label.pixel_size = 0.0018
+	_tdm_health.pixel_size = 0.0018
+	_tdm_health.text = "|".repeat(ceili(clampf(health_fraction, 0.0, 1.0) * TDM_HEALTH_TICKS))
+	_tdm_health.modulate = Color(TDM_TEAM_COLORS[tdm_team], _tdm_marker_alpha)
+	_tdm_health.visible = true
+
 ## Marks this puppet as a TDM player: team armband, a name only for teammates, no downed state.
 func set_tdm_team(team: int, show_name: bool) -> void:
 	tdm_mode = true
@@ -421,6 +551,10 @@ func set_tdm_team(team: int, show_name: bool) -> void:
 	band_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	_armband.material_override = band_material
 	_update_overhead_display()
+
+func _on_foot_planted(_side: int, _speed: float) -> void:
+	if tdm_mode and stance == 0:
+		_play_tdm_sound(false)
 
 func _play_tdm_sound(gunshot: bool) -> void:
 	var player := _shot_player if gunshot else _step_player
@@ -507,8 +641,37 @@ func is_head_hit(hit_y: float) -> bool:
 
 ## The shooter's client reports what its crosshair hit; the host decides whether it counts.
 func tdm_claim_hit(hit_position: Vector3, origin: Vector3, weapon_used := Weapons.M416) -> void:
+	if tdm_show_name:
+		return # A teammate: friendly fire is off, so there is nothing to claim.
 	if network_manager != null and network_manager.tdm != null and network_manager.tdm.active:
 		network_manager.tdm.claim_hit(peer_id, is_head_hit(hit_position.y), origin, hit_position, weapon_used)
+
+func set_nickname(value: String) -> void:
+	nickname = value
+	_update_overhead_display()
+
+## Squad elimination: the body falls where they died, then try_return() brings them back.
+func set_eliminated() -> void:
+	is_downed = false
+	stance = 0
+	set_tdm_alive(false, false)
+	_return_at_msec = Time.get_ticks_msec() + int(BODY_SECONDS * 1000.0)
+
+func is_eliminated() -> bool:
+	return _return_at_msec >= 0
+
+## Called with each position they report. Once the body has had its time they appear there, without
+## sliding across the map from where they died.
+func try_return(position_now: Vector3) -> bool:
+	if Time.get_ticks_msec() < _return_at_msec:
+		return false
+	_return_at_msec = -1
+	health = max_health
+	global_position = position_now
+	_target_position = position_now
+	_previous_position = position_now
+	set_tdm_alive(true, false)
+	return true
 
 func set_downed(down: bool) -> void:
 	is_downed = down
@@ -537,6 +700,7 @@ func take_damage(amount: float) -> void:
 
 func apply_local_damage(amount: float, hit_zone: String) -> void:
 	health = clampf(health - amount, 0.0, max_health)
-	if health <= 0.0 and not is_downed:
+	# With a network, only the host's word puts someone down: their armour may have saved them.
+	if health <= 0.0 and not is_downed and network_manager == null:
 		set_downed(true)
 	_update_overhead_display()

@@ -89,12 +89,14 @@ func build(data: MapData) -> void:
 		if road.get("structure", "") != "bridge":
 			_add_road(road)
 	source_rendered_way_count = rendered_way_ids.size()
+	preload("res://scripts/performance/startup_profile.gd").mark("  road: osm geometry")
 	for road in data.topoexport_roads:
-		if _matches_existing_road(road, data.roads):
+		if _matches_existing_road(road, data.roads, data.osm_road_grid()):
 			topoexport_duplicate_count += 1
 		else:
 			_add_road(road)
 			topoexport_rendered_count += 1
+	preload("res://scripts/performance/startup_profile.gd").mark("  road: topo")
 	for crossing in data.crossings:
 		_add_zebra(crossing, data)
 	for barrier in data.barriers:
@@ -106,7 +108,9 @@ func build(data: MapData) -> void:
 	for area in data.areas:
 		if area.kind == "stadium":
 			_add_compound_wall(area.points, data)
+	preload("res://scripts/performance/startup_profile.gd").mark("  road: zebra walls rail")
 	_commit()
+	preload("res://scripts/performance/startup_profile.gd").mark("  road: commit")
 
 ## Compound wall around a mapped stadium, with a gate gap facing the nearest road.
 func _add_compound_wall(ring: PackedVector2Array, data: MapData) -> void:
@@ -187,15 +191,21 @@ func _add_road(road: Dictionary) -> void:
 ## TopoExport and OSM commonly describe the same centreline.  Keep the OSM
 ## version when a supplemental line follows it, while retaining genuinely
 ## missing service lanes and footways from the export.
-func _matches_existing_road(candidate: Dictionary, existing: Array[Dictionary]) -> bool:
+func _matches_existing_road(candidate: Dictionary, existing: Array[Dictionary], grid: RefCounted) -> bool:
 	var candidate_points: PackedVector2Array = candidate.points
 	if candidate_points.size() < 2:
 		return true
 	var samples: Array[Vector2] = [candidate_points[0], candidate_points[candidate_points.size() - 1]]
 	for index in range(1, candidate_points.size() - 1, 2):
 		samples.append(candidate_points[index])
-	for road in existing:
-		var road_points: PackedVector2Array = road.points
+	# Only a road passing within 7 m of the first sample can match, so test just those.
+	var tried: Dictionary = {}
+	for segment in grid.near(samples[0], 7.0):
+		var owner: int = grid.owners[segment]
+		if tried.has(owner):
+			continue
+		tried[owner] = true
+		var road_points: PackedVector2Array = existing[owner].points
 		var all_close := true
 		for sample in samples:
 			var closest_distance := INF
@@ -296,18 +306,20 @@ func _add_zebra(point: Vector2, data: MapData) -> void:
 	var best_road: Dictionary = {}
 	var best_direction := Vector2.ZERO
 	var best_point := point
-	for road in data.roads:
+	var grid: RefCounted = data.osm_road_grid()
+	for segment in grid.near(point, best_distance):
+		var road: Dictionary = data.roads[grid.owners[segment]]
 		if RoadStyle.is_path(road.kind):
 			continue
-		var points: PackedVector2Array = road.points
-		for index in range(1, points.size()):
-			var closest := Geometry2D.get_closest_point_to_segment(point, points[index - 1], points[index])
-			var distance := closest.distance_to(point)
-			if distance < best_distance and points[index - 1].distance_to(points[index]) > 0.01:
-				best_distance = distance
-				best_road = road
-				best_point = closest
-				best_direction = (points[index] - points[index - 1]).normalized()
+		var a: Vector2 = grid.starts[segment]
+		var b: Vector2 = grid.ends[segment]
+		var closest := Geometry2D.get_closest_point_to_segment(point, a, b)
+		var distance := closest.distance_to(point)
+		if distance < best_distance and a.distance_to(b) > 0.01:
+			best_distance = distance
+			best_road = road
+			best_point = closest
+			best_direction = (b - a).normalized()
 	if best_road.is_empty():
 		return
 	var half := RoadStyle.width(best_road) * 0.5

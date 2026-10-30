@@ -78,6 +78,7 @@ const BOARD_MAX_WIDTH := 7.5
 const BOARD_ASPECT := 84.0 / 384.0
 const BOARD_OFFSET := 0.05
 const StorefrontAllocator := preload("res://scripts/world/storefront_allocator.gd")
+const FOOTPRINT_CELL := 64.0
 ## Wall finishes the shader can draw (bits 1-2 of the style code in COLOR.a).
 enum Finish { PAINTED, PEELING, BRICK, CONCRETE }
 ## Chajja sunshades over each storey's windows, and awnings over shops.
@@ -124,12 +125,20 @@ var unmounted_board_count := 0
 var storefront_allocator: RefCounted
 var building_metadata: Array[Dictionary] = []
 var _sign_road_grid: Dictionary = {}
+## Corners of each footprint's bounding box: low at index * 2, high at index * 2 + 1.
+var _footprint_bounds := PackedVector2Array()
+## Footprints whose bounding box touches each FOOTPRINT_CELL square.
+var _footprint_grid: Dictionary = {}
+var _board_keys: Dictionary = {}
+var _board_keys_for := -1
 
 func setup(data: MapData, is_excluded: Callable) -> void:
 	# Rebuilding the same generator must replace its generated state.
 	for child in get_children():
 		child.free()
 	footprints.clear()
+	_footprint_bounds.clear()
+	_footprint_grid.clear()
 	building_metadata.clear()
 	_styles.clear()
 	_chunks.clear()
@@ -166,6 +175,7 @@ func setup(data: MapData, is_excluded: Callable) -> void:
 		var document: Variant = JSON.parse_string(FileAccess.get_file_as_string(APPEARANCE_REFERENCES_PATH))
 		if document is Dictionary and document.get("buildings") is Dictionary:
 			appearance_references = document.buildings
+	preload("res://scripts/performance/startup_profile.gd").mark("  setup: head")
 	for building in data.buildings:
 		var points: PackedVector2Array = building.points
 		var area := _signed_area(points)
@@ -176,6 +186,7 @@ func setup(data: MapData, is_excluded: Callable) -> void:
 			points.reverse()
 		var index := footprints.size()
 		footprints.append(points)
+		_index_footprint(index, points)
 		var style := _style_for(points, absf(area), building.tags)
 		var reference_key := "osm/way/%d" % int(building.osm_id) if building.has("osm_id") else ""
 		if reference_key == "osm/way/599330373":
@@ -201,16 +212,24 @@ func setup(data: MapData, is_excluded: Callable) -> void:
 			_chunks[cell] = PackedInt32Array()
 		_chunks[cell].append(index)
 	_pending.assign(_chunks.keys())
+	preload("res://scripts/performance/startup_profile.gd").mark("  setup: styles loop")
 	_assign_boards()
+	preload("res://scripts/performance/startup_profile.gd").mark("  setup: assign boards")
 	preload("res://scripts/world/user_shop_facades.gd").build(self, data)
-	_add_historical_shop_reference_panels()
+	preload("res://scripts/performance/startup_profile.gd").mark("  setup: user shop facades")
+	# Research notes, not signboards: developer runs only.
+	if "--dev-panels" in OS.get_cmdline_user_args():
+		_add_historical_shop_reference_panels()
+	preload("res://scripts/performance/startup_profile.gd").mark("  setup: historical")
 
 ## True when this real place's name is already on its building's shop front.
 func has_facade_board(place_name: String) -> bool:
-	for mounted_name: String in _board_names:
-		if _sign_name_key(mounted_name) == _sign_name_key(place_name):
-			return true
-	return false
+	if _board_keys_for != _board_names.size():
+		_board_keys_for = _board_names.size()
+		_board_keys.clear()
+		for mounted_name: String in _board_names:
+			_board_keys[_sign_name_key(mounted_name)] = true
+	return _board_keys.has(_sign_name_key(place_name))
 
 ## Count of real names drawn on building fronts.
 func facade_board_count() -> int:
@@ -220,6 +239,7 @@ func facade_board_count() -> int:
 func _assign_boards() -> void:
 	facade_mounts.clear()
 	_board_names.clear()
+	_board_keys_for = -1
 	unmounted_board_count = 0
 	for style in _styles:
 		style.erase("boards")
@@ -243,6 +263,7 @@ func _assign_boards() -> void:
 	var reasons := {}
 	for record: Dictionary in storefront_allocator.unplaced:
 		reasons[record.reason] = int(reasons.get(record.reason, 0)) + 1
+	preload("res://scripts/performance/startup_profile.gd").mark("    boards: allocate")
 	var report := {"businesses": storefront_allocator.businesses, "storefronts": storefront_allocator.units,
 		"assignments": storefront_allocator.assignments, "unplaced": storefront_allocator.unplaced, "reasons": reasons}
 	var file := FileAccess.open("user://signage_placement_report.json", FileAccess.WRITE)
@@ -257,13 +278,33 @@ func _assign_boards() -> void:
 func _sign_clear_of_buildings(a: Vector2, b: Vector2, normal: Vector2) -> bool:
 	var aa := a + normal * BOARD_OFFSET
 	var bb := b + normal * BOARD_OFFSET
-	for footprint in footprints:
-		if Geometry2D.is_point_in_polygon(aa, footprint) or Geometry2D.is_point_in_polygon(bb, footprint):
-			return false
-		for edge in footprint.size():
-			if Geometry2D.segment_intersects_segment(aa, bb, footprint[edge], footprint[(edge + 1) % footprint.size()]) != null:
-				return false
+	var low := aa.min(bb)
+	var high := aa.max(bb)
+	for x in range(floori(low.x / FOOTPRINT_CELL), floori(high.x / FOOTPRINT_CELL) + 1):
+		for y in range(floori(low.y / FOOTPRINT_CELL), floori(high.y / FOOTPRINT_CELL) + 1):
+			for index: int in _footprint_grid.get(Vector2i(x, y), PackedInt32Array()):
+				var footprint := footprints[index]
+				if Geometry2D.is_point_in_polygon(aa, footprint) or Geometry2D.is_point_in_polygon(bb, footprint):
+					return false
+				for edge in footprint.size():
+					if Geometry2D.segment_intersects_segment(aa, bb, footprint[edge], footprint[(edge + 1) % footprint.size()]) != null:
+						return false
 	return true
+
+func _index_footprint(index: int, points: PackedVector2Array) -> void:
+	var low := points[0]
+	var high := low
+	for point in points:
+		low = low.min(point)
+		high = high.max(point)
+	_footprint_bounds.append(low)
+	_footprint_bounds.append(high)
+	for x in range(floori(low.x / FOOTPRINT_CELL), floori(high.x / FOOTPRINT_CELL) + 1):
+		for y in range(floori(low.y / FOOTPRINT_CELL), floori(high.y / FOOTPRINT_CELL) + 1):
+			var cell := Vector2i(x, y)
+			if not _footprint_grid.has(cell):
+				_footprint_grid[cell] = PackedInt32Array()
+			_footprint_grid[cell].append(index)
 
 func _sign_clear_of_roads(a: Vector2, b: Vector2, normal: Vector2) -> bool:
 	if not _sign_clear_of_buildings(a, b, normal):
@@ -357,7 +398,12 @@ func is_clear(point: Vector2, radius: float) -> bool:
 	var center := _cell(point)
 	for x in range(center.x - 1, center.x + 2):
 		for y in range(center.y - 1, center.y + 2):
-			for index in _chunks.get(Vector2i(x, y), PackedInt32Array()):
+			for index: int in _chunks.get(Vector2i(x, y), PackedInt32Array()):
+				# Outside the box widened by radius, a footprint can neither hold nor touch the circle.
+				var low := _footprint_bounds[index * 2]
+				var high := _footprint_bounds[index * 2 + 1]
+				if point.x < low.x - radius or point.x > high.x + radius or point.y < low.y - radius or point.y > high.y + radius:
+					continue
 				var footprint := footprints[index]
 				if Geometry2D.is_point_in_polygon(point, footprint):
 					return false

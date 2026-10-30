@@ -29,9 +29,3 @@ func _ready() -> void:
 		add_child(marker)
 		if marker.has_method("configure_shop"):
 			marker.call("configure_shop", shop)
-		else:
-			var label := Label3D.new()
-			label.text = str(shop.name)
-			label.position.y = 2.5
-			label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-			marker.add_child(label)

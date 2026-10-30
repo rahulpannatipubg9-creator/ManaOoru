@@ -20,6 +20,7 @@ signal player_killed(killer_id: int, victim_id: int, headshot: bool, assist_ids:
 signal score_changed(red: int, blue: int)
 signal sudden_death_started
 signal match_ended(winner: int)
+signal team_switched(peer_id: int, respawn_seconds: float)
 
 ## Per-life state for one player. Persistent score lives in the roster.
 class Life:
@@ -31,6 +32,7 @@ class Life:
 	var respawn_in := 0.0
 	var out_of_bounds_for := 0.0
 	var last_damage_at := -1000.0
+	var regen_for := 0.0
 	var last_shot_at := -1000.0
 	var damage_log: Array[Dictionary] = []
 
@@ -47,6 +49,7 @@ var sudden_death_left := 0.0
 var _clock := 0.0
 var _lives: Dictionary = {}
 var _empty_team_for: Array[float] = [0.0, 0.0]
+var _switched_at: Dictionary = {}
 
 func _init(p_config: Config, p_roster: Roster, p_spawns: Spawns) -> void:
 	config = p_config
@@ -66,6 +69,7 @@ func start() -> bool:
 	time_left = config.time_limit_seconds()
 	_empty_team_for = [0.0, 0.0]
 	_lives.clear()
+	_switched_at.clear()
 	_set_state(State.COUNTDOWN)
 	for id in roster.peer_ids():
 		_spawn(id, false)
@@ -88,6 +92,36 @@ func join(peer_id: int, nickname: String) -> Roster.Member:
 	if state == State.COUNTDOWN or state == State.LIVE:
 		_spawn(peer_id, state == State.LIVE)
 	return member
+
+## Moves a player to `team`. Returns what to tell them when it is refused, or "" when it worked.
+## In a live match the move costs a normal respawn on the new side; kills and deaths are kept.
+func change_team(peer_id: int, team: int) -> String:
+	var member := roster.member(peer_id)
+	if member == null:
+		return "You are not in this match."
+	if member.team == team:
+		return ""
+	if state != State.LOBBY and state != State.LIVE:
+		return "Teams are locked right now."
+	var refusal := roster.swap_refusal(peer_id)
+	if refusal != "":
+		return refusal
+	if state == State.LOBBY:
+		roster.swap_team(peer_id)
+		return ""
+	var wait: float = float(_switched_at.get(peer_id, -1000.0)) + config.team_switch_cooldown_seconds - _clock
+	if wait > 0.0:
+		return "You can switch again in %d s." % ceili(wait)
+	roster.swap_team(peer_id)
+	_switched_at[peer_id] = _clock
+	var life := _life(peer_id)
+	if life == null:
+		return ""
+	if life.alive:
+		_mark_dead(life)
+	life.damage_log.clear()
+	team_switched.emit(peer_id, life.respawn_in)
+	return ""
 
 func peer_disconnected(peer_id: int) -> void:
 	if not roster.has_member(peer_id):
@@ -165,6 +199,7 @@ func apply_hit(shooter_id: int, victim_id: int, damage: float, headshot := false
 	shooter.protected_for = 0.0
 	victim.health = maxf(0.0, victim.health - damage)
 	victim.last_damage_at = _clock
+	victim.regen_for = 0.0
 	victim.damage_log.append({"attacker": shooter_id, "amount": damage, "at": _clock})
 	player_damaged.emit(victim_id, shooter_id, damage, headshot, victim.health)
 	var killed := victim.health <= 0.0
@@ -252,7 +287,9 @@ func _tick_players(delta: float) -> void:
 		if life.alive:
 			life.protected_for = maxf(0.0, life.protected_for - delta)
 			if life.health < config.max_health and _clock - life.last_damage_at >= config.regen_delay_seconds:
-				life.health = minf(config.max_health, life.health + config.regen_per_second * delta)
+				life.regen_for += delta
+				var ease_in := minf(1.0, life.regen_for / config.regen_ramp_seconds)
+				life.health = minf(config.max_health, life.health + config.regen_per_second * ease_in * delta)
 			_tick_boundary(peer_id, life, delta)
 		else:
 			life.respawn_in -= delta
@@ -294,6 +331,7 @@ func _spawn(peer_id: int, protect: bool) -> void:
 	life.respawn_in = 0.0
 	life.out_of_bounds_for = 0.0
 	life.last_damage_at = -1000.0
+	life.regen_for = 0.0
 	life.damage_log.clear()
 	player_spawned.emit(peer_id, life.position)
 

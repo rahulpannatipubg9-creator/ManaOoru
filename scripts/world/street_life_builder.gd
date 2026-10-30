@@ -73,10 +73,13 @@ func build(world: Node, data: MapData) -> void:
 			_add_bus_stop(_map_point(stop), str(stop.name))
 		for gate: Dictionary in parsed.entrances:
 			_add_gate(_map_point(gate), str(gate.name))
+	preload("res://scripts/performance/startup_profile.gd").mark("  street: market stops gates")
 	for road in data.roads:
 		if RoadStyle.is_major(road.kind) or road.kind == "tertiary":
 			_add_road_furniture(road)
+	preload("res://scripts/performance/startup_profile.gd").mark("  street: furniture")
 	_commit()
+	preload("res://scripts/performance/startup_profile.gd").mark("  street: commit")
 
 ## Spots trees must avoid, as (x, z, radius).
 func occupied() -> Array[Vector3]:
@@ -227,30 +230,31 @@ func _add_gate(point: Vector2, colony: String) -> void:
 func _entrance_road(point: Vector2) -> Dictionary:
 	var best: Dictionary = {}
 	var best_distance := 45.0
-	for road: Dictionary in _world.map_data.roads:
+	var data: MapData = _world.map_data
+	var grid: RefCounted = data.osm_road_grid()
+	for segment in grid.near(point, best_distance):
+		var road: Dictionary = data.roads[grid.owners[segment]]
 		var kind := str(road.kind)
 		if kind not in ["residential", "living_street", "unclassified", "service", "road"]:
 			continue
-		var points: PackedVector2Array = road.points
-		for index in range(1, points.size()):
-			var a := points[index - 1]
-			var b := points[index]
-			if a.distance_squared_to(b) < 0.01:
-				continue
-			var closest := Geometry2D.get_closest_point_to_segment(point, a, b)
-			var distance := closest.distance_to(point)
-			if distance < best_distance:
-				var direction := (b - a).normalized()
-				# Entrance nodes usually sit near a way endpoint. Choose the
-				# segment direction leading away from the entrance, not the main road.
-				if point.distance_squared_to(a) < point.distance_squared_to(b):
-					direction = (b - closest).normalized()
-				else:
-					direction = (a - closest).normalized()
-				best_distance = distance
-				best = {"point": closest, "direction": direction, "inward_direction": direction,
-					"normal": direction.orthogonal(), "half_width": RoadStyle.width(road) * 0.5,
-					"kind": kind, "way_id": road.way_id}
+		var a: Vector2 = grid.starts[segment]
+		var b: Vector2 = grid.ends[segment]
+		if a.distance_squared_to(b) < 0.01:
+			continue
+		var closest := Geometry2D.get_closest_point_to_segment(point, a, b)
+		var distance := closest.distance_to(point)
+		if distance < best_distance:
+			var direction := (b - a).normalized()
+			# Entrance nodes usually sit near a way endpoint. Choose the
+			# segment direction leading away from the entrance, not the main road.
+			if point.distance_squared_to(a) < point.distance_squared_to(b):
+				direction = (b - closest).normalized()
+			else:
+				direction = (a - closest).normalized()
+			best_distance = distance
+			best = {"point": closest, "direction": direction, "inward_direction": direction,
+				"normal": direction.orthogonal(), "half_width": grid.half_widths[segment],
+				"kind": kind, "way_id": road.way_id}
 	return best
 
 ## Fallback for an entrance whose local branch has not been captured in OSM:
