@@ -238,9 +238,9 @@ func _test_touch_table() -> void:
 	_play.action_mode = true
 	_person.equipped = true
 	await _expect_buttons("Rifle out", ["Jump", "Run", "BtnWheel", "BtnMenu", "BtnFireRight", "BtnScope", "BtnReload", "BtnCrouch"])
-	_play.owned = [0, 1]
+	_play.owned.assign([0, 1])
 	await _expect_buttons("Two rifles", ["Jump", "Run", "BtnWheel", "BtnMenu", "BtnFireRight", "BtnScope", "BtnReload", "BtnCrouch", "BtnSwap"])
-	_play.owned = [0]
+	_play.owned.assign([0])
 	_play.action_mode = false
 	_person.equipped = false
 	_game.control_state = _game.ControlState.DRIVING

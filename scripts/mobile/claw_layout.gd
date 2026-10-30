@@ -140,7 +140,8 @@ static func compute(visible_size: Vector2, safe: Rect2, units_mm: float, _tablet
 
 	# Left: the stick rests low; a finger landing anywhere in its zone brings it there.
 	var zone_top: float = maxf(rects[&"Minimap"].end.y, rects[&"Coins"].end.y) + g
-	var zone_width: float = minf(safe.size.x * JOYSTICK_ZONE_SHARE - margin, rects[&"Context"].position.x - g - left)
+	var zone_width: float = minf(safe.size.x * JOYSTICK_ZONE_SHARE - margin,
+		minf(rects[&"Context"].position.x, rects[&"Readout"].position.x) - g - left)
 	var zone := Rect2(left, zone_top, zone_width, bottom - zone_top)
 	rects[&"JoystickZone"] = zone
 	var stick := minf(260.0 * k * s, minf(zone.size.x, zone.size.y))
