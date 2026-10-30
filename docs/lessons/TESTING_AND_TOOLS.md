@@ -18,6 +18,18 @@
 
 ## Entries
 
+### Cloud CI/CD and Codespaces Godot Android export keystores and editor settings (2026-10-30)
+- **Symptom:** Cloud headless exports in GitHub Actions / Codespaces failed with errors regarding missing Android keystores or unconfigured Android SDK paths; local exports failed on non-developer machines due to hardcoded absolute Mac paths in `export_presets.cfg`.
+- **Cause:**
+  1. `export_presets.cfg` referenced an absolute macOS filesystem path (`/Users/rahulpannati/Downloads/.../builds/manaooru-release.keystore`), which broke on Linux runners (GitHub Actions Ubuntu / Codespaces).
+  2. Godot headless exporter requires `export/android/sdk_path` and `export/android/java_sdk_path` in `~/.config/godot/editor_settings-4.tres` before it will compile APKs from the command line.
+  3. `builds/` is git-ignored, so fresh cloud runner checkouts lack keystores unless generated during pre-export setup.
+- **Rule:**
+  1. Always use relative Godot paths (`res://builds/manaooru-release.keystore`) inside `export_presets.cfg`.
+  2. Dev container and CI/CD workflow scripts must create `builds/` and auto-generate fallback debug and release keystores if not present.
+  3. Dev container setup and CI/CD jobs must write `~/.config/godot/editor_settings-4.tres` mapping `export/android/sdk_path` to `${ANDROID_HOME}` and `export/android/java_sdk_path` to `${JAVA_HOME}`.
+- **Check:** `godot --headless --export-debug "Android" builds/ManaOoru.apk` runs cleanly without path errors; GitHub Actions `.github/workflows/build_android_apk.yml` and `.devcontainer/setup.sh` pass quality gates.
+
 ### Touch screen camera drag lag and physics interpolation queue delay (2026-10-30)
 - **Symptom:** "evern after fix i feel laggy" on mobile and tablets (Xiaomi Pad 7); camera rotation felt sluggish, heavy, and unresponsive to thumb swipes and gyroscope movements despite steady 50-60 FPS rendering.
 - **Cause:** Three separate latency traps in `camera_controller.gd`:
