@@ -18,6 +18,18 @@
 
 ## Entries
 
+### Touch screen camera drag lag and physics interpolation queue delay (2026-10-30)
+- **Symptom:** "evern after fix i feel laggy" on mobile and tablets (Xiaomi Pad 7); camera rotation felt sluggish, heavy, and unresponsive to thumb swipes and gyroscope movements despite steady 50-60 FPS rendering.
+- **Cause:** Three separate latency traps in `camera_controller.gd`:
+  1. `_unhandled_input` required `event.relative.length_squared() > 16.0` (over 4 physical pixels in a single drag event) before assigning `_look_touch_index`. On 120Hz/240Hz touch polling digitizers, subtle, small, or precise finger swipes produce 1-2 pixel deltas per event, meaning every drag was discarded (`if event.index != _look_touch_index: return`), creating a deadzone where gentle swipes did nothing until the player violently flicked.
+  2. Camera rotation was only applied in `_physics_process()` (60 Hz tick). Touch drag, mouse motion, gyroscope, and chase camera calculations updated `_yaw` and `_pitch` in input handlers and `_process(delta)`, but render frames drew with stale orientations until the next physics step.
+  3. With `common/physics_interpolation=true`, `CameraPivot` inherited physics interpolation from the player/vehicle body, which delayed camera orientation changes by 1-2 full physics ticks (16-33 ms) and smoothed them out.
+- **Rule:**
+  1. Touch look zone touches must immediately claim `_look_touch_index` on press and accept all drag events without artificial single-frame distance thresholds.
+  2. `CameraPivot` must disable physics interpolation (`physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF`) so view rotation updates instantly on the render frame while still inheriting the parent body's interpolated spatial position.
+  3. Call `_apply_orbit_rotation()` immediately upon mouse/touch look events and at the end of `_process(delta)` so render frames reflect real-time input without waiting for physics ticks.
+- **Check:** `tests/movement_regression.gd`, `tests/camera_regression.gd`, `tests/chase_camera_regression.gd`.
+
 ### High-resolution mobile tablets (Xiaomi Pad 7 / 3.2K display) suffered severe lag under Tier 4 desktop settings (2026-10-30)
 - **Symptom:** "game is fulll lag" on Xiaomi Pad 7; measured frame rates dropped to 30-35 FPS with heavy frame drops and thermal throttling.
 - **Cause:** `DevicePerformanceManager.classify_device` assigned any high-resolution or 6GB+ tablet to Tier 4 (`TIER_4_PRO_TABLET_DESKTOP`). The Tier 4 profile unlocked 120 FPS, 4 shadow splits (`SHADOW_PARALLEL_4_SPLITS`), 100m shadow distance, 900m view distance, 400m simulation distance, 55 actors, and 0.75 resolution scale. On a 3200x2136 screen, 0.75 scale is 2400x1602 (3.84 million pixels per frame). Compounded by 4 cascaded shadow passes across 250+ building chunks in Godot Compatibility (GLES3) forward rendering, the mobile CPU and Adreno 732 GPU were completely choked.

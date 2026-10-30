@@ -98,6 +98,8 @@ var stream_radius := 650.0
 var stream_budget_usec := 2000
 var stream_enabled := true
 var _stream_nodes: Dictionary = {}
+var _chunk_cache: Dictionary = {}
+const MAX_CACHED_CHUNKS := 50
 var focus: Callable
 ## Number of buildings whose height came from measured data.
 var measured_height_count := 0
@@ -370,14 +372,20 @@ func is_clear(point: Vector2, radius: float) -> bool:
 func _process(delta: float) -> void:
 	_resort_timer -= delta
 	if _resort_timer <= 0.0 and focus.is_valid():
-		_resort_timer = 0.5
+		# Refresh chunk priority every 0.25s (every ~9m at 130 km/h) to maintain lookahead responsiveness
+		_resort_timer = 0.25
 		var center: Vector2 = focus.call()
 		if stream_enabled: _refresh_stream(center)
 		_pending.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
 			return _cell_center(a).distance_squared_to(center) < _cell_center(b).distance_squared_to(center))
 	var started := Time.get_ticks_usec()
+	var chunks_built := 0
 	while not _pending.is_empty() and Time.get_ticks_usec() - started < stream_budget_usec:
 		_build_chunk(_pending.pop_front())
+		chunks_built += 1
+		# Stagger chunk creation: never build more than 1 chunk in a single frame if elapsed time exceeds 1.2ms
+		if chunks_built >= 1 and (Time.get_ticks_usec() - started) >= 1200:
+			break
 
 func _refresh_stream(center: Vector2) -> void:
 	var load_distance := stream_radius + CHUNK_SIZE

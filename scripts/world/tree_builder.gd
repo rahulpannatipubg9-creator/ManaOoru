@@ -114,13 +114,17 @@ func _process(delta: float) -> void:
 	# Follow the same tracked body as the buildings unless given a focus of our own.
 	var source: Callable = focus if focus.is_valid() else _world.buildings.focus
 	if _resort_timer <= 0.0 and source.is_valid():
-		_resort_timer = 0.5
+		_resort_timer = 0.25
 		var center: Vector2 = source.call()
 		_pending.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
 			return _cell_center(a).distance_squared_to(center) < _cell_center(b).distance_squared_to(center))
 	var started := Time.get_ticks_usec()
+	var chunks_built := 0
 	while not _pending.is_empty() and Time.get_ticks_usec() - started < FRAME_BUDGET_USEC:
 		_build_chunk(_pending.pop_front())
+		chunks_built += 1
+		if chunks_built >= 1 and (Time.get_ticks_usec() - started) >= 1200:
+			break
 
 func _build_chunk(cell: Vector2i) -> void:
 	var trees: PackedFloat32Array = _chunks[cell]

@@ -26,12 +26,22 @@ func sanitize() -> void:
 		var value: Variant = values.get(key, defaults[key])
 		if key == "shadows": values[key] = value if value is bool else defaults[key]
 		else: values[key] = float(value) if (value is float or value is int) and is_finite(float(value)) else defaults[key]
-	values.scale = clampf(values.scale, 0.5, 1.0)
+	values.scale = clampf(values.scale, 0.4, 1.0)
 	values.distance = clampf(values.distance, 250.0, 1000.0)
 	values.actors = clampi(int(values.actors), 6, 70)
 	values.simulation = clampf(values.simulation, 80.0, 450.0)
 	values.effects = clampf(values.effects, 0.0, 1.0)
-	values.fps = 30 if int(values.fps) < 45 else 60
+	var raw_fps := int(values.get("fps", 60))
+	if raw_fps == 0:
+		values.fps = 0
+	elif raw_fps <= 45:
+		values.fps = 30
+	elif raw_fps <= 75:
+		values.fps = 60
+	elif raw_fps <= 105:
+		values.fps = 90
+	else:
+		values.fps = 120
 
 func load_from(path := PATH) -> void:
 	var config := ConfigFile.new()
