@@ -1,15 +1,16 @@
 extends RefCounted
 
-## BGMI-style touch layout for phones and tablets held in landscape, following the
-## reference arrangement Rahul supplied (2026-10-28): minimap top-right, compass
-## top-centre, left FIRE + peeks over a floating joystick, the right thumb cluster
-## (ADS, JUMP, FIRE, RELOAD, CROUCH, PRONE) and an item bar along the bottom centre.
+## Touch layout for phones and tablets held in landscape, following
+## docs/reference/UI_DESIGN.md: minimap and vitals top-left, compass top-centre, objective and
+## menu top-right, a floating joystick on the left, one column of everyday buttons down the
+## right edge with the rifle buttons inboard of it, and the ammo or speed readout at the
+## bottom centre.
 ##
 ## Pure geometry: from the canvas size, the display safe area and the screen density
 ## it returns non-overlapping rectangles in canvas units, so every device shape can
-## be checked headless. Positions follow the reference proportions scaled to the
-## safe-area height; sizes never drop below the touch minimum in millimetres, and
-## every stack is built inwards from an edge so a grown button never lands on another.
+## be checked headless. Every slot is reserved even while its button is hidden, so a
+## button appearing never pushes another one, and every stack is built inwards from an
+## edge so a grown button never lands on a neighbour.
 
 ## Apple's 44 pt and Android's 48 dp minimum touch targets are both ~7-7.6 mm.
 const MIN_TARGET_MM := 7.5
@@ -22,8 +23,14 @@ const MAX_UNIT_SHARE := 0.13
 const REF_HEIGHT := 1024.0
 ## Left share of the safe width where a finger landing spawns the floating joystick.
 const JOYSTICK_ZONE_SHARE := 0.40
-## Status rows (status, coins, speed, gear) use fixed-size fonts, so their box is fixed too.
-const STATUS_SIZE := Vector2(260.0, 135.0)
+## Boxes holding fixed-size text, so their size does not follow the screen.
+const VITALS_SIZE := Vector2(150.0, 36.0)
+const WANTED_HEIGHT := 24.0
+const COINS_HEIGHT := 28.0
+const OBJECTIVE_WIDTH := 240.0
+const OBJECTIVE_HEIGHT := 72.0
+const READOUT_SIZE := Vector2(280.0, 64.0)
+const PROMPT_HEIGHT := 44.0
 
 ## Slot for each button defined in hud.tscn's TouchControls. Vehicle and helicopter
 ## buttons reuse on-foot slots that are hidden while driving, so the thumb finds
@@ -31,14 +38,12 @@ const STATUS_SIZE := Vector2(260.0, 135.0)
 const SCENE_BUTTON_SLOTS := {
 	&"Run": &"Run",
 	&"Jump": &"Jump",
-	&"Reset": &"Reset",
 	&"Enter": &"Vehicle",
 	&"Exit": &"Vehicle",
 	&"Handbrake": &"Fire",
 	&"Camera": &"Scope",
 	&"GearUp": &"Reload",
 	&"GearDown": &"Crouch",
-	&"GearMode": &"Prone",
 }
 
 ## Canvas units per physical millimetre for the current window.
@@ -69,20 +74,18 @@ static func safe_pixels_to_canvas(safe_pixels: Rect2, window_pixels: Rect2, visi
 
 ## Smallest allowed button side for this screen, in canvas units.
 static func min_target(safe: Rect2, units_mm: float) -> float:
-	return minf(MIN_TARGET_MM * units_mm, minf(safe.size.x, safe.size.y) * MAX_UNIT_SHARE)
+	return minf(maxf(MIN_TARGET_MM * units_mm, UiTheme.TOUCH_TARGET), minf(safe.size.x, safe.size.y) * MAX_UNIT_SHARE)
 
-## Rectangles keyed by slot name. Contextual slots (Vehicle, Context) are always
-## reserved so showing them never pushes other buttons around. `tablet` is kept for
-## callers; the reference proportions already suit both, the mm floor handles phones.
+## Rectangles keyed by slot name. `tablet` is kept for callers; the reference proportions
+## already suit both, the mm floor handles phones.
 static func compute(visible_size: Vector2, safe: Rect2, units_mm: float, _tablet := false,
 		button_scale := 1.0, left_handed := false) -> Dictionary:
 	var short_side := minf(safe.size.x, safe.size.y)
-	var min_target := minf(MIN_TARGET_MM * units_mm, short_side * MAX_UNIT_SHARE)
+	var target_floor := min_target(safe, units_mm)
 	var k := safe.size.y / REF_HEIGHT
 	var s := button_scale
-	var g := maxf(min_target * 0.18, 10.0 * k)
+	var g := maxf(target_floor * 0.18, 10.0 * k)
 	var margin := maxf(g, short_side * 0.03)
-	var t := maxf(min_target, 62.0 * k * s)
 	var left := safe.position.x + margin
 	var right := safe.end.x - margin
 	var top := safe.position.y + margin
@@ -90,81 +93,58 @@ static func compute(visible_size: Vector2, safe: Rect2, units_mm: float, _tablet
 	var center_x := safe.get_center().x
 	var rects := {}
 
-	# Top right: minimap in the corner, then SQUAD, GYRO and RESET leftwards along the top.
-	var minimap := clampf(185.0 * k, 120.0, 230.0)
-	rects[&"Minimap"] = Rect2(right - minimap, top, minimap, minimap)
-	var cursor := right - minimap - g
-	for slot: StringName in [&"Squad", &"Gyro", &"Reset"]:
-		var width := t * (1.2 if slot == &"Reset" else 1.4)
-		rects[slot] = Rect2(cursor - width, top, width, t)
-		cursor -= width + g
-	# Second row under the minimap, right to left: auto-run, free look, FPP/TPP, drive, give up, help.
-	var row_y := top + maxf(minimap, t) + g
-	cursor = right
-	for slot: StringName in [&"Run", &"FreeLook", &"View", &"Vehicle", &"Surrender", &"Help"]:
-		var width := t * 1.5 if slot == &"Vehicle" else _size(95.0, k, s, min_target)
-		var height := t if slot == &"Vehicle" else width
-		rects[slot] = Rect2(cursor - width, row_y, width, height)
-		cursor -= width + g
+	# Top left: the map, with vitals, wanted stars and coin pop-ups beside it.
+	var minimap := clampf(215.0 * k, 130.0, 240.0)
+	rects[&"Minimap"] = Rect2(left, top, minimap, minimap)
+	rects[&"Vitals"] = Rect2(Vector2(left + minimap + g, top), VITALS_SIZE)
+	rects[&"Wanted"] = Rect2(rects[&"Vitals"].position.x, rects[&"Vitals"].end.y + g, VITALS_SIZE.x, WANTED_HEIGHT)
+	rects[&"Coins"] = Rect2(rects[&"Vitals"].position.x, rects[&"Wanted"].end.y + UiTheme.SPACE_XS, VITALS_SIZE.x, COINS_HEIGHT)
 
-	# Right thumb: PRONE in the corner, JUMP and ADS stacked above it along the edge,
-	# FIRE inboard of that column with CROUCH beneath it and RELOAD beside it.
-	var prone := _size(125.0, k, s, min_target)
-	var jump := _size(110.0, k, s, min_target)
-	var scope := _size(130.0, k, s, min_target)
-	rects[&"Prone"] = Rect2(right - prone, bottom - prone, prone, prone)
-	rects[&"Jump"] = Rect2(right - jump, bottom - prone - g - jump, jump, jump)
-	rects[&"Scope"] = Rect2(right - scope, rects[&"Jump"].position.y - g - scope, scope, scope)
-	var column := maxf(prone, maxf(jump, scope))
-	var fire := _size(190.0, k, s, min_target)
-	var crouch := _size(125.0, k, s, min_target)
-	var reload := _size(110.0, k, s, min_target)
-	rects[&"Fire"] = Rect2(right - column - g - fire, bottom - crouch - g - fire, fire, fire)
-	rects[&"Crouch"] = Rect2(rects[&"Fire"].get_center().x - crouch * 0.5, bottom - crouch, crouch, crouch)
-	rects[&"Reload"] = Rect2(rects[&"Fire"].position.x - g - reload, rects[&"Fire"].end.y - reload, reload, reload)
+	# Top right: the menu in the corner, the objective beside it.
+	var menu := _size(80.0, k, 1.0, target_floor)
+	rects[&"Menu"] = Rect2(right - menu, top, menu, menu)
+	rects[&"Objective"] = Rect2(rects[&"Menu"].position.x - g - OBJECTIVE_WIDTH, top, OBJECTIVE_WIDTH, OBJECTIVE_HEIGHT)
+	var compass_half := minf(clampf(visible_size.x * 0.28, 200.0, 320.0) * 0.5,
+		minf(rects[&"Objective"].position.x - g - center_x, center_x - rects[&"Vitals"].end.x - g))
+	rects[&"Compass"] = Rect2(center_x - compass_half, top, compass_half * 2.0, minf(30.0, target_floor))
 
-	# Bottom centre item bar: medkit | weapon (tap to equip, shows ammo) | grenade,
-	# fire mode above the weapon, contextual revive/loot above that.
-	var weapon := Vector2(maxf(220.0 * k * s, t * 2.4), maxf(70.0 * k * s, t))
-	rects[&"Equip"] = Rect2(center_x - weapon.x * 0.5, bottom - weapon.y, weapon.x, weapon.y)
-	var item := _size(85.0, k, s, min_target)
-	rects[&"Medkit"] = Rect2(rects[&"Equip"].position.x - g - item, bottom - item, item, item)
-	rects[&"Grenade"] = Rect2(rects[&"Equip"].end.x + g, bottom - item, item, item)
-	# Over the weapon slot: fire mode on the left half, the rifle swap (shown with two rifles) on the right.
-	var half := (weapon.x - g) * 0.5
-	rects[&"FireMode"] = Rect2(center_x - weapon.x * 0.5, rects[&"Equip"].position.y - g - t, half, t)
-	# Large buttons on a 4:3 tablet bring RELOAD's corner over this row; the swap gives way.
-	var swap_width := minf(half, rects[&"Reload"].position.x - g - (center_x + g * 0.5))
-	rects[&"Swap"] = Rect2(center_x + g * 0.5, rects[&"FireMode"].position.y, swap_width, t)
-	var context := Vector2(t * 2.2, t)
-	rects[&"Context"] = Rect2(center_x - context.x * 0.5, rects[&"FireMode"].position.y - g - t, context.x, t)
-	rects[&"ContextAlt"] = Rect2(center_x - context.x * 0.5, rects[&"Context"].position.y - g - t, context.x, t)
+	# Right edge, bottom to top: what is always useful on foot. The same slots serve driving.
+	var everyday := _size(110.0, k, s, target_floor)
+	var cursor := bottom
+	for slot: StringName in [&"Jump", &"Run", &"Vehicle", &"Wheel"]:
+		cursor -= everyday
+		rects[slot] = Rect2(right - everyday, cursor, everyday, everyday)
+		cursor -= g
 
-	# Left: compact status with the ACTION/PEACE and AVATAR toggles, then left FIRE with both peeks
-	# beside it, the joystick zone below, and TALK in the bottom-left corner.
-	rects[&"StatusPanel"] = Rect2(Vector2(left, top), STATUS_SIZE)
-	rects[&"Mode"] = Rect2(left, rects[&"StatusPanel"].end.y + g, t * 1.6, t)
-	rects[&"Character"] = Rect2(rects[&"Mode"].end.x + g, rects[&"Mode"].position.y, t * 1.6, t)
-	var fire_left := _size(165.0, k, s, min_target)
-	var fire_left_y: float = maxf(top + 435.0 * k - fire_left * 0.5, rects[&"Mode"].end.y + g)
-	rects[&"FireLeft"] = Rect2(left, fire_left_y, fire_left, fire_left)
-	var peek := _size(78.0, k, s, min_target)
-	var peek_y: float = rects[&"FireLeft"].get_center().y - peek * 0.5
-	rects[&"PeekLeft"] = Rect2(rects[&"FireLeft"].end.x + g, peek_y, peek, peek)
-	rects[&"PeekRight"] = Rect2(rects[&"PeekLeft"].end.x + g, peek_y, peek, peek)
-	var talk := _size(95.0, k, s, min_target)
-	rects[&"Talk"] = Rect2(left, bottom - talk, talk, talk)
-	var zone_top: float = maxf(rects[&"FireLeft"].end.y, rects[&"PeekRight"].end.y) + g
-	var zone := Rect2(left, zone_top, safe.size.x * JOYSTICK_ZONE_SHARE - margin, rects[&"Talk"].position.y - g - zone_top)
+	# Inboard of it, the buttons that appear with a rifle out: FIRE big and low, the sight
+	# over it, then CROUCH, RELOAD and the rifle swap in a third column.
+	var fire := _size(190.0, k, s, target_floor)
+	var fire_x := right - everyday - g - fire
+	rects[&"Fire"] = Rect2(fire_x, bottom - fire, fire, fire)
+	var scope := _size(125.0, k, s, target_floor)
+	rects[&"Scope"] = Rect2(fire_x + (fire - scope) * 0.5, bottom - fire - g - scope, scope, scope)
+	var side := _size(110.0, k, s, target_floor)
+	var side_x := fire_x - g - side
+	rects[&"Crouch"] = Rect2(side_x, bottom - side, side, side)
+	rects[&"Reload"] = Rect2(side_x, bottom - side * 2.0 - g, side, side)
+	rects[&"Swap"] = Rect2(side_x, bottom - side * 3.0 - g * 2.0, side, side)
+
+	# Bottom centre: the ammo or speed readout, contextual revive and loot above it, then the prompt.
+	var readout := Vector2(minf(READOUT_SIZE.x, (side_x - g - center_x) * 2.0), READOUT_SIZE.y)
+	rects[&"Readout"] = Rect2(center_x - readout.x * 0.5, bottom - readout.y, readout.x, readout.y)
+	var context := Vector2(target_floor * 2.0, target_floor)
+	var context_y: float = rects[&"Readout"].position.y - g - context.y
+	rects[&"Context"] = Rect2(center_x - g * 0.5 - context.x, context_y, context.x, context.y)
+	rects[&"ContextAlt"] = Rect2(center_x + g * 0.5, context_y, context.x, context.y)
+	rects[&"Prompt"] = Rect2(safe.position.x + safe.size.x * 0.25, context_y - g - PROMPT_HEIGHT, safe.size.x * 0.5, PROMPT_HEIGHT)
+
+	# Left: the stick rests low; a finger landing anywhere in its zone brings it there.
+	var zone_top: float = maxf(rects[&"Minimap"].end.y, rects[&"Coins"].end.y) + g
+	var zone_width: float = minf(safe.size.x * JOYSTICK_ZONE_SHARE - margin, rects[&"Context"].position.x - g - left)
+	var zone := Rect2(left, zone_top, zone_width, bottom - zone_top)
 	rects[&"JoystickZone"] = zone
 	var stick := minf(260.0 * k * s, minf(zone.size.x, zone.size.y))
-	var stick_x := clampf(left + 210.0 * k - stick * 0.5, zone.position.x, zone.end.x - stick)
-	rects[&"Joystick"] = Rect2(stick_x, zone.get_center().y - stick * 0.5, stick, stick)
-
-	# Compass fills whatever the top row leaves between the status box and RESET.
-	var compass_half := minf(clampf(visible_size.x * 0.28, 200.0, 320.0) * 0.5,
-		minf(rects[&"Reset"].position.x - g - center_x, center_x - rects[&"StatusPanel"].end.x - g))
-	rects[&"Compass"] = Rect2(center_x - compass_half, top, compass_half * 2.0, minf(34.0, t))
+	rects[&"Joystick"] = Rect2(left + 30.0 * k, bottom - stick, stick, stick)
 
 	if left_handed:
 		for slot in rects:
@@ -172,11 +152,14 @@ static func compute(visible_size: Vector2, safe: Rect2, units_mm: float, _tablet
 			rects[slot] = Rect2(safe.position.x + safe.end.x - rect.end.x, rect.position.y, rect.size.x, rect.size.y)
 	return rects
 
-## Slots that receive touches; Compass, StatusPanel, Minimap and the zone are excluded.
+## Slots that receive touches; the map, readouts and the stick's zone are excluded.
 static func button_slots() -> Array[StringName]:
-	return [&"Jump", &"Crouch", &"Prone", &"Fire", &"Scope", &"Reload", &"PeekRight", &"PeekLeft",
-		&"Vehicle", &"Squad", &"Gyro", &"FireMode", &"Reset", &"FireLeft", &"Run", &"Context", &"ContextAlt",
-		&"Equip", &"Swap", &"Medkit", &"Grenade", &"Talk", &"Surrender", &"Help", &"FreeLook", &"Mode", &"Character", &"View"]
+	return [&"Jump", &"Run", &"Vehicle", &"Wheel", &"Menu", &"Fire", &"Scope", &"Reload", &"Crouch", &"Swap",
+		&"Context", &"ContextAlt"]
+
+## Rectangles holding information only; they must not sit under a button either.
+static func display_slots() -> Array[StringName]:
+	return [&"Compass", &"Vitals", &"Objective", &"Minimap", &"JoystickZone", &"Readout"]
 
 ## A reference-sized button scaled to this screen, never below the touch minimum.
 static func _size(reference: float, k: float, button_scale: float, min_target: float) -> float:
