@@ -252,6 +252,12 @@ func _test_touch_table() -> void:
 	await process_frame
 
 func _test_prompt_parsing() -> void:
+	# A still compass still redraws, or its glyphs stay as blocks after the font atlas grows.
+	_hud.compass_bar.set_heading(_hud.compass_bar.heading)
+	var refresh_at: int = _hud.compass_bar._next_refresh_ms
+	_hud.compass_bar._next_refresh_ms = 0
+	_hud.compass_bar.set_heading(_hud.compass_bar.heading)
+	_check(_hud.compass_bar._next_refresh_ms > 0 and refresh_at > 0, "A still compass schedules its periodic redraw")
 	var split: PackedStringArray = _read.split_prompt("[E]  ENTER Thar_Truck")
 	_check(split[0] == "E" and split[1] == "ENTER Thar Truck", "A prompt splits into key and words (%s)" % [split])
 	split = _read.split_prompt("Vehicle recovered")

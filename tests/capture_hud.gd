@@ -105,6 +105,7 @@ func _boot_stub() -> void:
 	pivot.set_script(_script(PIVOT))
 	_person.add_child(pivot)
 	_person.camera_pivot = pivot
+	pivot.add_child(Camera3D.new()) # The compass reads the current camera.
 	_hud = load("res://scenes/ui/hud.tscn").instantiate()
 	_game.add_child(_hud)
 	await process_frame
