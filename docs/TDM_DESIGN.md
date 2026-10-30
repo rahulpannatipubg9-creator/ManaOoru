@@ -244,6 +244,8 @@ reload, no crime, no grenades, vault, medkits, missions or extra vehicles), `set
 - Health (2026-10-30): after the 5 s delay regen eases in over 3 s to 11.8 HP/s, about 10 s for a full refill. The main
   signal is a red screen edge that scales with missing health; under 30 HP the colour drains and a heartbeat plays. A
   hit gives a short camera punch through `add_recoil`, with no loss of control.
+- Pace (2026-10-30): respawn 3 s, spawn protection 2 s, killcam 2.5 s. A kill draws a bigger red marker; kills within
+  6 s of each other show one word (DOUBLE, TRIPLE, RAMPAGE). This replaces the 5 s figures above for respawning.
 - Score bar is one line; the kill limit shows in the lobby. Rifle, ammo and health sit bottom-centre.
 - The spare radar was removed; the game's minimap carries the match markers. Protocol version 3 (CZ Bren 2).
 

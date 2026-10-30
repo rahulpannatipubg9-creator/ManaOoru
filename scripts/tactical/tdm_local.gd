@@ -53,11 +53,14 @@ var _aim_assist_amount := 0.0
 var _aim_assist_wanted := false
 var _aim_assist_timer := 0.0
 ## Killcam: for a few seconds after dying the view follows the killer over their shoulder.
-const KILLCAM_SECONDS := 3.0
+const KILLCAM_SECONDS := 2.5
 var _killcam: Camera3D
 var _killcam_target := 0
 var _killcam_left := 0.0
 var _camera_before: Camera3D
+const STREAK_WINDOW_MSEC := 6000
+var _streak := 0
+var _streak_at := 0
 const MINIMAP_ALLY := Color(0.35, 1.0, 0.45)
 const MINIMAP_ALLY_RING := Color(0.95, 1.0, 0.95)
 const FLINCH_PER_DAMAGE := 0.0012
@@ -104,9 +107,10 @@ func setup(p_game: Node, p_session: Node) -> void:
 	session.damaged.connect(_on_damaged)
 	session.killed.connect(_on_killed)
 	session.hit_confirmed.connect(func(_victim: int, headshot: bool, killed: bool) -> void:
-		hud.flash_hit(headshot)
+		hud.flash_hit(headshot, killed)
 		if killed:
-			_buzz(BUZZ_KILL_MSEC))
+			_buzz(BUZZ_KILL_MSEC)
+			hud.show_streak(_count_streak(Time.get_ticks_msec())))
 	session.ended.connect(_on_ended)
 	session.closed.connect(_on_closed)
 	session.rejected.connect(_on_rejected)
@@ -114,6 +118,10 @@ func setup(p_game: Node, p_session: Node) -> void:
 	session.ping_received.connect(_on_ping)
 	session.team_refused.connect(func(reason: String) -> void: hud.show_message(reason, 3.0))
 	session.team_switched.connect(_on_team_switched)
+	# A match never pauses, but Settings still needs its tabs and sliders to answer a finger.
+	var bridge: Node = game.hud.get_node_or_null("MenuTouchBridge")
+	if bridge != null:
+		bridge.runs_unpaused = func() -> bool: return in_match
 
 # --- Entering and leaving --------------------------------------------------------
 
@@ -429,6 +437,7 @@ func _on_killed(killer_id: int, victim_id: int, headshot: bool, _assists: Array)
 	var killer_name: String = session.nickname_of(killer_id) if killer_id != Match.NO_KILLER else ""
 	hud.add_kill(killer_name, session.nickname_of(victim_id), session.team_of(killer_id), headshot)
 	if victim_id == session.local_id():
+		_streak = 0
 		_alive = false
 		_killer_name = killer_name
 		_respawn_left = session.config.respawn_seconds
@@ -442,6 +451,12 @@ func _on_killed(killer_id: int, victim_id: int, headshot: bool, _assists: Array)
 		if killer_id != Match.NO_KILLER and killer_id != session.local_id() and killer_position != Vector3.INF:
 			_start_killcam(killer_id)
 	_refresh_puppets()
+
+## Kills in a row, each within STREAK_WINDOW_MSEC of the last. Dying ends the run.
+func _count_streak(now_msec: int) -> int:
+	_streak = _streak + 1 if _streak > 0 and now_msec - _streak_at <= STREAK_WINDOW_MSEC else 1
+	_streak_at = now_msec
+	return _streak
 
 ## A light tap on phones and tablets; a desktop never sees it.
 func _buzz(msec: int) -> void:
@@ -499,6 +514,7 @@ func _process(delta: float) -> void:
 		_cursor_wanted = cursor
 		if game.has_method("refresh_mouse_mode"):
 			game.refresh_mouse_mode()
+		_show_touch_controls(not cursor)
 	if not in_match and not practicing:
 		return
 	_settings_was_open = _settings_open()
@@ -830,6 +846,17 @@ func _blend_aim_assist(amount: float) -> void:
 	pivot.look_sensitivity = _base_sensitivity * slowdown
 	pivot.ads_sensitivity = _base_ads_sensitivity * slowdown
 	_aim_assist_amount = amount
+
+## The floating stick claims any touch in its zone before panels see it, so a lobby or menu button on the
+## left of the screen would be dead with the claw up. Held inputs are dropped with it.
+func _show_touch_controls(on: bool) -> void:
+	var overlay: bool = game.hud.get("_touch_overlay_enabled")
+	if not overlay:
+		return
+	if not on:
+		game.hud.clear_touch_inputs()
+	var menu_up: bool = game.hud._menu_open()
+	game.hud.get_node("TouchControls").visible = on and not menu_up
 
 ## A finger lifted while its button was hidden sends no release, so the button's real state decides.
 ## An empty magazine reloads by itself on touch, with no spare finger to ask.

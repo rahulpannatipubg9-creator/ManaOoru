@@ -13,6 +13,9 @@ var is_menu_open: Callable
 ## Returns true while a menu is up over a running game (a live Team Deathmatch never
 ## pauses). The menu fills the screen, so the pointer lands on it and not on the rifle.
 var live_menu: Callable
+## Returns true when menus run over a live game that cannot pause, as in a match, where firing is
+## blocked by other means.
+var runs_unpaused: Callable
 ## Fingers that landed while a menu was open. They stay the menu's until they lift,
 ## so the lift after "Save & Return" cannot fall through onto the minimap below it.
 var _menu_fingers := {}
@@ -30,7 +33,9 @@ func menu_active() -> bool:
 		return false
 	if live_menu.is_valid() and live_menu.call():
 		return true
-	return get_tree().paused and is_menu_open.is_valid() and is_menu_open.call()
+	if not is_menu_open.is_valid():
+		return false
+	return (get_tree().paused or (runs_unpaused.is_valid() and runs_unpaused.call())) and is_menu_open.call()
 
 func _input(event: InputEvent) -> void:
 	if not (event is InputEventScreenTouch or event is InputEventScreenDrag):
