@@ -33,6 +33,9 @@ const PUFF_POOL := 5
 const CASING_POOL := 8
 const CASING_SECONDS := 0.5
 const GRAVITY := 9.8
+## Phones keep half of every pool and fewer particles: effects must never cost a frame in a fight.
+const MOBILE_POOL_SHARE := 0.5
+const MOBILE_PARTICLE_SHARE := 0.6
 ## Shots further apart than this start a new burst, so the first round of a tap is always the steadiest.
 const BURST_GAP_SECONDS := 0.28
 const CLIMB_PER_SHOT := 0.05
@@ -79,6 +82,10 @@ var _casings: Array[Dictionary] = []
 var _casing_index := 0
 var _session: Node
 var _pending_flesh := Vector3.INF
+
+## How many of an effect this device keeps.
+static func pool_size(desktop: int, mobile := OS.has_feature("mobile")) -> int:
+	return ceili(desktop * MOBILE_POOL_SHARE) if mobile else desktop
 
 func setup(owner_game: Node) -> void:
 	game = owner_game
@@ -256,12 +263,12 @@ func _load_sounds() -> void:
 		_feedback[sound] = load(AUDIO_PATH % sound)
 
 func _build_voices() -> void:
-	for _i in SHOT_VOICES:
+	for _i in pool_size(SHOT_VOICES):
 		var voice := AudioStreamPlayer.new()
 		voice.volume_db = SHOT_DB
 		add_child(voice)
 		_voices.append(voice)
-	for _i in REMOTE_VOICES:
+	for _i in pool_size(REMOTE_VOICES):
 		var voice := AudioStreamPlayer3D.new()
 		voice.max_distance = REMOTE_RANGE
 		voice.unit_size = 14.0
@@ -319,7 +326,7 @@ func _build_tracers() -> void:
 	mesh.radial_segments = 4
 	mesh.rings = 1
 	mesh.material = _unlit(Color("ffe29a"))
-	for _i in TRACER_POOL:
+	for _i in pool_size(TRACER_POOL):
 		var line := MeshInstance3D.new()
 		line.mesh = mesh
 		line.visible = false
@@ -400,7 +407,7 @@ func _build_marks() -> void:
 	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	material.albedo_texture = _mark_texture()
 	mesh.material = material
-	for _i in MARK_POOL:
+	for _i in pool_size(MARK_POOL):
 		var mark := MeshInstance3D.new()
 		mark.mesh = mesh
 		mark.visible = false
@@ -466,7 +473,7 @@ func _build_puffs() -> void:
 	for surface: int in looks:
 		var look: Array = looks[surface]
 		var list: Array[CPUParticles3D] = []
-		for _i in PUFF_POOL:
+		for _i in pool_size(PUFF_POOL):
 			list.append(_puff_emitter(look[0], look[1], look[2], look[3], look[4]))
 		_puffs[surface] = list
 		_puff_index[surface] = 0

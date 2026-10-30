@@ -62,6 +62,8 @@ func run() -> void:
 	await _wait_until(func() -> bool: return session.state == Match.State.LIVE, 10.0)
 	check(session.state == Match.State.LIVE, "the countdown ends in a live match")
 	var client_id := _client_id()
+	# Stand both players side by side; a real report this far from the spawn would fail the speed check.
+	session._position_times.clear()
 	session.on_peer_position(1, Vector3(0, 0, 0))
 	session.on_peer_position(client_id, Vector3(0, 0, 5))
 	await _wait_until(func() -> bool: return killed_events.size() > 0, 20.0)

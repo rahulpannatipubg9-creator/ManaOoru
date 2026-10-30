@@ -60,6 +60,13 @@ const TDM_HEAD_ZONE := 0.35
 var tdm_mode := false
 var tdm_team := -1
 var tdm_show_name := false
+## Above a teammate only: small health ticks under the name, seen through walls, fading with distance.
+const TDM_MARKER_NEAR := 40.0
+const TDM_MARKER_FAR := 140.0
+const TDM_MARKER_MIN_ALPHA := 0.35
+const TDM_HEALTH_TICKS := 20
+var _tdm_marker_alpha := 1.0
+var _tdm_health: Label3D
 var _body_material: StandardMaterial3D
 var _armband: MeshInstance3D
 ## Gunshots carry about 120 m, footsteps about 25 m (docs/TDM_DESIGN.md); both fade with distance.
@@ -253,9 +260,13 @@ func _update_overhead_display() -> void:
 		# Teammates get a name in their team colour; enemies show nothing. No HP bars.
 		_overhead_label.text = nickname
 		_overhead_label.visible = tdm_show_name
-		_overhead_label.modulate = TDM_TEAM_COLORS[tdm_team] if tdm_team >= 0 else Color.WHITE
+		_overhead_label.fixed_size = tdm_show_name
+		_overhead_label.modulate = Color(TDM_TEAM_COLORS[tdm_team], _tdm_marker_alpha) if tdm_team >= 0 else Color.WHITE
 		_overhead_status.visible = false
 		return
+	_overhead_label.fixed_size = false
+	if _tdm_health != null:
+		_tdm_health.visible = false
 	_overhead_label.text = nickname
 	if is_downed:
 		_overhead_label.modulate = Color(1.0, 0.25, 0.25, 1.0)
@@ -291,7 +302,9 @@ func update_network_state(pos: Vector3, yaw: float, pitch: float, target_stance:
 func trigger_firing_effect() -> void:
 	last_fired_msec = Time.get_ticks_msec()
 	if tdm_mode:
-		_play_tdm_sound(true)
+		var feel: Node = get_tree().get_first_node_in_group("gun_feel")
+		if feel == null or not feel.remote_shot(weapon_id, global_position + Vector3.UP * 1.4, global_basis.z):
+			_play_tdm_sound(true)
 	if _muzzle_flash:
 		_muzzle_flash.visible = true
 		_flash_timer = 0.06
@@ -400,6 +413,32 @@ func _apply_stance_visuals(delta: float) -> void:
 		_overhead_label.position.y = target_h + 0.45
 		_overhead_status.position.y = target_h + 0.25
 
+## Called every frame for each puppet. Enemies never show anything through walls.
+func tdm_update_marker(camera_position: Vector3, health_fraction: float) -> void:
+	if not tdm_show_name:
+		if _tdm_health != null:
+			_tdm_health.visible = false
+		return
+	if _tdm_health == null:
+		_tdm_health = Label3D.new()
+		_tdm_health.name = "TeamHealth"
+		_tdm_health.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		_tdm_health.fixed_size = true
+		_tdm_health.no_depth_test = true
+		_tdm_health.pixel_size = _overhead_label.pixel_size
+		_tdm_health.font_size = 10
+		_tdm_health.outline_size = 2
+		_tdm_health.position = _overhead_label.position
+		_tdm_health.offset = Vector2(0.0, -22.0)
+		add_child(_tdm_health)
+	var fade := inverse_lerp(TDM_MARKER_FAR, TDM_MARKER_NEAR, global_position.distance_to(camera_position))
+	_tdm_marker_alpha = lerpf(TDM_MARKER_MIN_ALPHA, 1.0, clampf(fade, 0.0, 1.0))
+	_overhead_label.pixel_size = 0.0018
+	_tdm_health.pixel_size = 0.0018
+	_tdm_health.text = "|".repeat(ceili(clampf(health_fraction, 0.0, 1.0) * TDM_HEALTH_TICKS))
+	_tdm_health.modulate = Color(TDM_TEAM_COLORS[tdm_team], _tdm_marker_alpha)
+	_tdm_health.visible = true
+
 ## Marks this puppet as a TDM player: team armband, a name only for teammates, no downed state.
 func set_tdm_team(team: int, show_name: bool) -> void:
 	tdm_mode = true
@@ -507,6 +546,8 @@ func is_head_hit(hit_y: float) -> bool:
 
 ## The shooter's client reports what its crosshair hit; the host decides whether it counts.
 func tdm_claim_hit(hit_position: Vector3, origin: Vector3, weapon_used := Weapons.M416) -> void:
+	if tdm_show_name:
+		return # A teammate: friendly fire is off, so there is nothing to claim.
 	if network_manager != null and network_manager.tdm != null and network_manager.tdm.active:
 		network_manager.tdm.claim_hit(peer_id, is_head_hit(hit_position.y), origin, hit_position, weapon_used)
 

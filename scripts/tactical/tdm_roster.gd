@@ -75,6 +75,10 @@ func can_swap(peer_id: int) -> bool:
 	var difference := team_count(m.team) - team_count(other_team(m.team))
 	return difference >= 1 and difference <= 3
 
+## Why this player cannot swap, in words for the player. Empty when they can.
+func swap_refusal(peer_id: int) -> String:
+	return "" if can_swap(peer_id) else "Can't switch: the teams would be uneven."
+
 ## The host may move anyone; players need can_swap().
 func swap_team(peer_id: int, by_host := false) -> bool:
 	var m := member(peer_id)
