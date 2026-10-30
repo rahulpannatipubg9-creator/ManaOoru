@@ -308,12 +308,15 @@ func test_boom() -> void:
 	await physics_frame
 	var worst := 0.0
 	var last := arm.get_hit_length()
-	for _i in 60:
-		await physics_frame
-		worst = maxf(worst, absf(arm.get_hit_length() - last))
+	var elapsed := 0.0
+	while elapsed < 1.0:
+		await process_frame
+		var delta := maxf(root.get_process_delta_time(), 0.001)
+		elapsed += delta
+		worst = maxf(worst, absf(arm.get_hit_length() - last) / delta)
 		last = arm.get_hit_length()
-	print("MEASURED boom recovery: worst %.3f m/tick, end %.2f of %.2f" % [worst, last, free_length])
-	check(worst < 0.12, "the boom does not pop out when the wall clears (%.3f m per tick)" % worst)
+	print("MEASURED boom recovery: fastest %.1f m/s, end %.2f of %.2f" % [worst, last, free_length])
+	check(worst < 12.0, "the boom does not pop out when the wall clears (%.1f m/s)" % worst)
 	check(last > free_length - 0.1, "the boom returns to full length")
 
 func test_landing() -> void:
@@ -423,7 +426,8 @@ func test_shot_effects() -> void:
 	check(fx.active_tracers() == 1, "a tracer flies")
 	var line: MeshInstance3D = fx._tracers[0].line
 	var early: float = line.global_position.z
-	await frames(3)
+	for _i in 3:
+		await process_frame
 	check(line.global_position.z < early, "the tracer travels toward the hit")
 	await frames(30)
 	check(fx.active_tracers() == 0 and not line.visible, "the tracer ends at the hit")
