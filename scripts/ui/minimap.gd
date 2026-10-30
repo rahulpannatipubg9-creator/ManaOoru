@@ -103,7 +103,6 @@ func _process(delta: float) -> void:
 func set_compact(value: bool) -> void:
 	for button_name in ["ZoomIn", "ZoomOut", "Orientation"]:
 		_buttons[button_name].visible = not value
-	_status.visible = not value
 
 ## Pulls the latest tracked position/heading and redraws if anything visible changed.
 func refresh() -> void:
