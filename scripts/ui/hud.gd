@@ -818,7 +818,7 @@ func set_tablet_ergonomics_inset(enabled: bool) -> void:
 	if _tablet_inset_override != enabled:
 		_tablet_inset_override = enabled
 		if _touch_overlay_enabled:
-			_layout_touch(get_viewport().get_visible_rect().size)
+			_layout_touch()
 
 ## The default (uncustomised) layout for this screen, and what the editor shows for it.
 func _layout_context(profile: StringName) -> Dictionary:
