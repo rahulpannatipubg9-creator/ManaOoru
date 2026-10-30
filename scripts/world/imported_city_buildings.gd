@@ -10,6 +10,7 @@ const DEFINITIONS := [
 	{"slug":"stadium_with_swimming_pool", "place":"JAWAHARLAL NEHRU STADIUM STAGE", "lon":79.51853, "lat":18.7431, "scale":1.0}
 ]
 const SOFA_SCENE := preload("res://assets/models/props/furniture/sofa_modular.glb")
+const POOL_SCENE := preload("res://assets/models/environment/pool/swimming_pool_luxury.glb")
 var placements: Array[Dictionary] = []
 var instance_count := 0
 
@@ -105,6 +106,8 @@ func build(world: Node) -> void:
 		_collision_and_visibility(model)
 		if slug == "sai_leela_residency" or slug == "destination_dine_in":
 			_place_lobby_sofas(anchor, factor)
+		if slug == "sai_leela_residency":
+			_place_courtyard_pool(anchor, factor)
 		instance_count += 1
 	print("Imported city buildings placed: ", instance_count)
 
@@ -117,6 +120,29 @@ func _place_lobby_sofas(parent: Node3D, factor: float) -> void:
 	sofa.scale = Vector3.ONE * clampf(factor, 0.85, 1.05)
 	_collision_and_visibility(sofa)
 	parent.add_child(sofa)
+
+func _place_courtyard_pool(parent: Node3D, factor: float) -> void:
+	if POOL_SCENE == null: return
+	var pool := POOL_SCENE.instantiate() as Node3D
+	pool.name = "CourtyardSwimmingPool"
+	# Position in the rear courtyard patio behind Hotel Sai Leela
+	pool.position = Vector3(0.0, 0.02, -16.0 * factor)
+	pool.rotation.y = 0.0
+	pool.scale = Vector3.ONE * clampf(factor, 0.90, 1.10)
+	_collision_and_visibility(pool)
+
+	# Water volume Area3D for player swimming detection
+	var water_area := Area3D.new()
+	water_area.name = "PoolWaterVolume"
+	var col := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	box.size = Vector3(10.0, 1.4, 8.0) * pool.scale.x
+	col.shape = box
+	col.position = Vector3(0.0, -0.7, 0.0)
+	water_area.add_child(col)
+	pool.add_child(water_area)
+
+	parent.add_child(pool)
 
 func _bounds(root: Node3D) -> AABB:
 	var result := AABB()

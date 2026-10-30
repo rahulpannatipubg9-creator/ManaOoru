@@ -12,6 +12,8 @@ extends Node3D
 ## turnaround into the road network so the map, minimap and GPS route onto the bridge.
 
 const BRIDGE_SCENE := "res://Godavarikhani_Bridge_3D/Godavarikhani_Bridge.glb"
+const CRASH_BARRIER_SCENE := preload("res://assets/models/city_props/road/metal_crash_barrier.glb")
+const SPEED_LIMIT_SIGN_SCENE := preload("res://assets/models/city_props/road/sign_speed_limit.glb")
 
 ## Surveyed highway junction terminus from OSM (Way 817699107 & Way 1320685007)
 const ABUTMENT_X := 757.87
@@ -190,7 +192,61 @@ func build(world: Node, data: MapData) -> void:
 		"name": "Godavari River Bridge"
 	}
 
+	_place_bridge_road_props(world)
+
 	print("Godavari River Bridge placed from ", south, " to ", north, " (deck ", south_h, " -> ", north_h, ")")
+
+func _place_bridge_road_props(world: Node) -> void:
+	if not CRASH_BARRIER_SCENE or not SPEED_LIMIT_SIGN_SCENE:
+		return
+	var props_root := Node3D.new()
+	props_root.name = "BridgeRoadProps"
+	add_child(props_root)
+
+	var f := forward2()
+	var r := right2()
+	var south := south_end()
+	var forward_3d := Vector3(f.x, 0.0, f.y).normalized()
+	var barrier_basis := Basis.looking_at(forward_3d, Vector3.UP) * Basis(Vector3.UP, PI * 0.5)
+
+	# 1. Mount Speed Limit Sign at the south highway approach entrance
+	var sign_2d := south - f * 32.0 - r * (LANE_OFFSET + 3.2)
+	var sign_y: float = world.ground_height(sign_2d)
+	var sign := SPEED_LIMIT_SIGN_SCENE.instantiate() as Node3D
+	sign.name = "BridgeSpeedLimitSign"
+	sign.position = Vector3(sign_2d.x, sign_y, sign_2d.y)
+	sign.basis = Basis.looking_at(forward_3d, Vector3.UP)
+	_setup_prop_collision(sign)
+	props_root.add_child(sign)
+
+	# 2. Place Metal Crash Barriers along south approach shoulders
+	var segment_length := 4.35
+	for i in range(7):
+		var dist := -30.0 + float(i) * segment_length
+		# West (left) shoulder barrier
+		var west_pt := south + f * dist - r * (LANE_OFFSET + 2.8)
+		var west_y: float = world.ground_height(west_pt)
+		var b_west := CRASH_BARRIER_SCENE.instantiate() as Node3D
+		b_west.name = "CrashBarrier_W_%d" % i
+		b_west.transform = Transform3D(barrier_basis, Vector3(west_pt.x, west_y, west_pt.y))
+		_setup_prop_collision(b_west)
+		props_root.add_child(b_west)
+
+		# East (right) shoulder barrier
+		var east_pt := south + f * dist + r * (LANE_OFFSET + 2.8)
+		var east_y: float = world.ground_height(east_pt)
+		var b_east := CRASH_BARRIER_SCENE.instantiate() as Node3D
+		b_east.name = "CrashBarrier_E_%d" % i
+		b_east.transform = Transform3D(barrier_basis, Vector3(east_pt.x, east_y, east_pt.y))
+		_setup_prop_collision(b_east)
+		props_root.add_child(b_east)
+
+func _setup_prop_collision(root: Node3D) -> void:
+	for node in root.find_children("*", "MeshInstance3D", true, false):
+		var mesh := node as MeshInstance3D
+		mesh.visibility_range_end = 300.0 if OS.has_feature("mobile") else 750.0
+		if mesh.mesh != null:
+			mesh.create_trimesh_collision()
 
 ## Land north of the terrain edge: a strip from the edge to just under the south abutment, a bank down to
 ## the river, the river, a bank up to the north landing and the landing itself, across the whole width of the

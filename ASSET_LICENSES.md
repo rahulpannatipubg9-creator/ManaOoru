@@ -442,4 +442,37 @@ barrel forward along Godot +Z. Includes receiver, tactical foregrip, folding but
 suppressor, and red-dot sight. Playable weapon in free roam and multiplayer (Weapons.BREN2).
 - **Licence: not confirmed.** User-supplied download. Confirm original author and licence before any public release.
 
+## Banana Tree / Arati Chettu (`assets/models/foliage/banana_tree.glb`)
+
+Converted by `tools/export_banana_tree.py` from user-supplied `Banana_Plant_01.obj` (CGTrader download).
+Origin at trunk root on ground level (Z=0), real-world scale (height 2.74 m, width 2.97 m).
+Double-sided foliage material with tropical green leaf albedo.
+- **Licence: not confirmed.** User-supplied download from CGTrader. Confirm original author and licence before any public release.
+
+## Modular Sofa Set (`assets/models/props/furniture/sofa_modular.glb`)
+
+Converted by `tools/export_sofa.py` from user-supplied `sofas_session.blend` (NVJ-99 / CGTrader download).
+Contains 3 modular seating sections (Left Armchair, Center Armless, Right Armchair).
+Origin on ground level, real-world scaled (2.40 m total width). Placed in hotel lobbies.
+- **Licence: not confirmed.** User-supplied download. Confirm original author and licence before any public release.
+
+## Luxury Swimming Pool (`assets/models/environment/pool/swimming_pool_luxury.glb`)
+
+Converted by `tools/export_swimming_pool.py` from user-supplied `Swimming_Pool.blend`.
+Origin centered, deck lip at Z=0. Placed in hotel courtyards (Sai Leela Residency).
+- **Licence: not confirmed.** User-supplied download. Confirm original author and licence before any public release.
+
+## SUV 4x4 Off-Road Vehicle (`assets/models/suv_4x4/`)
+
+Converted by `tools/export_suv.py` from user-supplied `Suv_4x4.blend`.
+Provides `suv_body.glb`, `suv_wheel.glb`, and assembled `suv_4x4_complete.glb`.
+- **Licence: not confirmed.** User-supplied download. Confirm original author and licence before any public release.
+
+## Road & Infrastructure Props (`assets/models/city_props/road/`)
+
+Converted by `tools/export_road_props.py` from user-supplied `Models.blend`.
+Includes `electrical_pylon.glb`, `metal_crash_barrier.glb`, `sign_slippery_road.glb`,
+`sign_speed_limit.glb`, and `sign_winding_road.glb`. Placed along coal mine incline and highways.
+- **Licence: not confirmed.** User-supplied download. Confirm original author and licence before any public release.
+
 

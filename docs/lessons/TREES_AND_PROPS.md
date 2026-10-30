@@ -12,6 +12,12 @@ Anything placed on the ground: trees, stalls, carts, pickups, poles, drains, cov
 
 ## Entries
 
+### Instantiated GLB node does not have visibility_range_end (2026-10-30)
+- **Symptom:** Godot crashes with "Invalid assignment of property or key 'visibility_range_end' with value of type 'float' on a base object of type 'Node3D'".
+- **Cause:** Instantiating a `.glb` or `.tscn` scene returns a base `Node3D`, but `visibility_range_end` is only defined on `GeometryInstance3D` (e.g. `MeshInstance3D`).
+- **Rule:** Iterate over child `GeometryInstance3D` nodes using `root.find_children("*", "GeometryInstance3D")` and assign `visibility_range_end` to each mesh instance individually.
+- **Check:** `tests/movement_regression.gd` verifies all world building scripts compile and run without runtime exceptions.
+
 ### Rifles appeared inside walls and cars, or floating (before 2026-10-29)
 - **Rule:** see `_build_weapon_pickups()` in `city_gameplay.gd`: ray down for level ground within 2 m of the start
   height, sphere overlap test, skip the spot otherwise. `weapon_pickup_regression` checks every rifle rests on
