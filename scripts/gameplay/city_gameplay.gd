@@ -1147,7 +1147,8 @@ func _build_weapon_pickups() -> void:
 			continue
 		var pickup := preload("res://scripts/gameplay/weapon_pickup.gd").new()
 		pickup.gameplay = self
-		pickup.weapon_id = Weapons.AK47 if placed % 2 == 1 else Weapons.M416
+		const WEAPONS_CYCLE: Array[int] = [Weapons.M416, Weapons.AK47, Weapons.BREN2]
+		pickup.weapon_id = WEAPONS_CYCLE[placed % WEAPONS_CYCLE.size()]
 		add_child(pickup)
 		pickup.global_position = hit.position
 		placed += 1

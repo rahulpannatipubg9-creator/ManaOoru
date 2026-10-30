@@ -1,0 +1,72 @@
+{
+  "project_name": "Godavarikhani_Godavari_River_Bridge",
+  "location": "Godavarikhani, Telangana, India",
+  "units": "meters",
+  "bridge": {
+    "total_length": 1100.0,
+    "deck_height_above_water": 11.0,
+    "num_spans": 31,
+    "span_length": 35.48,
+    "carriageway_width": 10.5,
+    "central_gap": 3.0,
+    "total_width": 24.0,
+    "deck_thickness": 0.35,
+    "asphalt_thickness": 0.08,
+    "lanes_per_carriageway": 2,
+    "lane_width": 3.75,
+    "shoulder_width": 1.5,
+    "camber_slope_pct": 1.5
+  },
+  "superstructure": {
+    "girders_per_carriageway": 4,
+    "girder_height": 1.85,
+    "girder_top_flange_width": 0.8,
+    "girder_bottom_flange_width": 0.6,
+    "girder_web_thickness": 0.25,
+    "bearing_height": 0.2,
+    "expansion_joint_gap": 0.08
+  },
+  "substructure": {
+    "pier_shaft_width_x": 2.2,
+    "pier_shaft_width_y": 3.0,
+    "pier_cap_width_y": 9.2,
+    "pier_cap_length_x": 2.6,
+    "pier_cap_height": 1.7,
+    "tie_beam_height": 1.0,
+    "tie_beam_width_x": 1.6,
+    "footing_width_x": 5.4,
+    "footing_width_y": 5.0,
+    "footing_height": 2.2,
+    "footing_depth_below_water": -1.2
+  },
+  "barriers": {
+    "barrier_base_height": 0.5,
+    "barrier_base_width": 0.45,
+    "railing_total_height": 0.85,
+    "railing_pipe_diameter": 0.065,
+    "post_spacing": 2.5
+  },
+  "streetlights": {
+    "spacing": 35.48,
+    "pole_height": 9.0,
+    "arm_reach": 2.2,
+    "color_temp_kelvin": 4500,
+    "emissive_strength": 8.0
+  },
+  "environment": {
+    "water_level": 0.0,
+    "river_width": 1400.0,
+    "river_length_flow": 900.0,
+    "terrain_subdivisions": 128,
+    "bank_height": 14.0,
+    "sandbank_elevation": 0.6,
+    "num_rock_islands": 24,
+    "num_bank_trees": 120
+  },
+  "render": {
+    "resolution_x": 1920,
+    "resolution_y": 1080,
+    "engine": "BLENDER_EEVEE",
+    "samples": 64
+  }
+}

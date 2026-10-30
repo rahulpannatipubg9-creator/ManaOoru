@@ -24,6 +24,8 @@ tools/facebuilder_head/
 assets/models/panipuri_cart/source/
 assets/models/characters/references/Screenshot*
 assets/test_only/device_screenshots/
+Godavarikhani_Bridge_3D/renders/
+Godavarikhani_Bridge_3D/renders_test/
 
 # Temporary work directories, test captures, and local outputs
 work/

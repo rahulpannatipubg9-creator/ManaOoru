@@ -10,7 +10,8 @@ extends RefCounted
 
 const M416 := 0
 const AK47 := 1
-const IDS: Array[int] = [M416, AK47]
+const BREN2 := 2
+const IDS: Array[int] = [M416, AK47, BREN2]
 
 const STATS := {
 	M416: {
@@ -52,6 +53,25 @@ const STATS := {
 		"min_claim_interval": 0.09,
 		"recoil": Vector2(0.034, 0.016),
 		"kick": 0.06,
+	},
+	# The CZ Bren 2 is a modern 5.56 tactical rifle: fast, flat-shooting with tight recoil
+	# and a built-in holographic red-dot sight, foregrip and suppressor.
+	BREN2: {
+		"name": "CZ Bren 2",
+		"short": "Bren",
+		"scene": "res://assets/models/weapons/bren2.glb",
+		"loose_parts": [],
+		"offset": Vector3(0.098, 0.082, -0.08),
+		"muzzle": Vector3(0.097, 0.109, 0.503),
+		"grip_right": Vector3(0.085, 0.033, -0.08),
+		"grip_left": Vector3(0.110, 0.030, 0.20),
+		"auto_interval": 0.11,
+		"single_interval": 0.20,
+		"body_damage": 30.0,
+		"head_damage": 75.0,
+		"min_claim_interval": 0.075,
+		"recoil": Vector2(0.020, 0.008),
+		"kick": 0.042,
 	},
 }
 
