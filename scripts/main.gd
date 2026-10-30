@@ -49,7 +49,9 @@ var tdm_session: Node
 var tdm_local: Node
 
 func _ready() -> void:
-	preload("res://scripts/performance/startup_profile.gd").mark("main: before _ready")
+	# A staged world finishes after this runs; everything below needs it whole.
+	if $World.building:
+		await $World.built
 	var environment := WorldEnvironment.new()
 	environment.name = "DayEnvironment"
 	var world_environment := Environment.new()
