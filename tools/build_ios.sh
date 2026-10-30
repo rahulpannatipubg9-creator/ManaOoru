@@ -52,6 +52,21 @@ echo "✅ iOS project successfully exported to:"
 echo "   $BUILD_DIR/ManaOoru.xcodeproj"
 echo "   $BUILD_DIR/ManaOoru.pck"
 
+# Ensure local network multiplayer permission for iOS 14+ cross-play
+INFO_PLIST="$BUILD_DIR/ManaOoru/ManaOoru-Info.plist"
+if [ -f "$INFO_PLIST" ] && ! grep -q "NSLocalNetworkUsageDescription" "$INFO_PLIST"; then
+    echo "🌐 Injecting NSLocalNetworkUsageDescription for cross-platform LAN multiplayer..."
+    sed -i '' '/<key>NSMicrophoneUsageDescription<\/key>/a\
+\	<key>NSLocalNetworkUsageDescription<\/key>\
+\	<string>Mana Ooru uses local network access to find, connect, and play multiplayer matches with nearby Android and iPhone friends on the same Wi-Fi or hotspot.<\/string>\
+\	<key>NSBonjourServices<\/key>\
+\	<array>\
+\		<string>_manaooru._udp<\/string>\
+\		<string>_manaooru._tcp<\/string>\
+\	<\/array>
+' "$INFO_PLIST"
+fi
+
 # 4. Xcode verification / IPA compilation
 echo "📱 [3/3] Checking Xcode environment..."
 if command -v xcodebuild >/dev/null 2>&1 && xcodebuild -version >/dev/null 2>&1; then
