@@ -53,53 +53,95 @@ const RoadsideDrainage := preload("res://scripts/world/roadside_drainage_builder
 var drainage: Node3D
 
 func _ready() -> void:
+	preload("res://scripts/performance/startup_profile.gd").mark("before world._ready")
 	map_data = MapData.load_shared()
+	preload("res://scripts/performance/startup_profile.gd").mark("world: map_data = MapData.load_shared()")
 	if not map_data.is_valid:
 		return
 	_create_ground()
+	preload("res://scripts/performance/startup_profile.gd").mark("world: _create_ground()")
 	roads = RoadBuilder.new()
+	preload("res://scripts/performance/startup_profile.gd").mark("world: roads = RoadBuilder.new()")
 	add_child(roads)
+	preload("res://scripts/performance/startup_profile.gd").mark("world: add_child(roads)")
 	roads.build(map_data)
+	preload("res://scripts/performance/startup_profile.gd").mark("world: roads.build(map_data)")
 	buildings = BuildingBuilder.new()
+	preload("res://scripts/performance/startup_profile.gd").mark("world: buildings = BuildingBuilder.new()")
 	add_child(buildings)
+	preload("res://scripts/performance/startup_profile.gd").mark("world: add_child(buildings)")
 	imported_city_buildings = ImportedCityBuildings.new()
+	preload("res://scripts/performance/startup_profile.gd").mark("world: imported_city_buildings = ImportedCityBuildings.new()")
 	add_child(imported_city_buildings)
+	preload("res://scripts/performance/startup_profile.gd").mark("world: add_child(imported_city_buildings)")
 	imported_city_buildings.prepare(map_data)
+	preload("res://scripts/performance/startup_profile.gd").mark("world: imported_city_buildings.prepare(map_data)")
 	var lane_clearance := preload("res://scripts/world/vidya_lane_clearance.gd").new()
 	lane_clearance.prepare(map_data)
+	preload("res://scripts/performance/startup_profile.gd").mark("world: lane_clearance.prepare(map_data)")
 	buildings.setup(map_data, func(points: PackedVector2Array) -> bool: return imported_city_buildings.excludes(points) or lane_clearance.excludes(points))
+	preload("res://scripts/performance/startup_profile.gd").mark("world: buildings.setup(map_data, func(points: PackedVector2Array) -")
 	print("Vidyanagar 2 road clearance: %d conflicting building footprints omitted from rendering/collision" % lane_clearance.excluded_count)
 	rendered_building_footprints = buildings.footprints
+	preload("res://scripts/performance/startup_profile.gd").mark("world: rendered_building_footprints = buildings.footprints")
 	var graphics = preload("res://scripts/performance/graphics_settings.gd").new()
 	graphics.load_from()
+	preload("res://scripts/performance/startup_profile.gd").mark("world: graphics.load_from()")
 	buildings.stream_radius = graphics.values.distance
+	preload("res://scripts/performance/startup_profile.gd").mark("world: buildings.stream_radius = graphics.values.distance")
 	buildings.build_around(SPAWN_CENTER, minf(300.0, graphics.values.distance))
+	preload("res://scripts/performance/startup_profile.gd").mark("world: buildings.build_around(SPAWN_CENTER, minf(300.0, graphics.va")
 	signage = SignageBuilder.new()
+	preload("res://scripts/performance/startup_profile.gd").mark("world: signage = SignageBuilder.new()")
 	add_child(signage)
+	preload("res://scripts/performance/startup_profile.gd").mark("world: add_child(signage)")
 	signage.build(map_data, buildings)
+	preload("res://scripts/performance/startup_profile.gd").mark("world: signage.build(map_data, buildings)")
 	imported_city_buildings.build(self)
+	preload("res://scripts/performance/startup_profile.gd").mark("world: imported_city_buildings.build(self)")
 	_create_water_infrastructure()
+	preload("res://scripts/performance/startup_profile.gd").mark("world: _create_water_infrastructure()")
 	_create_bus_station()
+	preload("res://scripts/performance/startup_profile.gd").mark("world: _create_bus_station()")
 	_create_billboards()
+	preload("res://scripts/performance/startup_profile.gd").mark("world: _create_billboards()")
 	_create_cctv()
+	preload("res://scripts/performance/startup_profile.gd").mark("world: _create_cctv()")
 	_create_fountain()
+	preload("res://scripts/performance/startup_profile.gd").mark("world: _create_fountain()")
 	_create_coal_gallery()
+	preload("res://scripts/performance/startup_profile.gd").mark("world: _create_coal_gallery()")
 	_create_godavari_bridge()
+	preload("res://scripts/performance/startup_profile.gd").mark("world: _create_godavari_bridge()")
 	_choose_spawns()
+	preload("res://scripts/performance/startup_profile.gd").mark("world: _choose_spawns()")
 	street_life = StreetLifeBuilder.new()
+	preload("res://scripts/performance/startup_profile.gd").mark("world: street_life = StreetLifeBuilder.new()")
 	add_child(street_life)
+	preload("res://scripts/performance/startup_profile.gd").mark("world: add_child(street_life)")
 	street_life.build(self, map_data)
+	preload("res://scripts/performance/startup_profile.gd").mark("world: street_life.build(self, map_data)")
 	add_child(preload("res://scripts/world/vidya_nagar_one_entrance.gd").build(self))
+	preload("res://scripts/performance/startup_profile.gd").mark("world: add_child(preload('res://scripts/world/vidya_nagar_one_entra")
 	add_child(preload("res://scripts/world/vidya_nagar_one_entrance.gd").build(self, 2, Vector2(79.5163817,18.7549674), Vector2(79.5151192,18.7559943)))
+	preload("res://scripts/performance/startup_profile.gd").mark("world: add_child(preload('res://scripts/world/vidya_nagar_one_entra")
 	var vn2_street := preload("res://scripts/world/vidya_nagar_two_street_builder.gd").new()
 	add_child(vn2_street)
+	preload("res://scripts/performance/startup_profile.gd").mark("world: add_child(vn2_street)")
 	vn2_street.build(self, map_data)
+	preload("res://scripts/performance/startup_profile.gd").mark("world: vn2_street.build(self, map_data)")
 	_create_trees()
+	preload("res://scripts/performance/startup_profile.gd").mark("world: _create_trees()")
 	_create_birds()
+	preload("res://scripts/performance/startup_profile.gd").mark("world: _create_birds()")
 	_create_pedestrians()
+	preload("res://scripts/performance/startup_profile.gd").mark("world: _create_pedestrians()")
 	_create_local_activity()
+	preload("res://scripts/performance/startup_profile.gd").mark("world: _create_local_activity()")
 	_create_traffic()
+	preload("res://scripts/performance/startup_profile.gd").mark("world: _create_traffic()")
 	_create_collectibles()
+	preload("res://scripts/performance/startup_profile.gd").mark("world: _create_collectibles()")
 	# Representative scenery is planned after existing assets/spawns so it yields
 	# to gameplay and source-backed placement. No GIS drainage geometry is loaded.
 	if "--representative-drainage" in OS.get_cmdline_user_args() and "--no-drainage" not in OS.get_cmdline_user_args():
@@ -108,6 +150,7 @@ func _ready() -> void:
 		drainage.setup(self, map_data)
 		drainage.focus = func() -> Vector2:
 			return buildings.focus.call() if buildings.focus.is_valid() else SPAWN_CENTER
+	preload("res://scripts/performance/startup_profile.gd").report("world")
 	print("Godavarikhani district: %d/%d source roads rendered, %d roads skipped, %d TopoExport roads added (%d duplicates), %d buildings (%d OSM + %d Microsoft + %d Overture), %d signs, %d signals, %d legacy drain segments" %
 		[roads.source_rendered_way_count, map_data.source_road_way_count,
 		map_data.source_road_way_count - roads.source_rendered_way_count, roads.topoexport_rendered_count,
@@ -126,38 +169,42 @@ func _create_ground() -> void:
 	if not terrain.is_valid:
 		push_warning("Terrain data missing; ground will be empty")
 		return
-	var cells := terrain.size - 1
-	for chunk_row in range(0, cells, TERRAIN_CHUNK_CELLS):
-		for chunk_col in range(0, cells, TERRAIN_CHUNK_CELLS):
-			var surface := MeshSurface.new()
-			for row in range(chunk_row, mini(chunk_row + TERRAIN_CHUNK_CELLS, cells)):
-				for col in range(chunk_col, mini(chunk_col + TERRAIN_CHUNK_CELLS, cells)):
-					# Same diagonal as TerrainData.height_at so placed objects sit exactly on it.
-					var v00 := terrain.vertex(row, col)
-					var v10 := terrain.vertex(row, col + 1)
-					var v01 := terrain.vertex(row + 1, col)
-					var v11 := terrain.vertex(row + 1, col + 1)
-					for triangle in [[v00, v10, v01], [v11, v01, v10]]:
-						var normal: Vector3 = (triangle[1] - triangle[0]).cross(triangle[2] - triangle[0]).normalized()
-						if normal.y < 0.0:
-							normal = -normal
-						surface.triangle(triangle[0], triangle[1], triangle[2], normal, Color.WHITE,
-							Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, true)
-			var chunk := StaticBody3D.new()
-			chunk.name = "Terrain_%d_%d" % [chunk_row, chunk_col]
-			var mesh := MeshInstance3D.new()
-			mesh.mesh = surface.to_mesh()
-			mesh.material_override = material
-			# The visible ground sits 0.2 m below the collision surface so draped roads never z-fight with it.
-			mesh.position.y = -0.2
-			mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-			chunk.add_child(mesh)
-			var shape := ConcavePolygonShape3D.new()
-			shape.set_faces(surface.collision)
-			var collision := CollisionShape3D.new()
-			collision.shape = shape
-			chunk.add_child(collision)
-			ground.add_child(chunk)
+	# Vertex maths runs on worker threads; nodes and shapes are made here on the main thread.
+preload("res://scripts/performance/startup_profile.gd").mark("  ground: material")
+	var chunks := terrain.build_chunks(TERRAIN_CHUNK_CELLS)
+	preload("res://scripts/performance/startup_profile.gd").mark("  ground: threaded vertices")
+	for built: Dictionary in chunks:
+		var chunk := StaticBody3D.new()
+		chunk.name = "Terrain_%d_%d" % [built.row, built.col]
+		var arrays := []
+		arrays.resize(Mesh.ARRAY_MAX)
+		arrays[Mesh.ARRAY_VERTEX] = built.vertices
+		arrays[Mesh.ARRAY_NORMAL] = built.normals
+		var count: int = built.vertices.size()
+		var colors := PackedColorArray()
+		colors.resize(count)
+		colors.fill(Color.WHITE)
+		var uvs := PackedVector2Array()
+		uvs.resize(count)
+		uvs.fill(Vector2.ZERO)
+		arrays[Mesh.ARRAY_COLOR] = colors
+		arrays[Mesh.ARRAY_TEX_UV] = uvs
+		arrays[Mesh.ARRAY_TEX_UV2] = uvs
+		var surface := ArrayMesh.new()
+		surface.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+		var mesh := MeshInstance3D.new()
+		mesh.mesh = surface
+		mesh.material_override = material
+		# The visible ground sits 0.2 m below the collision surface so draped roads never z-fight with it.
+		mesh.position.y = -0.2
+		mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		chunk.add_child(mesh)
+		var shape := ConcavePolygonShape3D.new()
+		shape.set_faces(built.vertices)
+		var collision := CollisionShape3D.new()
+		collision.shape = shape
+		chunk.add_child(collision)
+		ground.add_child(chunk)
 
 ## Real ground cover: the land-cover raster goes to the shader as an 8-bit class texture.
 func _ground_material() -> Material:
@@ -234,19 +281,7 @@ func roadside_spots(center: Vector2, count: int, edge_offset: float, spacing: fl
 	return chosen
 
 func _is_on_any_road(point: Vector2, margin: float) -> bool:
-	for road in map_data.roads:
-		var half := RoadStyle.width(road) * 0.5 + margin
-		var points: PackedVector2Array = road.points
-		for index in range(1, points.size()):
-			if Geometry2D.get_closest_point_to_segment(point, points[index - 1], points[index]).distance_to(point) < half:
-				return true
-	for road in map_data.topoexport_roads:
-		var half := RoadStyle.width(road) * 0.5 + margin
-		var points: PackedVector2Array = road.points
-		for index in range(1, points.size()):
-			if Geometry2D.get_closest_point_to_segment(point, points[index - 1], points[index]).distance_to(point) < half:
-				return true
-	return false
+	return map_data.road_grid().any_within(point, margin)
 
 func _choose_spawns() -> void:
 	var main_kinds := ["secondary", "tertiary", "trunk", "primary", "secondary_link", "unclassified"]

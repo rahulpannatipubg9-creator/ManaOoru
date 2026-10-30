@@ -57,3 +57,56 @@ func lowest_under(points: PackedVector2Array) -> float:
 
 func vertex(row: int, col: int) -> Vector3:
 	return Vector3(origin.x + col * cell_size, heights[row * size + col], origin.y + row * cell_size)
+
+## Triangle soup for the whole ground, one entry per chunk of cells:
+## {row, col, vertices, normals}. Pure data, so it runs on the worker threads.
+func build_chunks(chunk_cells: int) -> Array[Dictionary]:
+	var cells := size - 1
+	var chunks: Array[Dictionary] = []
+	for row in range(0, cells, chunk_cells):
+		for col in range(0, cells, chunk_cells):
+			chunks.append({"row": row, "col": col, "cells": chunk_cells})
+	var task := WorkerThreadPool.add_group_task(_fill_chunk.bind(chunks), chunks.size())
+	WorkerThreadPool.wait_for_group_task_completion(task)
+	return chunks
+
+## Each cell is two triangles on the same diagonal as height_at, wound and lit from above.
+func _fill_chunk(index: int, chunks: Array[Dictionary]) -> void:
+	var chunk: Dictionary = chunks[index]
+	var first_row: int = chunk.row
+	var first_col: int = chunk.col
+	var last_row := mini(first_row + int(chunk.cells), size - 1)
+	var last_col := mini(first_col + int(chunk.cells), size - 1)
+	var count := (last_row - first_row) * (last_col - first_col) * 6
+	var vertices := PackedVector3Array()
+	var normals := PackedVector3Array()
+	vertices.resize(count)
+	normals.resize(count)
+	var at := 0
+	for row in range(first_row, last_row):
+		for col in range(first_col, last_col):
+			var v00 := vertex(row, col)
+			var v10 := vertex(row, col + 1)
+			var v01 := vertex(row + 1, col)
+			var v11 := vertex(row + 1, col + 1)
+			var first := (v10 - v00).cross(v01 - v00).normalized()
+			if first.y < 0.0:
+				first = -first
+			var second := (v01 - v11).cross(v10 - v11).normalized()
+			if second.y < 0.0:
+				second = -second
+			vertices[at] = v00
+			vertices[at + 1] = v10
+			vertices[at + 2] = v01
+			vertices[at + 3] = v11
+			vertices[at + 4] = v01
+			vertices[at + 5] = v10
+			normals[at] = first
+			normals[at + 1] = first
+			normals[at + 2] = first
+			normals[at + 3] = second
+			normals[at + 4] = second
+			normals[at + 5] = second
+			at += 6
+	chunk.vertices = vertices
+	chunk.normals = normals
