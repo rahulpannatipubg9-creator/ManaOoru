@@ -18,6 +18,17 @@
 
 ## Entries
 
+### A test printed PASS over a script error (2026-10-30)
+- **Symptom:** `pause_menu_regression` and `environment_modes_regression` printed PASS and exited 0, and the same
+  output held `Invalid access to property or key 'city_life'`.
+- **Cause:** `main._handle_menu_input` calls `pause_menu.owns_keys()` before the menu's first `_process` had set
+  `_game` (`scripts/ui/pause_menu.gd`). The menu's touch-bridge wiring also waited for the first `open_menu()`, so
+  Settings opened directly over a live match got no touch.
+- **Rule:** anything another node may call checks its own setup first, and setup must not wait for one particular
+  screen to open. Read test output for `SCRIPT ERROR`: an exit code or a PASS line does not rule it out.
+- **Check:** `tests/pause_menu_regression.gd` asserts the bridge is wired before the first open; its output must hold
+  no `SCRIPT ERROR`.
+
 ### Tuk-tuk driver test checks a hidden rig (2026-10-29, open)
 - **Symptom:** `tuk_tuk_driver_pose_regression` fails ("Driver wrist must contact its handlebar grip").
 - **Cause:** written on 2026-10-27 for the old `DEF-` rig (`character.skeleton`). Since Rahul became the default,

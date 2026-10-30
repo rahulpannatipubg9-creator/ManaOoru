@@ -458,7 +458,7 @@ func close_modal() -> void:
 	_modal = null
 	_modal_root = null
 	modal_back = Callable()
-	_game.get_tree().paused = false
+	_game.pause_tree(false)
 	_game._clear_control_inputs()
 	Input.mouse_mode = _mouse_before
 	_game._sync_input_context()

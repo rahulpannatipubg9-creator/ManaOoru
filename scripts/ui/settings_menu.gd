@@ -221,11 +221,6 @@ func _build_controls(page: VBoxContainer) -> void:
 			hud.open_layout_editor()))
 	if not hud._touch_overlay_enabled:
 		_build_keys(page)
-	_developer_toggle = _toggle(page, "Developer tools", func(value: bool) -> void:
-		if _syncing: return
-		_developer_enabled = value
-		_refresh_developer())
-	_developer_toggle.visible = OS.is_debug_build() and "--dev" not in OS.get_cmdline_user_args()
 
 func _build_keys(page: VBoxContainer) -> void:
 	var grid := GridContainer.new()
@@ -382,7 +377,7 @@ func close_menu() -> void:
 		hint.text = "Not saved"
 		return
 	panel.hide()
-	get_tree().paused = _was_paused
+	hud._game.pause_tree(_was_paused)
 	hud._game._clear_control_inputs()
 	Input.mouse_mode = _mouse_before
 	hud._game._sync_input_context()
@@ -412,6 +407,11 @@ func _build_graphics(page: VBoxContainer) -> void:
 	graphics_controls.fps = fps
 	fps.item_selected.connect(func(index: int) -> void:
 		if not _graphics_sync: _graphics_change("fps", 30 if index == 0 else 60))
+	_developer_toggle = _toggle(page, "Developer tools", func(value: bool) -> void:
+		if _syncing: return
+		_developer_enabled = value
+		_refresh_developer())
+	_developer_toggle.visible = OS.is_debug_build() and "--dev" not in OS.get_cmdline_user_args()
 
 func _graphics_change(key: String, value: Variant) -> void:
 	var controller = hud._game.performance_controller

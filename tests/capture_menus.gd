@@ -51,7 +51,7 @@ func run() -> void:
 		if settings.tabs.is_tab_hidden(index):
 			continue
 		settings.tabs.current_tab = index
-		await shot("02_settings_%d_%s" % [index, settings.tabs.get_tab_title(index).to_snake_case()])
+		await shot("02_settings_%d_%s" % [index, settings.tabs.get_tab_title(index).replace(" & ", " ").to_snake_case()])
 	await back()
 	pause.buttons["Activities"].pressed.emit()
 	await shot("03_activities")

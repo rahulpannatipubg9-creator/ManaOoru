@@ -162,3 +162,8 @@ static func _style_buttons(value: Theme) -> void:
 		value.set_color("font_pressed_color", type_name, ACCENT)
 		value.set_color("font_focus_color", type_name, TEXT)
 		value.set_color("font_disabled_color", type_name, TEXT_MUTED)
+	# A switch that is on is a resting state, so its row stays calm and only the switch changes.
+	value.set_stylebox("pressed", "CheckButton", box(SURFACE_RAISED))
+	value.set_stylebox("hover_pressed", "CheckButton", box(SURFACE_RAISED.lightened(0.08)))
+	value.set_color("font_pressed_color", "CheckButton", TEXT)
+	value.set_color("font_hover_pressed_color", "CheckButton", TEXT)

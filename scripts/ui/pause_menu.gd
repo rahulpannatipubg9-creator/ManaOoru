@@ -58,7 +58,6 @@ func is_open() -> bool:
 func open_menu() -> void:
 	if not _available() or panel.visible or _page != Page.NONE or _screen_up():
 		return
-	_wire()
 	_game._clear_control_inputs()
 	_game.pause_tree(true)
 	_show_panel()
@@ -73,7 +72,7 @@ func close_menu() -> void:
 ## True while Esc and M belong to these menus, so main's polling leaves them alone. It stays
 ## true for one frame after a screen closes: that press was the close, not a new pause.
 func owns_keys() -> bool:
-	return _owned_last_frame or _keys_are_ours()
+	return _available() and (_owned_last_frame or _keys_are_ours())
 
 ## Steps back one screen.
 func back() -> void:
@@ -92,6 +91,7 @@ func back() -> void:
 func _process(_delta: float) -> void:
 	if not _available():
 		return
+	_wire()
 	_owned_last_frame = _keys_are_ours()
 	# The layout editor draws over Settings, and this menu must not show through it.
 	panel.modulate.a = 0.0 if _layout_editor_open() else 1.0
@@ -132,9 +132,10 @@ func _layout_editor_open() -> bool:
 func _in_match() -> bool:
 	return _game.tdm_local != null and _game.tdm_local.in_match
 
-## The map is made after this menu, so these are connected on first use.
+## The map and lobby are made after this menu, so these are connected once they exist. Settings
+## can open before this menu ever has, and a live match still needs the touch bridge then.
 func _wire() -> void:
-	if _wired:
+	if _wired or not is_instance_valid(_hud.full_map) or not is_instance_valid(_hud.multiplayer_panel):
 		return
 	_wired = true
 	_hud.full_map.visibility_changed.connect(_on_map_visibility)
