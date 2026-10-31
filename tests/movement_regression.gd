@@ -55,7 +55,12 @@ func _init() -> void:
 	root.add_child(game)
 	await process_frame
 	var world_player := game.get_node("Player") as CharacterBody3D
-	assert(game.vehicles.size() == 7, "All placed vehicles, including the helicopter and tuk-tuk, must be enterable")
+	var placement_catalog: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/world/custom_placements.json"))
+	var expected_vehicles := 7
+	for placement: Dictionary in placement_catalog.get("assets", []):
+		if not str(placement.get("drivable_scene", "")).is_empty():
+			expected_vehicles += 1
+	assert(game.vehicles.size() == expected_vehicles, "Original vehicles and every configured imported vehicle must be enterable")
 	var tuk_tuk := game.get_node("Tuk Tuk") as PhysicsBody3D
 	assert(tuk_tuk != null, "Player Tuk Tuk missing")
 	var helicopter := game.get_node("Chowrastha Helicopter") as PhysicsBody3D
@@ -85,7 +90,7 @@ func _init() -> void:
 	assert(absf(world_displacement.z) > 0.1 or absf(world_displacement.x) > 0.1, "Car must translate in the generated world")
 	for vehicle in game.vehicles:
 		assert(vehicle.global_position.distance_to(parked_vehicle_positions[vehicle]) < 0.01,
-			"Parked vehicles must not move while the person walks")
+			"Parked vehicle %s moved %.4f m while the person walks" % [vehicle.name, vehicle.global_position.distance_to(parked_vehicle_positions[vehicle])])
 		assert(vehicle.is_physics_processing(), "Parked vehicles must keep physics processing enabled")
 	Input.action_press("forward")
 	for _frame in 30:
@@ -93,7 +98,7 @@ func _init() -> void:
 	Input.action_release("forward")
 	for vehicle in game.vehicles:
 		assert(vehicle.global_position.distance_to(parked_vehicle_positions[vehicle]) < 0.01,
-			"Global W input must not move parked vehicles")
+			"Global W input moved parked vehicle %s by %.4f m" % [vehicle.name, vehicle.global_position.distance_to(parked_vehicle_positions[vehicle])])
 	world_player.set_touch_move_input(Vector2.ZERO)
 	var world_person := game.get_node("Player") as CharacterBody3D
 	var world_vehicle := game.get_node("Vehicle") as PhysicsBody3D

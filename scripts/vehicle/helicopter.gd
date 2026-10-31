@@ -7,8 +7,8 @@ extends RigidBody3D
 
 @export var keep_custom_spawn := true
 @export var entry_half_width := 1.5
-@export var seat_hip := Vector3(-0.45, 1.35, -0.15)
-@export var pedal_point := Vector3(-0.45, 0.9, 0.75)
+@export var seat_hip := Vector3(-0.45, 1.35, -1.35)
+@export var pedal_point := Vector3(-0.45, 0.85, -1.95)
 @export var vehicle_mass := 2200.0
 @export var max_horizontal_speed := 42.0
 @export var cruise_speed := 25.0
@@ -48,6 +48,11 @@ var _collective := 0.0
 var _rotor_spool := 0.0
 var _model: Node3D
 var _rotor_hub: Node3D
+var _tail_rotor_hub: Node3D
+var _main_blur_disc: MeshInstance3D
+var _tail_blur_disc: MeshInstance3D
+var _main_blur_mat: StandardMaterial3D
+var _tail_blur_mat: StandardMaterial3D
 var _engine_audio: AudioStreamPlayer3D
 var _engine_playback: AudioStreamGeneratorPlayback
 var _audio_phase := 0.0
@@ -70,15 +75,18 @@ func _ready() -> void:
 	continuous_cd = true
 	contact_monitor = true
 	max_contacts_reported = 6
-	for rotor: Node in find_children("*", "Node3D", true, false):
-		if "rotor" in rotor.name.to_lower():
-			_rotors.append(rotor as Node3D)
 	respawn_position = global_position
 	_hover_height = global_position.y
 	_safe_landing = global_transform
 	_model = get_node_or_null("Model") as Node3D
+	_apply_civilian_livery()
 	_create_visible_rotor()
+	_create_tail_rotor()
+	_create_blur_discs()
 	_create_engine_audio()
+	for rotor: Node in find_children("*", "Node3D", true, false):
+		if "rotor" in rotor.name.to_lower() and rotor != _rotor_hub and rotor != _tail_rotor_hub and not rotor.is_ancestor_of(_rotor_hub) and not _rotor_hub.is_ancestor_of(rotor):
+			_rotors.append(rotor as Node3D)
 	freeze = true
 
 func set_touch_move_input(value: Vector2) -> void:
@@ -192,18 +200,44 @@ func _process(delta: float) -> void:
 	_rotor_spool = move_toward(_rotor_spool, 1.0 if driving_enabled else 0.0, delta * 1.8)
 	var spin := 48.0 * _rotor_spool
 	if _rotor_hub:
-		_rotor_hub.rotate_y(spin * delta)
+		_rotor_hub.rotate_object_local(Vector3.UP, spin * delta)
+	if _tail_rotor_hub:
+		_tail_rotor_hub.rotate_object_local(Vector3.RIGHT, 4.0 * spin * delta)
 	for rotor in _rotors:
 		rotor.rotate_object_local(Vector3.UP, spin * delta)
+	
+	if _main_blur_disc and _main_blur_mat:
+		var show_blur := _rotor_spool > 0.4
+		_main_blur_disc.visible = show_blur
+		_tail_blur_disc.visible = show_blur
+		if show_blur:
+			var alpha := clampf((_rotor_spool - 0.4) / 0.45, 0.0, 0.38)
+			_main_blur_mat.albedo_color.a = alpha
+			_tail_blur_mat.albedo_color.a = alpha
 	_fill_engine_audio()
 
+func _apply_civilian_livery() -> void:
+	if not _model:
+		return
+	var body := _model.find_child("Body", true, false) as MeshInstance3D
+	if not body:
+		return
+	var shader := load("res://shaders/helicopter_civilian_livery.gdshader") as Shader
+	if shader:
+		var mat := ShaderMaterial.new()
+		mat.shader = shader
+		body.material_override = mat
+
 func _create_visible_rotor() -> void:
-	# The supplied helicopter mesh has baked rotor geometry. Add four separate,
-	# lightweight blades so rotor rotation remains visible at every camera range.
 	_rotor_hub = Node3D.new()
 	_rotor_hub.name = "AnimatedMainRotor"
-	_rotor_hub.position = Vector3(0.0, 2.77, -0.15)
-	add_child(_rotor_hub)
+	if _model:
+		_model.add_child(_rotor_hub)
+		_rotor_hub.position = Vector3(0.0, 0.15, -1.42)
+		_rotor_hub.basis = _model.transform.basis.inverse()
+	else:
+		add_child(_rotor_hub)
+		_rotor_hub.position = Vector3(0.0, 2.77, -0.15)
 	var material := StandardMaterial3D.new()
 	material.albedo_color = Color("#1f2527")
 	material.metallic = 0.65
@@ -224,6 +258,75 @@ func _create_visible_rotor() -> void:
 	hub.mesh = hub_mesh
 	hub.material_override = material
 	_rotor_hub.add_child(hub)
+
+func _create_tail_rotor() -> void:
+	_tail_rotor_hub = Node3D.new()
+	_tail_rotor_hub.name = "AnimatedTailRotor"
+	if _model:
+		_model.add_child(_tail_rotor_hub)
+		_tail_rotor_hub.position = Vector3(0.16, -4.15, -0.70)
+	else:
+		add_child(_tail_rotor_hub)
+		_tail_rotor_hub.position = Vector3(-0.16, 2.05, 4.15)
+	var material := StandardMaterial3D.new()
+	material.albedo_color = Color("#1f2527")
+	material.metallic = 0.65
+	material.roughness = 0.38
+	for rotation in [0.0, PI * 0.5]:
+		var blade := MeshInstance3D.new()
+		var mesh := BoxMesh.new()
+		mesh.size = Vector3(0.03, 1.45, 0.08)
+		blade.mesh = mesh
+		blade.rotation.x = rotation
+		blade.material_override = material
+		_tail_rotor_hub.add_child(blade)
+	var hub := MeshInstance3D.new()
+	var hub_mesh := CylinderMesh.new()
+	hub_mesh.top_radius = 0.06
+	hub_mesh.bottom_radius = 0.08
+	hub_mesh.height = 0.08
+	hub.mesh = hub_mesh
+	hub.rotation.z = PI * 0.5
+	hub.material_override = material
+	_tail_rotor_hub.add_child(hub)
+
+func _create_blur_discs() -> void:
+	_main_blur_mat = StandardMaterial3D.new()
+	_main_blur_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	_main_blur_mat.albedo_color = Color(0.12, 0.15, 0.18, 0.0)
+	_main_blur_mat.roughness = 0.8
+	_main_blur_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	
+	_main_blur_disc = MeshInstance3D.new()
+	_main_blur_disc.name = "MainRotorBlurDisc"
+	var main_mesh := CylinderMesh.new()
+	main_mesh.top_radius = 4.1
+	main_mesh.bottom_radius = 4.1
+	main_mesh.height = 0.005
+	_main_blur_disc.mesh = main_mesh
+	_main_blur_disc.material_override = _main_blur_mat
+	_main_blur_disc.visible = false
+	if _rotor_hub:
+		_rotor_hub.add_child(_main_blur_disc)
+	
+	_tail_blur_mat = StandardMaterial3D.new()
+	_tail_blur_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	_tail_blur_mat.albedo_color = Color(0.12, 0.15, 0.18, 0.0)
+	_tail_blur_mat.roughness = 0.8
+	_tail_blur_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	
+	_tail_blur_disc = MeshInstance3D.new()
+	_tail_blur_disc.name = "TailRotorBlurDisc"
+	var tail_mesh := CylinderMesh.new()
+	tail_mesh.top_radius = 0.75
+	tail_mesh.bottom_radius = 0.75
+	tail_mesh.height = 0.005
+	_tail_blur_disc.mesh = tail_mesh
+	_tail_blur_disc.rotation.z = PI * 0.5
+	_tail_blur_disc.material_override = _tail_blur_mat
+	_tail_blur_disc.visible = false
+	if _tail_rotor_hub:
+		_tail_rotor_hub.add_child(_tail_blur_disc)
 
 func _create_engine_audio() -> void:
 	_engine_audio = AudioStreamPlayer3D.new()

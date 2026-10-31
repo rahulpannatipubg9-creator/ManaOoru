@@ -6,16 +6,16 @@ var _storm_timer := 8.0
 var _flash := 0.0
 var sky_material: ShaderMaterial
 var thunder: AudioStreamPlayer
-var hour := 16.0
+var hour := 8.5
 var day_seconds := 1440.0
-var auto_time := true
-var time_mode := "Automatic"
+var auto_time := false
+var time_mode := "Morning"
 var night := 0.0
 var rain := 0.0
 var rain_target := 0.0
 var wetness := 0.0
 var indoors := false
-var auto_weather := true
+var auto_weather := false
 var lamp_count := 0
 var _game: Node
 var _world: Node
@@ -123,12 +123,17 @@ func cycle_weather() -> void:
 	set_weather(rain_target < 0.5)
 
 func set_time_mode(mode: String) -> void:
-	if mode not in ["Automatic", "Morning", "Afternoon", "Night"]:
+	if mode not in ["Automatic", "Morning", "Afternoon", "Night", "Clear Morning"]:
 		return
 	time_mode = mode
 	auto_time = mode == "Automatic"
-	if not auto_time:
-		set_hour({"Morning": 8.0, "Afternoon": 14.0, "Night": 22.0}[mode])
+	if mode in ["Morning", "Clear Morning"]:
+		set_hour(8.5)
+		set_weather_mode("Clear")
+	elif mode == "Afternoon":
+		set_hour(14.0)
+	elif mode == "Night":
+		set_hour(22.0)
 
 func set_weather_mode(mode: String) -> void:
 	if mode == "Automatic":

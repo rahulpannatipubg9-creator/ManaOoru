@@ -80,6 +80,12 @@ const PERSON_HIT_COOLDOWN := 0.8
 ## body slip angle, so drifts are easy to catch, like GTA's driving assist.
 @export var countersteer_assist := 0.7
 @export var rear_wheel_drive := false
+@export var front_wheel_drive := false
+## Optional manufacturer/vehicle-class governor in m/s; zero keeps legacy behaviour.
+@export var road_speed_limit := 0.0
+## AWD torque share sent to the front axle. Existing vehicles retain 50:50.
+@export_range(0.0, 1.0) var front_drive_share := 0.5
+@export var center_of_mass_forward := CENTER_OF_MASS_FORWARD
 ## Optional measurements for non-car vehicles. Zero means use the generic car
 ## defaults in VehicleEntry; the Tuk Tuk supplies its real cabin measurements.
 @export var seat_hip := Vector3.ZERO
@@ -149,6 +155,10 @@ var _hit_cooldowns: Dictionary = {}
 ## car against a (kinematic) person by the time the contact is reported.
 var _pre_contact_velocity := Vector3.ZERO
 var _parked_still_time := 0.0
+var _mirror_viewport: SubViewport
+var _mirror_camera: Camera3D
+var _mirror_mesh: MeshInstance3D
+var _mirror_material: StandardMaterial3D
 
 func _ready() -> void:
 	if not drivetrain is DrivetrainProfile:
@@ -156,7 +166,7 @@ func _ready() -> void:
 	gearbox = Gearbox.new(drivetrain)
 	mass = vehicle_mass
 	center_of_mass_mode = RigidBody3D.CENTER_OF_MASS_MODE_CUSTOM
-	center_of_mass = Vector3(0.0, center_of_mass_height, CENTER_OF_MASS_FORWARD)
+	center_of_mass = Vector3(0.0, center_of_mass_height, center_of_mass_forward)
 	# Box inertia of the collision body, so pitch, roll and yaw respond like a real chassis.
 	var size := Vector3(1.9, 1.4, 4.3)
 	var shape_node := get_node_or_null("CollisionShape3D") as CollisionShape3D
@@ -187,6 +197,7 @@ func _ready() -> void:
 	_apply_paint()
 	if respawn_position == Vector3.ZERO:
 		respawn_position = global_position
+	_setup_rearview_mirror()
 	settle_on_ground()
 
 func _apply_paint() -> void:
@@ -225,7 +236,8 @@ func set_driving_enabled(value: bool) -> void:
 		touch_move_input = Vector2.ZERO
 		touch_run_pressed = false
 		tyre_slip = 0.0
-		gearbox.reset()
+		if gearbox != null:
+			gearbox.reset()
 		sleeping = linear_velocity.length() < PARK_SLEEP_SPEED
 	else:
 		sleeping = false
@@ -353,6 +365,8 @@ func _physics_process(delta: float) -> void:
 	if controlled and not braking and not handbrake_pressed:
 		drive_force = gearbox.update(current_speed, throttle, wheel_radius, delta)
 	drive_force *= (0.0 if condition <= 0.0 else lerpf(0.35, 1.0, condition / 100.0))
+	if road_speed_limit > 0.0 and drive_force > 0.0:
+		drive_force *= clampf((road_speed_limit - current_speed) / (road_speed_limit * 0.05), 0.0, 1.0)
 	var brake := 0.0
 	if not controlled:
 		brake = 1.0 # parking brake
@@ -365,6 +379,7 @@ func _physics_process(delta: float) -> void:
 	_apply_wheels(delta, drive_force, brake)
 	_record_safe_transform(delta)
 	_update_visuals()
+	_update_rearview_mirror()
 
 ## Speed-sensitive lock, eased so the wheel turns rather than snaps, self-centring
 ## when released, and pointing the front wheels into a slide when the player is
@@ -388,6 +403,11 @@ func lateral_tyre_force(side_speed: float, long_speed: float, grip: float) -> fl
 	var slip_angle := atan2(side_speed, maxf(absf(long_speed), SLIP_REFERENCE_SPEED))
 	return -grip * sin(TYRE_CURVE_SHAPE * atan(tyre_cornering_stiffness * slip_angle))
 
+## Share of point effective mass a tyre may stop in one step. Narrow vehicles
+## override this because rotational inertia matters much more than chassis mass.
+func _lateral_stop_mass(_contact: Vector3, _direction: Vector3) -> float:
+	return vehicle_mass * 0.25
+
 func _read_gear_input() -> void:
 	if Input.is_action_just_pressed("vehicle_transmission"):
 		toggle_transmission_mode()
@@ -407,7 +427,7 @@ func _apply_wheels(delta: float, drive_force: float, brake: float) -> void:
 	var static_compression := vehicle_mass * 0.25 * _gravity / stiffness
 	var max_length := suspension_rest_length + suspension_droop_travel
 	var min_length := suspension_rest_length - suspension_bump_travel
-	var driven := [2, 3] if rear_wheel_drive else [0, 1, 2, 3]
+	var front_share := 0.0 if rear_wheel_drive else 1.0 if front_wheel_drive else front_drive_share
 	var hits: Array[Dictionary] = []
 	for index in 4:
 		var origin := global_transform * _mounts[index]
@@ -465,8 +485,8 @@ func _apply_wheels(delta: float, drive_force: float, brake: float) -> void:
 		var grip := tyre_friction * surface_friction * weather_grip * load
 
 		var longitudinal := 0.0
-		if index in driven:
-			longitudinal += drive_force / driven.size()
+		var axle_share := front_share if index < 2 else 1.0 - front_share
+		longitudinal += drive_force * axle_share * 0.5
 		longitudinal -= signf(long_speed) * minf(rolling_resistance * load, mass_share * absf(long_speed) / delta)
 		var locked := handbrake_pressed and index >= 2
 		if brake > 0.0 or locked:
@@ -476,7 +496,7 @@ func _apply_wheels(delta: float, drive_force: float, brake: float) -> void:
 		var limit: float = grip * (handbrake_rear_grip if locked else 1.0)
 		var lateral := lateral_tyre_force(side_speed, long_speed, limit)
 		# A tyre can at most stop the sideways slide this step; more would overshoot and wobble.
-		var cancel := mass_share * absf(side_speed) / delta
+		var cancel := _lateral_stop_mass(contact, wheel_side) * absf(side_speed) / delta
 		lateral = clampf(lateral, -cancel, cancel)
 		# Friction circle: braking/driving and cornering share the same grip.
 		var combined := Vector2(longitudinal, lateral)
@@ -531,14 +551,13 @@ func _resolve_person_hits(delta: float) -> void:
 			continue
 		var severity := clampf((closing - PERSON_IMPACT_MIN_SPEED) / (PERSON_IMPACT_FULL_SPEED - PERSON_IMPACT_MIN_SPEED), 0.0, 1.0)
 		var push := Vector3(car_velocity.x, 0.0, car_velocity.z)
-		var throw := push * lerpf(0.6, 1.1, severity) + Vector3.UP * lerpf(1.5, 7.0, severity)
+		var throw := push.normalized() * maxf(push.length() * lerpf(1.15, 1.4, severity), 4.2) + Vector3.UP * lerpf(2.0, 7.0, severity)
 		person.apply_knockback(throw - person.velocity, severity, self, PERSON_MAX_DAMAGE * pow(severity, 1.3))
 		# A thrown person is let through briefly so the car doesn't snag on them, and the
-		# car keeps its momentum minus what it handed over (a person is ~80 kg, the car ~1.8 t).
-		# A slow nudge keeps colliding, so the car is held back rather than driving into them.
-		if severity > 0.3:
+		# car loses some momentum on impact so it does not coast directly over them.
+		if severity > 0.05:
 			add_collision_exception_with(person)
-			linear_velocity = car_velocity - push.normalized() * PERSON_MASS * closing * 0.5 / vehicle_mass
+			linear_velocity = car_velocity - push.normalized() * minf(car_velocity.length() * 0.35, 2.0)
 		_hit_cooldowns[person] = PERSON_HIT_COOLDOWN
 		impact.emit(person, closing, hit.normal, person.global_position)
 	_pending_person_hits.clear()
@@ -582,3 +601,49 @@ func _update_visuals() -> void:
 		if hub:
 			hub.position.y = wheel.position.y
 			hub.rotation = wheel_rotation
+
+func _setup_rearview_mirror() -> void:
+	if get_script().resource_path.ends_with("motorcycle.gd") or has_node("BikeModel"):
+		return
+	var pivot := get_node_or_null("CameraPivot")
+	if pivot == null:
+		return
+	_mirror_viewport = SubViewport.new()
+	_mirror_viewport.name = "RearviewMirrorViewport"
+	_mirror_viewport.size = Vector2i(256, 128)
+	_mirror_viewport.render_target_update_mode = SubViewport.UPDATE_DISABLED
+	
+	_mirror_camera = Camera3D.new()
+	_mirror_camera.name = "RearviewCamera"
+	_mirror_camera.fov = 55.0
+	_mirror_camera.rotation.y = PI
+	_mirror_camera.position = Vector3(0.0, seat_hip.y + 0.45, seat_hip.z + 0.38)
+	_mirror_viewport.add_child(_mirror_camera)
+	add_child(_mirror_viewport)
+	
+	_mirror_material = StandardMaterial3D.new()
+	_mirror_material.albedo_texture = _mirror_viewport.get_texture()
+	_mirror_material.uv1_scale = Vector3(-1.0, 1.0, 1.0)
+	_mirror_material.uv1_offset = Vector3(1.0, 0.0, 0.0)
+	_mirror_material.roughness = 0.08
+	_mirror_material.metallic = 0.85
+	
+	_mirror_mesh = MeshInstance3D.new()
+	_mirror_mesh.name = "RearviewMirrorMesh"
+	var quad := QuadMesh.new()
+	quad.size = Vector2(0.24, 0.07)
+	_mirror_mesh.mesh = quad
+	_mirror_mesh.material_override = _mirror_material
+	_mirror_mesh.position = Vector3(0.0, seat_hip.y + 0.45, seat_hip.z + 0.38)
+	_mirror_mesh.rotation.y = 0.0
+	_mirror_mesh.visible = false
+	add_child(_mirror_mesh)
+
+func _update_rearview_mirror() -> void:
+	if _mirror_viewport == null:
+		return
+	var pivot := get_node_or_null("CameraPivot")
+	var is_fpp: bool = driving_enabled and pivot != null and pivot.has_method("is_first_person") and bool(pivot.is_first_person())
+	_mirror_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS if is_fpp else SubViewport.UPDATE_DISABLED
+	if _mirror_mesh:
+		_mirror_mesh.visible = is_fpp

@@ -1,0 +1,103 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/vehicle/imported_vehicle.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/camera/camera_controller.gd" id="2"]
+[ext_resource type="PackedScene" path="res://assets/models/vehicles/alfa_romeo_155_v6/alfa_romeo_155_v6_rig.glb" id="3"]
+[ext_resource type="Script" path="res://scripts/player/engine_sound.gd" id="4"]
+[ext_resource type="Script" path="res://scripts/player/drivetrain_profile.gd" id="5"]
+
+[sub_resource type="Resource" id="Drivetrain"]
+script = ExtResource("5")
+gear_ratios = Array[float]([2.8, 2.2, 1.78, 1.5, 1.27, 1.08])
+reverse_ratio = 3.2
+final_drive = 4.3
+driveline_efficiency = 0.88
+automatic_available = true
+electric_motor = false
+shift_time = 0.3
+idle_rpm = 900.0
+redline_rpm = 12000.0
+torque_curve = Array[Vector2]([Vector2(900, 105.84), Vector2(4950.0, 229.32), Vector2(9000, 294), Vector2(9360.0, 279.3), Vector2(12000, 170.52)])
+launch_rpm = 1900.0
+launch_torque_ratio = 1.4
+cylinders = 6
+diesel_clatter = 0.0
+turbo_whine = 0.04
+
+[sub_resource type="BoxShape3D" id="BodyCollision"]
+size = Vector3(1.53538, 1.1356, 4.2594)
+
+[node name="AlfaRomeo155V6" type="RigidBody3D" groups=["enterable_vehicle"]]
+script = ExtResource("1")
+vehicle_id = "alfa_romeo_155_v6"
+road_speed_limit = 83.33333
+vehicle_mass = 1050.0
+wheel_radius = 0.32002
+suspension_rest_length = 0.57998
+suspension_bump_travel = 0.14
+suspension_droop_travel = 0.18
+suspension_frequency = 1.6
+suspension_damping_ratio = 0.52
+center_of_mass_height = 0.443
+center_of_mass_forward = 0.1
+braking_acceleration = 9.2
+drag_area = 0.758
+rolling_resistance = 0.012
+tyre_friction = 1.45
+max_steer_angle = 0.61
+high_speed_steer_share = 0.23
+rear_wheel_drive = false
+front_wheel_drive = false
+front_drive_share = 0.33
+seat_hip = Vector3(0.33531, 0.54038, 0.25436)
+pedal_point = Vector3(0.33531, 0.19038, 0.90436)
+entry_half_width = 0.882
+left_hand_grip = Vector3(0.50531, 0.94038, 0.67436)
+right_hand_grip = Vector3(0.16531, 0.94038, 0.67436)
+drivetrain = SubResource("Drivetrain")
+
+[node name="Chassis" type="Node3D" parent="."]
+
+[node name="FrontIndicator" type="Marker3D" parent="Chassis"]
+position = Vector3(0.0, 0.4, 2.29)
+
+[node name="FrontLeftWheel" type="Node3D" parent="."]
+position = Vector3(-0.74639, 0.31977, 1.25627)
+rotation = Vector3(0, 0, 1.5707963)
+
+[node name="FrontRightWheel" type="Node3D" parent="."]
+position = Vector3(0.74637, 0.3203, 1.25627)
+rotation = Vector3(0, 0, 1.5707963)
+
+[node name="RearLeftWheel" type="Node3D" parent="."]
+position = Vector3(-0.74631, 0.32023, -1.25632)
+rotation = Vector3(0, 0, 1.5707963)
+
+[node name="RearRightWheel" type="Node3D" parent="."]
+position = Vector3(0.83647, 0.31977, -1.25622)
+rotation = Vector3(0, 0, 1.5707963)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("BodyCollision")
+position = Vector3(0.0, 0.6878, 0.0)
+
+[node name="Model" parent="." instance=ExtResource("3")]
+
+[node name="CameraPivot" type="Node3D" parent="."]
+position = Vector3(0.0, 1.6356, 0.0)
+script = ExtResource("2")
+first_person_offset = Vector3(0.33531, 1.22038, 0.35436)
+first_person_follows_body = true
+first_person_min_pitch = -0.6
+first_person_max_pitch = 0.5
+
+[node name="SpringArm3D" type="SpringArm3D" parent="CameraPivot"]
+spring_length = 5.725
+collision_mask = 1
+margin = 0.2
+
+[node name="Camera3D" type="Camera3D" parent="CameraPivot/SpringArm3D"]
+fov = 68.0
+
+[node name="EngineAudio" type="AudioStreamPlayer3D" parent="."]
+script = ExtResource("4")

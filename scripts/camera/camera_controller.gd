@@ -16,6 +16,8 @@ enum ViewMode { THIRD_PERSON, FIRST_PERSON }
 @export var first_person_max_pitch: float = 1.0
 @export_group("Chase camera")
 ## Seconds without mouse or touch look before the driving camera swings back behind the car.
+## Motorcycle view: follow interpolated motion without inheriting chassis roll.
+@export var stabilized_vehicle_mount := false
 @export var chase_delay: float = 1.0
 @export var chase_stiffness: float = 3.0
 @export var chase_pitch: float = -0.2
@@ -27,6 +29,9 @@ const SPEED_FOV_FULL := 30.0
 @export var sprint_fov_boost := 6.0
 ## First person on foot sits wider than third person, as in BGMI's FPP.
 @export var first_person_fov := 80.0
+@export var shoulder_offset := 0.62
+@export var camera_shake_enabled := true
+@export var camera_shake_scale := 1.0
 ## Head bob depth in metres, walking and sprinting, in first person; third person uses a third.
 @export var bob_walk := 0.025
 @export var bob_run := 0.055
@@ -76,7 +81,11 @@ var _ads_sight := false
 var _since_recoil := 0.0
 
 func _process(delta: float) -> void:
-	if not _camera or not _camera.current or GameplayControls.blocked:
+	if not _camera or not _camera.current:
+		return
+	if GameplayControls.blocked:
+		if stabilized_vehicle_mount:
+			_apply_orbit_rotation()
 		return
 	var behind := Input.is_action_pressed("camera_look_behind")
 	if behind != looking_behind:
@@ -102,12 +111,16 @@ static func clamp_pitch_value(value: float, lower: float, upper: float) -> float
 func _ready() -> void:
 	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
 	_third_person_position = position
+	if stabilized_vehicle_mount:
+		top_level = true
 	_set_level_mount(view_mode == ViewMode.THIRD_PERSON)
 	var spring_arm := get_node_or_null("SpringArm3D") as SpringArm3D
 	if spring_arm:
 		spring_arm.spring_length = camera_distance
 		spring_arm.margin = 0.45
 		spring_arm.collision_mask = 1
+		if stabilized_vehicle_mount and get_parent() is CollisionObject3D:
+			spring_arm.add_excluded_object(get_parent().get_rid())
 		_camera = spring_arm.get_node_or_null("Camera3D") as Camera3D
 		if _camera:
 			# A larger near plane keeps depth precision for road markings across the town.
@@ -234,7 +247,9 @@ func _follows_body() -> bool:
 
 func _body_yaw() -> float:
 	var followed_body := get_parent() as Node3D
-	return followed_body.global_rotation.y if followed_body else 0.0
+	if followed_body == null:
+		return 0.0
+	return followed_body.get_global_transform_interpolated().basis.get_euler().y if stabilized_vehicle_mount else followed_body.global_rotation.y
 
 ## Converts the stored yaw (body-relative when following the body) into world space.
 func _world_yaw() -> float:
@@ -288,10 +303,14 @@ func _set_level_mount(_level: bool) -> void:
 	reset_physics_interpolation()
 
 func _physics_process(_delta: float) -> void:
-	_apply_orbit_rotation()
+	if not stabilized_vehicle_mount:
+		_apply_orbit_rotation()
 
 func _apply_orbit_rotation() -> void:
 	var body := get_parent() as Node3D
+	if stabilized_vehicle_mount and body:
+		_apply_stabilized_vehicle_mount(body)
+		return
 	if view_mode == ViewMode.THIRD_PERSON and body:
 		var body_basis := body.global_basis.orthonormalized()
 		var body_yaw := body_basis.get_euler().y
@@ -306,14 +325,36 @@ func _apply_orbit_rotation() -> void:
 		var peek_lateral := Vector3(-_current_peek * 0.45, 0.0, 0.0)
 		var mount := _third_person_position
 		if body.has_method("is_weapon_equipped") and body.is_weapon_equipped() and body.get("combat_mode") == true:
-			mount.x = -0.62 * _shoulder_sign
+			mount.x = -shoulder_offset * _shoulder_sign
 		if body.has_method("is_weapon_equipped"): mount.y = _stance_y
+		# Wall clearance probe: clamp peek displacement so camera never clips into adjacent obstacles
+		if absf(_current_peek) > 0.01 and is_inside_tree():
+			var space_state := get_world_3d().direct_space_state
+			var head_world := body.global_position + Vector3.UP * _stance_y
+			var peek_target_world := body.global_transform * (mount + peek_lateral)
+			var query := PhysicsRayQueryParameters3D.create(head_world, peek_target_world, 1, [body.get_rid()])
+			var hit := space_state.intersect_ray(query)
+			if not hit.is_empty():
+				var hit_dist: float = (hit.position as Vector3).distance_to(head_world)
+				var max_lateral := maxf(0.0, hit_dist - 0.25)
+				peek_lateral.x = clampf(peek_lateral.x, -max_lateral, max_lateral)
 		var offset := Basis(Vector3.UP, body_yaw) * (mount + peek_lateral)
 		transform = Transform3D(body_basis.inverse() * level, body_basis.inverse() * offset)
 		return
 	var body_yaw := _body_yaw()
 	if body and body.has_method("is_weapon_equipped") and body.get("combat_mode") == true:
-		position = Vector3(0.0, _stance_y + 0.12, 0.0)
+		var fp_lateral := Vector3(-_current_peek * 0.35, 0.0, 0.0)
+		if absf(_current_peek) > 0.01 and is_inside_tree():
+			var space_state := get_world_3d().direct_space_state
+			var head_world := body.global_position + Vector3.UP * (_stance_y + 0.12)
+			var target_world := body.global_transform * (Vector3(0.0, _stance_y + 0.12, 0.0) + fp_lateral)
+			var query := PhysicsRayQueryParameters3D.create(head_world, target_world, 1, [body.get_rid()])
+			var hit := space_state.intersect_ray(query)
+			if not hit.is_empty():
+				var hit_dist: float = (hit.position as Vector3).distance_to(head_world)
+				var max_lateral := maxf(0.0, hit_dist - 0.20)
+				fp_lateral.x = clampf(fp_lateral.x, -max_lateral, max_lateral)
+		position = Vector3(fp_lateral.x, _stance_y + 0.12, 0.0)
 	if looking_behind:
 		# GTA-style rear view: face backwards along the body, so first person looks out the back.
 		rotation = Vector3(0.0, 0.0, 0.0)
@@ -322,7 +363,13 @@ func _apply_orbit_rotation() -> void:
 	rotation = Vector3(_pitch, relative_yaw, -_peek_roll)
 
 func _is_look_zone(position: Vector2) -> bool:
-	var size := get_viewport().get_visible_rect().size
+	var vp := get_viewport()
+	if vp == null:
+		return false
+	var gui := vp.gui_get_hovered_control()
+	if gui != null and gui.mouse_filter != Control.MOUSE_FILTER_IGNORE:
+		return false
+	var size := vp.get_visible_rect().size
 	var normalized := Vector2(position.x / size.x, position.y / size.y)
 	return normalized.x >= 0.55 and normalized.y >= 0.08 and normalized.y < 0.88
 
@@ -388,12 +435,36 @@ func clear_touch_look() -> void:
 	_gyro.reset()
 
 func add_recoil(pitch_kick: float = 0.022, yaw_kick: float = 0.008) -> void:
+	if not camera_shake_enabled:
+		pitch_kick *= 0.15
+		yaw_kick *= 0.15
+	else:
+		pitch_kick *= camera_shake_scale
+		yaw_kick *= camera_shake_scale
 	_since_look = 0.0
 	_pitch = clamp_pitch_value(_pitch + pitch_kick, _min_pitch(), _max_pitch())
 	_recoil_debt += pitch_kick
 	_since_recoil = 0.0
 	var random_yaw := (randf() - 0.5) * 2.0 * yaw_kick
 	_yaw += random_yaw
+	_apply_orbit_rotation()
+
+func set_tpp_distance(dist: float) -> void:
+	_set_camera_distance(clampf(dist, 3.0, 9.0))
+
+func set_tpp_fov(fov_val: float) -> void:
+	_base_fov = clampf(fov_val, 55.0, 90.0)
+	if _camera and view_mode == ViewMode.THIRD_PERSON:
+		_camera.fov = _base_fov
+
+func set_fpp_fov(fov_val: float) -> void:
+	first_person_fov = clampf(fov_val, 65.0, 105.0)
+	if _camera and view_mode == ViewMode.FIRST_PERSON:
+		_camera.fov = first_person_fov
+
+func set_shoulder_offset(offset: float) -> void:
+	shoulder_offset = clampf(offset, 0.35, 0.95)
+	_third_person_position.x = shoulder_offset * _shoulder_sign
 	_apply_orbit_rotation()
 
 ## Step-timed head bob through the camera's view offsets (the spring arm owns its
@@ -424,3 +495,17 @@ func _update_recoil_recovery(delta: float) -> void:
 	var step := minf(_recoil_debt, recoil_recovery * delta)
 	_recoil_debt -= step
 	_pitch = clamp_pitch_value(_pitch - step, _min_pitch(), _max_pitch())
+
+## A top-level mount reads one interpolated chassis pose per rendered frame.
+## The rider's head keeps a level horizon while the motorcycle banks underneath.
+func _apply_stabilized_vehicle_mount(body: Node3D) -> void:
+	var pose := body.get_global_transform_interpolated()
+	var yaw := pose.basis.orthonormalized().get_euler().y
+	var first := view_mode == ViewMode.FIRST_PERSON
+	var world_yaw := _yaw + yaw if first and first_person_follows_body else _yaw
+	world_yaw += _free_yaw
+	if looking_behind:
+		world_yaw = yaw
+	var pitch := (-0.12 if not first else 0.0) if looking_behind else _pitch
+	var origin := pose * first_person_offset if first else pose.origin + Basis(Vector3.UP,yaw)*_third_person_position
+	global_transform = Transform3D(Basis.from_euler(Vector3(pitch,world_yaw,-_peek_roll)),origin)

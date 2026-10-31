@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-31",
+  "title": "Mana Ooru Settings",
+  "extensions": {
+    "breakpoints": [
+      {
+        "name": "compact",
+        "value": "1050px"
+      }
+    ],
+    "shadows": [],
+    "motion": []
+  },
+  "components": [],
+  "narrative": {
+    "overview": "Persistent category navigation and compact setting rows for landscape phones/tablets.",
+    "keyCharacteristics": [
+      "Opaque teal surface",
+      "Amber selection",
+      "Visible numeric values",
+      "Persistent save action"
+    ]
+  }
+}

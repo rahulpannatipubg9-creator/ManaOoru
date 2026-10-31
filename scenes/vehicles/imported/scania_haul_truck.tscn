@@ -1,0 +1,103 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/vehicle/imported_vehicle.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/camera/camera_controller.gd" id="2"]
+[ext_resource type="PackedScene" path="res://assets/models/vehicles/scania_haul_truck/scania_haul_truck_rig.glb" id="3"]
+[ext_resource type="Script" path="res://scripts/player/engine_sound.gd" id="4"]
+[ext_resource type="Script" path="res://scripts/player/drivetrain_profile.gd" id="5"]
+
+[sub_resource type="Resource" id="Drivetrain"]
+script = ExtResource("5")
+gear_ratios = Array[float]([11.32, 9.16, 7.17, 5.81, 4.5, 3.64, 2.82, 2.28, 1.77, 1.43, 1.13, 1])
+reverse_ratio = 3.2
+final_drive = 2.59
+driveline_efficiency = 0.88
+automatic_available = true
+electric_motor = false
+shift_time = 0.3
+idle_rpm = 650.0
+redline_rpm = 2300.0
+torque_curve = Array[Vector2]([Vector2(650, 918.0), Vector2(850, 1989.0), Vector2(1300, 2550), Vector2(1794.0, 2422.5), Vector2(2300, 1479.0)])
+launch_rpm = 1700.0
+launch_torque_ratio = 1.4
+cylinders = 8
+diesel_clatter = 0.5
+turbo_whine = 0.04
+
+[sub_resource type="BoxShape3D" id="BodyCollision"]
+size = Vector3(2.58164, 4.4962, 15.345)
+
+[node name="ScaniaHaulTruck" type="RigidBody3D" groups=["enterable_vehicle"]]
+script = ExtResource("1")
+vehicle_id = "scania_haul_truck"
+road_speed_limit = 25.0
+vehicle_mass = 18000.0
+wheel_radius = 0.56206
+suspension_rest_length = 0.33794
+suspension_bump_travel = 0.16
+suspension_droop_travel = 0.17
+suspension_frequency = 1.25
+suspension_damping_ratio = 0.6
+center_of_mass_height = 0.6
+center_of_mass_forward = 0.1
+braking_acceleration = 6.5
+drag_area = 8.732
+rolling_resistance = 0.012
+tyre_friction = 1.25
+max_steer_angle = 0.52
+high_speed_steer_share = 0.17
+rear_wheel_drive = true
+front_wheel_drive = false
+front_drive_share = 0.5
+seat_hip = Vector3(0.56381, 1.4, 5.61)
+pedal_point = Vector3(0.56381, 1.05, 6.26)
+entry_half_width = 1.484
+left_hand_grip = Vector3(0.73381, 1.8, 6.03)
+right_hand_grip = Vector3(0.39381, 1.8, 6.03)
+drivetrain = SubResource("Drivetrain")
+
+[node name="Chassis" type="Node3D" parent="."]
+
+[node name="FrontIndicator" type="Marker3D" parent="Chassis"]
+position = Vector3(0.0, 0.4, 8.25)
+
+[node name="FrontLeftWheel" type="Node3D" parent="."]
+position = Vector3(-1.02245, 0.56198, 5.14005)
+rotation = Vector3(0, 0, 1.5707963)
+
+[node name="FrontRightWheel" type="Node3D" parent="."]
+position = Vector3(0.97533, 0.56183, 5.13794)
+rotation = Vector3(0, 0, 1.5707963)
+
+[node name="RearLeftWheel" type="Node3D" parent="."]
+position = Vector3(-1.08754, 0.56197, -5.13756)
+rotation = Vector3(0, 0, 1.5707963)
+
+[node name="RearRightWheel" type="Node3D" parent="."]
+position = Vector3(1.20731, 0.56246, -5.14044)
+rotation = Vector3(0, 0, 1.5707963)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("BodyCollision")
+position = Vector3(0.0, 2.3681, 0.0)
+
+[node name="Model" parent="." instance=ExtResource("3")]
+
+[node name="CameraPivot" type="Node3D" parent="."]
+position = Vector3(0.0, 4.9962, 0.0)
+script = ExtResource("2")
+first_person_offset = Vector3(0.56381, 2.08, 5.71)
+first_person_follows_body = true
+first_person_min_pitch = -0.6
+first_person_max_pitch = 0.5
+
+[node name="SpringArm3D" type="SpringArm3D" parent="CameraPivot"]
+spring_length = 20.625
+collision_mask = 1
+margin = 0.2
+
+[node name="Camera3D" type="Camera3D" parent="CameraPivot/SpringArm3D"]
+fov = 68.0
+
+[node name="EngineAudio" type="AudioStreamPlayer3D" parent="."]
+script = ExtResource("4")

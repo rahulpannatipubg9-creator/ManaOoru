@@ -15,6 +15,12 @@ notes are in [characters/](characters/). Code: `scripts/player/test_character.gd
 
 ## Entries
 
+### Mixamo action-blending non-hip bone translation tracks explode skeleton bounds (2026-10-31)
+- **Symptom:** `mixamo_gameplay_regression` failed with `reload preserves low stance instead of standing up (bounds.size.y = 1.541m >= 1.5m)`. Character meshes exploded into dozens of meters when playing action clips (e.g. Reload, Melee) during crouch or prone stances.
+- **Cause:** Mixamo FBX animations store non-zero translation tracks on non-hip bones in source centimeters (~48 cm). When `set_bone_pose_position` was applied to limb and spine bones during action blending in `test_character.gd`, the centimeter translation offsets were written into meter-scaled bones, throwing vertices outward.
+- **Rule:** In Mixamo skeletons, translation tracks must be applied strictly and exclusively to `mixamorig_Hips`. All other bones (`Spine`, `Spine1`, `Spine2`, `UpLeg`, `Leg`, `Foot`, `Arm`, `Hand`) must only receive rotation tracks.
+- **Check:** `tests/mixamo_gameplay_regression.gd`, `tests/mixamo_contacts_regression.gd`.
+
 ### Crouch refused under a low ceiling: the headroom query hit the floor (2026-10-29)
 - **Symptom:** `character_physics_regression` failed "Crouch must shrink the collider". A player squeezed
   under a low roof could not crouch out of it.
@@ -85,3 +91,20 @@ notes are in [characters/](characters/). Code: `scripts/player/test_character.gd
 - **Symptom:** High bone counts and full 60 FPS blend tree updates on multiple pedestrians, dummies and puppets caused vertex skinning bottlenecks on mobile GPUs (Vulkan/OpenGL ES 3.0).
 - **Rule:** Keep mobile character rigs under 45–50 bones for seamless compatibility with mobile OpenGL/Vulkan skinning limits (preventing uniform buffer overflow). Update character skeletons at full 60 FPS up close (0–15m), but throttle distant pedestrians, bots and puppets to 15–30 FPS animation ticks (30 FPS at 15–35m, 15 FPS beyond 35m).
 - **Check:** `movement_regression.gd`, verify animation fidelity up close and tick throttling in distant views.
+
+### Default Mixamo height must be measured after axis correction (2026-10-31)
+- **Symptom:** The new default looked too tall beside vehicles and the world.
+- **Cause:** The Mixamo visual used a hard-coded 100x import multiplier instead of a measured game height.
+- **Rule:** Fit the rotated upright bounds to DEFAULT_MIXAMO_HEIGHT (1.73m), retain a ground offset through reset, and match standing collision height. Preserve the other selectable models and animation clips.
+- **Check:** character_scale_regression verifies measured height, soles at the player origin, and matching standing collision height.
+
+### Mixamo skin bounds caused a giant sideways avatar (2026-10-31)
+- **Cause:** Static mesh AABBs inherited the armature's 0.01 scale but omitted skin bind matrices that restore metre-sized vertices. Fitting those bounds multiplied the character by about 100; an extra axis correction also tipped it sideways.
+- **Rule:** Keep the imported Y-up root rotation at zero. Fit skinned vertices using bone poses and inverse binds, once at startup. Never infer skin size from static mesh AABBs alone.
+- **Check:** character_scale_regression measures actual skinned geometry at 1.73m and samples idle, walking, jogging and seated animation frames for size explosions.
+
+### Audit the active Mixamo library, not the hidden legacy skeleton (2026-10-31)
+- **Symptoms:** walk-start and cover-entry transitions looped; large source root travel escaped the collider; the standing grenade selected a prone throw; long actions were cut at 1.2s; deaths restarted; reload/fire had no selection. Seated poses lost wheel/peg contacts, and rifle sights sat above the eyes.
+- **Fix:** build private runtime clip copies in `mixamo_animation_library.gd`, keep physics responsible for horizontal travel, close genuine loop seams, derive steady idle/walk/driver clips, preserve low stances during actions, time actions from clip/gameplay duration, and solve the active Mixamo rig after `mixer_applied`. Use its own shoulder height and prone reach in local and remote rifle presentation; test crawling and directional weapon clips as well as rifle idle. Source FBXs and GLB remain unchanged.
+- **Rule:** check every source clip, every state selection and crossfade, then inspect rendered poses with props. Static bounds and hidden-rig tests cannot validate the visible skinned player. Grounding corrections belong to the source model/height and must be rebuilt when those change.
+- **Check:** `mixamo_animation_audit`, `mixamo_gameplay_regression`, `mixamo_contacts_regression`, `character_scale_regression`, and the corrected visible-rig vehicle/character tests. Render all clips with `capture_mixamo_animations` and prop poses with `capture_mixamo_gameplay`. Full findings: `docs/MIXAMO_ANIMATION_AUDIT.md`.

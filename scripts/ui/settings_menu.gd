@@ -10,6 +10,11 @@ var graphics_controls: Dictionary = {}
 var graphics_preset: OptionButton
 var _graphics_sync := false
 var _syncing := false
+var _tabs: TabContainer
+var _nav: VBoxContainer
+var _footer: Label
+var _page_title: Label
+var _nav_buttons: Array[Button] = []
 var _mouse_before := Input.MOUSE_MODE_VISIBLE
 
 func setup(owner_hud: Node) -> void:
@@ -30,8 +35,9 @@ func setup(owner_hud: Node) -> void:
 	panel.offset_top = 24
 	panel.offset_right = -24
 	panel.offset_bottom = -24
+	_install_theme()
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.025, 0.04, 0.065, 0.99)
+	style.bg_color = Color("101e29")
 	style.content_margin_left = 24
 	style.content_margin_right = 24
 	style.content_margin_top = 16
@@ -43,18 +49,38 @@ func setup(owner_hud: Node) -> void:
 	var header := HBoxContainer.new()
 	column.add_child(header)
 	var title := Label.new()
-	title.text = "SETTINGS"
+	title.text = "MANA OORU  /  Settings"
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	title.add_theme_font_size_override("font_size", 26)
+	title.add_theme_font_size_override("font_size", 24)
 	header.add_child(title)
 	_button(header, "Save & Return", close_menu)
+	var body := HBoxContainer.new()
+	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	body.add_theme_constant_override("separation", 24)
+	column.add_child(body)
+	_nav = VBoxContainer.new()
+	_nav.custom_minimum_size.x = 205
+	_nav.add_theme_constant_override("separation", 8)
+	body.add_child(_nav)
+	var content := VBoxContainer.new()
+	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	body.add_child(content)
+	_page_title = Label.new()
+	_page_title.add_theme_font_size_override("font_size", 28)
+	content.add_child(_page_title)
 	var tabs := TabContainer.new()
+	_tabs = tabs
+	tabs.tabs_visible = false
 	tabs.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	tabs.add_theme_font_size_override("font_size", 22)
-	column.add_child(tabs)
+	content.add_child(tabs)
+	_footer = Label.new()
+	_footer.text = "Changes apply immediately. Save & Return keeps your preferences."
+	_footer.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_footer.add_theme_color_override("font_color", Color("abc4ce"))
+	column.add_child(_footer)
 	var sensitivity := _page(tabs, "Controls & Sensitivity")
 	var description := Label.new()
-	description.text = "Game-specific presets. 100% = 1x sensitivity. Changes apply immediately and save on return."
+	description.text = "Tune your aim. Choose a preset, then adjust individual sensitivities."
 	description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	sensitivity.add_child(description)
 	# BGMI-style layout editor: separate NORMAL, FIRING and VEHICLE arrangements.
@@ -96,17 +122,37 @@ func setup(owner_hud: Node) -> void:
 	hint = Label.new()
 	sensitivity.add_child(hint)
 	var weather := _page(tabs, "Time & Weather")
-	var time := _options(weather, "Time of day", ["Automatic", "Morning", "Afternoon", "Night"])
+	var quick_env := HBoxContainer.new()
+	quick_env.add_theme_constant_override("separation", 10)
+	weather.add_child(quick_env)
+	var btn_clear := Button.new()
+	btn_clear.text = "☀️ Clear Morning (Default)"
+	btn_clear.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	btn_clear.custom_minimum_size.y = 44
+	btn_clear.pressed.connect(func() -> void:
+		hud._game.environment_controls.environment.set_time_mode("Clear Morning")
+		close_menu())
+	quick_env.add_child(btn_clear)
+	var btn_night := Button.new()
+	btn_night.text = "🌙 Night"
+	btn_night.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	btn_night.custom_minimum_size.y = 44
+	btn_night.pressed.connect(func() -> void:
+		hud._game.environment_controls.environment.set_time_mode("Night")
+		close_menu())
+	quick_env.add_child(btn_night)
+	var time := _options(weather, "Time of day", ["Morning", "Afternoon", "Night", "Automatic"])
 	controls["time"] = time
 	time.item_selected.connect(func(index: int) -> void:
-		if not _syncing: hud._game.environment_controls.environment.set_time_mode(["Automatic", "Morning", "Afternoon", "Night"][index]))
-	var sky := _options(weather, "Weather", ["Automatic", "Clear", "Rain", "Storm"])
+		if not _syncing: hud._game.environment_controls.environment.set_time_mode(["Morning", "Afternoon", "Night", "Automatic"][index]))
+	var sky := _options(weather, "Weather", ["Clear", "Rain", "Storm", "Automatic"])
 	controls["weather"] = sky
 	sky.item_selected.connect(func(index: int) -> void:
-		if not _syncing: hud._game.environment_controls.environment.set_weather_mode(["Automatic", "Clear", "Rain", "Storm"][index]))
+		if not _syncing: hud._game.environment_controls.environment.set_weather_mode(["Clear", "Rain", "Storm", "Automatic"][index]))
 	var activities := _page(tabs, "Activities")
 	_button(activities, "Open missions & activities", func() -> void:
 		close_menu()
+		if panel.visible: return
 		hud._game.gameplay.open_board())
 	var cities := _page(tabs, "Maps & Cities")
 	var city_desc := Label.new()
@@ -115,14 +161,20 @@ func setup(owner_hud: Node) -> void:
 	cities.add_child(city_desc)
 	_button(cities, "Load Chowrasta City (Sketch Reference)", func() -> void:
 		close_menu()
+		if panel.visible: return
 		get_tree().change_scene_to_file("res://scenes/world/chowrasta_city.tscn"))
 	_button(cities, "Load Godavarikhani (Full District)", func() -> void:
 		close_menu()
+		if panel.visible: return
 		get_tree().change_scene_to_file("res://scenes/main.tscn"))
 	_button(activities, "Open city journal", func() -> void:
 		close_menu()
+		if panel.visible: return
 		hud._game.city_life.open_journal())
 	_build_graphics(tabs)
+	_build_navigation()
+	get_viewport().size_changed.connect(_fit_layout)
+	_fit_layout()
 	panel.hide()
 
 func _page(tabs: TabContainer, title: String) -> VBoxContainer:
@@ -147,13 +199,20 @@ func _button(parent: Node, text: String, callback: Callable) -> void:
 	button.pressed.connect(callback)
 
 func _options(parent: Node, title: String, choices: Array) -> OptionButton:
+	var row := HBoxContainer.new()
+	row.custom_minimum_size.y = 64
+	row.add_theme_constant_override("separation", 20)
+	parent.add_child(row)
 	var label := Label.new()
 	label.text = title
-	parent.add_child(label)
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(label)
 	var option := OptionButton.new()
-	option.custom_minimum_size.y = 52
+	option.custom_minimum_size = Vector2(245, 56)
+	option.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	for choice: String in choices: option.add_item(choice)
-	parent.add_child(option)
+	row.add_child(option)
 	return option
 
 func _slider(parent: Node, title: String, key: String, lower: float, upper: float) -> void:
@@ -170,7 +229,16 @@ func _slider(parent: Node, title: String, key: String, lower: float, upper: floa
 	slider.max_value = upper
 	slider.step = 0.05
 	slider.custom_minimum_size.y = 48
-	parent.add_child(slider)
+	row.add_child(slider)
+	row.move_child(slider, 1)
+	slider.custom_minimum_size.x = 180
+	slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	label.custom_minimum_size.x = 210
+	label.size_flags_horizontal = Control.SIZE_FILL
+	value.custom_minimum_size.x = 65
+	value.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	row.custom_minimum_size.y = 64
+	row.add_theme_constant_override("separation", 20)
 	controls[key] = slider
 	slider.value_changed.connect(func(amount: float) -> void:
 		value.text = "%d%%" % roundi(amount * 100.0)
@@ -185,7 +253,9 @@ func _refresh() -> void:
 	preset.select(maxi(0, PRESETS.find(hud.touch_settings.sensitivity_preset)))
 	for key in controls:
 		var control: Control = controls[key]
-		if control is HSlider: control.value = hud.touch_settings.get(key)
+		if control is HSlider:
+			control.value = hud.touch_settings.get(key)
+			control.value_changed.emit(control.value)
 		elif control is CheckButton: control.button_pressed = hud.touch_settings.get(key)
 		elif key == "gyro_mode": control.select(hud.touch_settings.gyro_mode)
 	var environment = hud._game.environment_controls.environment
@@ -205,8 +275,10 @@ func open_menu() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	_refresh()
 	_refresh_graphics()
+	_footer.text = "Changes apply immediately. Save & Return keeps your preferences."
 	hint.text = "Gyro affects aim only on devices with a gyroscope. Off ignores gyro sensitivity."
 	panel.show()
+	hud._game._sync_input_context()
 
 func close_menu() -> void:
 	if not panel.visible: return
@@ -214,9 +286,11 @@ func close_menu() -> void:
 	var result: Error = hud.touch_settings.save_to()
 	if result != OK:
 		hint.text = "Settings could not be saved. Try again."
+		_footer.text = hint.text
 		return
 	if hud._game.performance_controller.settings.save_to() != OK:
 		hint.text = "Graphics preferences could not be saved."
+		_footer.text = hint.text
 		return
 	var dpm_node: Variant = hud._game.get("device_performance_manager")
 	if dpm_node != null:
@@ -333,3 +407,90 @@ func _refresh_graphics() -> void:
 				0: target_index = 4
 			control.select(target_index)
 	_graphics_sync = false
+
+func _install_theme() -> void:
+	var theme := Theme.new()
+	theme.default_font_size = 18
+	var normal := _surface(Color("1c3341"))
+	var hover := _surface(Color("294957"))
+	var selected := _surface(Color("d3ae62"))
+	var focus := normal.duplicate() as StyleBoxFlat
+	focus.border_color = Color("f3cf86")
+	focus.set_border_width_all(2)
+	for kind in ["Button", "OptionButton", "CheckButton"]:
+		theme.set_stylebox("normal", kind, normal)
+		theme.set_stylebox("hover", kind, hover)
+		theme.set_stylebox("pressed", kind, selected)
+		theme.set_stylebox("focus", kind, focus)
+		theme.set_color("font_color", kind, Color("edf3ef"))
+		theme.set_color("font_hover_color", kind, Color.WHITE)
+		theme.set_color("font_pressed_color", kind, Color("101e29"))
+		theme.set_color("font_disabled_color", kind, Color("809aa5"))
+	theme.set_color("font_color", "Label", Color("e1eceb"))
+	theme.set_stylebox("panel", "TabContainer", _surface(Color("101e29"), 0))
+	theme.set_stylebox("panel", "PopupMenu", _surface(Color("1c3341")))
+	theme.set_constant("v_separation", "PopupMenu", 32)
+	theme.set_color("font_color", "PopupMenu", Color("edf3ef"))
+	theme.set_stylebox("hover", "PopupMenu", selected)
+	theme.set_color("font_hover_color", "PopupMenu", Color("101e29"))
+	var track := _surface(Color("395363"), 3)
+	track.content_margin_top = 3
+	track.content_margin_bottom = 3
+	theme.set_stylebox("slider", "HSlider", track)
+	var fill := track.duplicate() as StyleBoxFlat
+	fill.bg_color = Color("d3ae62")
+	theme.set_stylebox("grabber_area", "HSlider", fill)
+	theme.set_stylebox("grabber_area_highlight", "HSlider", fill)
+	var image := Image.create(26, 26, false, Image.FORMAT_RGBA8)
+	for y in 26:
+		for x in 26:
+			var alpha := clampf(12.0 - Vector2(x - 12.5, y - 12.5).length(), 0.0, 1.0)
+			image.set_pixel(x, y, Color(0.96, 0.84, 0.59, alpha))
+	var handle := ImageTexture.create_from_image(image)
+	theme.set_icon("grabber", "HSlider", handle)
+	theme.set_icon("grabber_highlight", "HSlider", handle)
+	panel.theme = theme
+
+func _surface(color: Color, radius: int = 6) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = color
+	style.set_corner_radius_all(radius)
+	style.content_margin_left = 16
+	style.content_margin_right = 16
+	style.content_margin_top = 12
+	style.content_margin_bottom = 12
+	return style
+
+func _build_navigation() -> void:
+	for index in _tabs.get_tab_count():
+		var button := Button.new()
+		button.text = ["Aim & controls", "Time & weather", "Activities", "Maps & cities", "Graphics"][index]
+		button.toggle_mode = true
+		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		button.custom_minimum_size.y = 64
+		_nav.add_child(button)
+		_nav_buttons.append(button)
+		button.pressed.connect(func() -> void: _select_page(index))
+	_tabs.tab_changed.connect(_select_page)
+	_select_page(0)
+
+func _select_page(index: int) -> void:
+	_tabs.current_tab = index
+	_page_title.text = ["Aim & controls", "Time & weather", "Activities", "Maps & cities", "Graphics & performance"][index]
+	for i in _nav_buttons.size(): _nav_buttons[i].set_pressed_no_signal(i == index)
+
+func _fit_layout() -> void:
+	var compact := get_viewport().get_visible_rect().size.x < 1050.0
+	_nav.custom_minimum_size.x = 168.0 if compact else 205.0
+	panel.theme.default_font_size = 16 if compact else 18
+	for button in _nav_buttons:
+		button.custom_minimum_size.y = 54.0 if compact else 64.0
+	for slider in controls.values():
+		if slider is HSlider:
+			slider.custom_minimum_size.x = 100.0 if compact else 180.0
+			var row: HBoxContainer = slider.get_parent()
+			row.get_child(0).custom_minimum_size.x = 160.0 if compact else 210.0
+			row.get_child(2).custom_minimum_size.x = 56.0 if compact else 65.0
+			row.add_theme_constant_override("separation", 12 if compact else 20)
+	for option in panel.find_children("*", "OptionButton", true, false):
+		option.custom_minimum_size.x = 200.0 if compact else 245.0

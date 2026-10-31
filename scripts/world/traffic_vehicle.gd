@@ -3,6 +3,9 @@ extends Node3D
 
 const TUK_TUK_SCENE := preload("res://assets/models/tuk_tuk/gdk_tuk_tuk.glb")
 const SUV_SCENE := preload("res://assets/models/suv_4x4/suv_4x4_complete.glb")
+const BUS_SCENE := preload("res://assets/models/vehicles/indian_tgsrtc_bus/indian_tgsrtc_bus.glb")
+const BULLET_SCENE := preload("res://assets/models/vehicles/royal_enfield_bullet/royal_enfield_bullet.glb")
+const AVENGER_SCENE := preload("res://assets/models/vehicles/bajaj_avenger_cruise/bajaj_avenger_cruise.glb")
 
 ## Lightweight ambient traffic. It follows map-derived lanes without a rigid
 ## body, so dozens of cars can run on local/mobile hardware without disturbing
@@ -48,7 +51,7 @@ func _process(delta: float) -> void:
 	visible = true
 	if _must_wait_at_signal():
 		return
-	if vehicle_kind == "scooter" and _scooter_obstructed():
+	if (vehicle_kind == "scooter" or vehicle_kind in ["bullet", "bike", "avenger"]) and _scooter_obstructed():
 		return
 	_distance += speed * lerpf(1.0, 0.68, night_factor) * delta
 	while _distance >= _segment_length():
@@ -99,7 +102,7 @@ func _build_visual() -> void:
 	if vehicle_kind == "scooter":
 		_build_scooter()
 		return
-	if vehicle_kind == "tuk_tuk":
+	if vehicle_kind == "tuk_tuk" or vehicle_kind == "auto":
 		var tuk_tuk := TUK_TUK_SCENE.instantiate() as Node3D
 		tuk_tuk.name = "TukTukModel"
 		# The converted GLB already imports in metres.  Its mesh is centred on
@@ -107,6 +110,24 @@ func _build_visual() -> void:
 		# the mapped road instead of shrinking it to a centimetre.
 		tuk_tuk.position.y = 1.40
 		add_child(tuk_tuk)
+		return
+	if vehicle_kind == "bus":
+		var bus := BUS_SCENE.instantiate() as Node3D
+		bus.name = "TGSRTCBusModel"
+		bus.rotation.y = PI
+		add_child(bus)
+		return
+	if vehicle_kind in ["bullet", "bike"]:
+		var bullet := BULLET_SCENE.instantiate() as Node3D
+		bullet.name = "BulletModel"
+		add_child(bullet)
+		_build_bike_rider()
+		return
+	if vehicle_kind == "avenger":
+		var avenger := AVENGER_SCENE.instantiate() as Node3D
+		avenger.name = "AvengerModel"
+		add_child(avenger)
+		_build_bike_rider()
 		return
 	if vehicle_kind == "suv":
 		var suv := SUV_SCENE.instantiate() as Node3D
@@ -185,7 +206,10 @@ func _scooter_obstructed() -> bool:
 	if not get_world_3d().direct_space_state.intersect_shape(query,1).is_empty():
 		return true
 	# Ambient pedestrians/vehicles are lightweight nodes, not all physics bodies.
-	var world := get_parent().get_parent()
+	var parent := get_parent()
+	var world := parent.get_parent() if parent else null
+	if world == null:
+		return false
 	for container in world.get_children():
 		for actor in container.get_children():
 			if actor == self or not actor is Node3D:
@@ -243,3 +267,30 @@ func _build_scooter() -> void:
 			_scooter_box("Thigh",Vector3(side*.23,1.0,.12),Vector3(.17,.17,.42),Color("263345"),rider)
 			_scooter_box("Leg",Vector3(side*.26,.70,.27),Vector3(.14,.48,.16),Color("263345"),rider)
 			_scooter_box("Arm",Vector3(side*.26,1.28,.22),Vector3(.12,.13,.53),Color("935f43"),rider)
+
+func _build_bike_rider() -> void:
+	var rider := Node3D.new()
+	rider.name = "BikeRider"
+	rider.position.z = -0.15
+	add_child(rider)
+	_scooter_box("Torso", Vector3(0, 1.15, -0.05), Vector3(0.38, 0.52, 0.22), Color("#2e3d48"), rider)
+	var head := MeshInstance3D.new()
+	var sphere := SphereMesh.new()
+	sphere.radius = 0.14
+	sphere.height = 0.28
+	head.mesh = sphere
+	head.position = Vector3(0, 1.52, -0.05)
+	head.material_override = _material(Color("#d8b08c"))
+	rider.add_child(head)
+	var helmet := MeshInstance3D.new()
+	var hmesh := SphereMesh.new()
+	hmesh.radius = 0.155
+	hmesh.height = 0.26
+	helmet.mesh = hmesh
+	helmet.position = Vector3(0, 1.55, -0.05)
+	helmet.material_override = _material(Color("#1a1a1a"))
+	rider.add_child(helmet)
+	for side in [-1, 1]:
+		_scooter_box("Thigh", Vector3(side * 0.16, 0.85, 0.08), Vector3(0.14, 0.14, 0.35), Color("#1b252e"), rider)
+		_scooter_box("Leg", Vector3(side * 0.18, 0.55, 0.18), Vector3(0.12, 0.42, 0.14), Color("#1b252e"), rider)
+		_scooter_box("Arm", Vector3(side * 0.24, 1.08, 0.18), Vector3(0.11, 0.11, 0.44), Color("#2e3d48"), rider)

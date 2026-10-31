@@ -183,14 +183,21 @@ func _place_on_real_roadsides() -> void:
 			if vehicle.has_method("settle_on_ground"):
 				vehicle.settle_on_ground()
 			vehicle.reset_physics_interpolation()
-	for index in mini(vehicles.size(), world.vehicle_spawns.size()):
-		if vehicles[index].get("keep_custom_spawn") == true or vehicles[index].name.contains("Bridge"):
+	# Custom vehicles retain their named districts without consuming the slots
+	# reserved for the original Thar/911/Compass roadside roster.
+	var roadside_vehicles: Array[PhysicsBody3D] = []
+	for vehicle in vehicles:
+		if not vehicle.has_meta("placement_spawn"):
+			roadside_vehicles.append(vehicle)
+	for index in mini(roadside_vehicles.size(), world.vehicle_spawns.size()):
+		var vehicle := roadside_vehicles[index]
+		if vehicle.get("keep_custom_spawn") == true or vehicle.name.contains("Bridge"):
 			continue
 		var spot: Dictionary = world.vehicle_spawns[index]
-		vehicles[index].global_position = spot.position
-		vehicles[index].rotation.y = spot.yaw
-		vehicles[index].respawn_position = spot.position
-		vehicles[index].settle_on_ground()
+		vehicle.global_position = spot.position
+		vehicle.rotation.y = spot.yaw
+		vehicle.respawn_position = spot.position
+		vehicle.settle_on_ground()
 	for vehicle in vehicles:
 		if vehicle.name.contains("Bridge"):
 			var bridge_spot := Vector3(751.15, -24.8, -3275.0)
@@ -317,6 +324,15 @@ func _input(event: InputEvent) -> void:
 	elif key_event.keycode == KEY_TAB and control_state == ControlState.ON_FOOT:
 		_switch_character()
 		get_viewport().set_input_as_handled()
+	elif key_event.keycode == KEY_M and control_state == ControlState.ON_FOOT:
+		_switch_to_mixamo()
+		get_viewport().set_input_as_handled()
+
+func _switch_to_mixamo() -> void:
+	var character := person.get_node_or_null("TestCharacter")
+	if character and character.has_method("select_mixamo"):
+		var selected: String = character.select_mixamo()
+		_show_control_hint("CHARACTER: %s  •  M / Tab to switch" % selected)
 
 func _switch_character() -> void:
 	var character := person.get_node_or_null("TestCharacter")
@@ -417,14 +433,15 @@ func _clear_control_inputs() -> void:
 
 func _sync_input_context() -> void:
 	var text := GameplayControls.text_focused(get_viewport())
-	var suspended := _window_unfocused or text or get_tree().paused
+	var settings_open: bool = hud != null and hud.get("settings_menu") != null and hud.settings_menu.panel != null and hud.settings_menu.panel.visible
+	var suspended := _window_unfocused or text or get_tree().paused or settings_open
 	if suspended and not _input_suspended:
 		_clear_control_inputs()
 	_input_suspended = suspended
 	GameplayControls.blocked = suspended
 	if get_tree().paused:
 		GameplayControls.mode = GameplayControls.Mode.PAUSED
-	elif text or _window_unfocused:
+	elif text or _window_unfocused or settings_open:
 		GameplayControls.mode = GameplayControls.Mode.UI_FOCUSED
 	elif control_state == ControlState.ON_FOOT:
 		GameplayControls.mode = GameplayControls.Mode.ON_FOOT
@@ -460,17 +477,23 @@ func _is_key(event: InputEventKey, keycode: Key, unicode: int) -> bool:
 
 func _park_all_vehicles() -> void:
 	for candidate in vehicles:
-		candidate.set_input_authority(false)
-		candidate.set_driving_enabled(false)
-		candidate.set_keyboard_input_enabled(false)
+		if candidate.has_method("set_input_authority"):
+			candidate.set_input_authority(false)
+		if candidate.has_method("set_driving_enabled"):
+			candidate.set_driving_enabled(false)
+		if candidate.has_method("set_keyboard_input_enabled"):
+			candidate.set_keyboard_input_enabled(false)
 
 func _activate_only(selected: PhysicsBody3D) -> void:
 	GameplayControls.owner_id = selected.get_instance_id()
 	for candidate in vehicles:
 		var is_selected := candidate == selected
-		candidate.set_input_authority(is_selected)
-		candidate.set_driving_enabled(is_selected)
-		candidate.set_keyboard_input_enabled(is_selected)
+		if candidate.has_method("set_input_authority"):
+			candidate.set_input_authority(is_selected)
+		if candidate.has_method("set_driving_enabled"):
+			candidate.set_driving_enabled(is_selected)
+		if candidate.has_method("set_keyboard_input_enabled"):
+			candidate.set_keyboard_input_enabled(is_selected)
 
 func _interact() -> void:
 	if control_state != ControlState.ON_FOOT:

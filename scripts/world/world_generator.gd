@@ -50,6 +50,8 @@ var traffic: TrafficBuilder
 var local_activity: LocalActivityBuilder
 var godavari_bridge: GodavariBridgeBuilder
 var custom_placements: Node3D
+const CityScenariosBuilder := preload("res://scripts/world/city_scenarios.gd")
+var scenarios: Node3D
 const RoadsideDrainage := preload("res://scripts/world/roadside_drainage_builder.gd")
 var drainage: Node3D
 
@@ -105,6 +107,7 @@ func _ready() -> void:
 	custom_placements = preload("res://scripts/world/custom_asset_placements.gd").new()
 	add_child(custom_placements)
 	custom_placements.call("build", self)
+	_create_scenarios()
 	# Representative scenery is planned after existing assets/spawns so it yields
 	# to gameplay and source-backed placement. No GIS drainage geometry is loaded.
 	if "--representative-drainage" in OS.get_cmdline_user_args() and "--no-drainage" not in OS.get_cmdline_user_args():
@@ -475,6 +478,11 @@ func _create_local_activity() -> void:
 	local_activity = LocalActivityBuilder.new()
 	add_child(local_activity)
 	local_activity.build(self, map_data, bus_station)
+
+func _create_scenarios() -> void:
+	scenarios = CityScenariosBuilder.new()
+	add_child(scenarios)
+	scenarios.call("build", self, map_data)
 
 func _create_collectibles() -> void:
 	_coin_material = StandardMaterial3D.new()

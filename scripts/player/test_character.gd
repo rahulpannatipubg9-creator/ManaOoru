@@ -36,6 +36,8 @@ const MALE_RUN_BLEND := Vector2(4.4, 6.8)
 ## An optional separate clip library that overrides the model's own clips by name. Empty: Rahul carries
 ## his own clips, and a library authored on another body would override them with its joint offsets.
 const MALE_ANIMATIONS_PATH := ""
+const DEFAULT_MIXAMO_HEIGHT := 1.78
+const MIXAMO_MODEL_PATH := "res://assets/models/characters/rahul/rahul_mixamo.glb"
 
 ## Gait clips authored for the speeds the game actually uses (tools/rahul_character, 17_game_clips.py):
 ## a planted foot then moves back under the body at exactly the body's speed, so feet do not slide.
@@ -126,6 +128,9 @@ var _rifle_time := 0.0
 
 ## Set by the vehicle entry sequence: sitting in a car seat, hands on the wheel.
 var seated := false
+var vehicle_entry_bend := 0.0
+var vehicle_mount_swing := 0.0
+var vehicle_foot_half_width := 0.0
 var use_vehicle_grips := false
 var left_grip_target := Vector3.ZERO
 var right_grip_target := Vector3.ZERO
@@ -139,9 +144,22 @@ var foot_target := Vector3(0.0, 0.35, 0.75)
 const ANKLE_HEIGHT := 0.07
 var model: Node3D
 var male_model: Node3D
+var _mixamo_base_height := 0.0
+var mixamo_model: Node3D
+var mixamo_anim_player: AnimationPlayer
+var mixamo_skeleton: Skeleton3D
+var _mixamo_reload_active := false
 var male_skeleton: Skeleton3D
 var skeleton: Skeleton3D
 var _character_index := 0
+var _mixamo_action_lock := 0.0
+var _mixamo_current_clip := ""
+var _melee_combo := [
+	"Boxing", "Hook", "Flying_Knee_Punch_Combo", "Mma_Kick",
+	"Drop_Kick", "Flying_Kick", "Headbutt", "Fist_Fight_B", "Illegal_Elbow_Punch"
+]
+var _melee_index := 0
+var _prev_striking := false
 var _phase := 0.0
 var _gait := 0.0
 var _air := 0.0
@@ -234,6 +252,32 @@ func _ready() -> void:
 		_character_index = 1
 		if model:
 			model.visible = false
+	var has_mixamo := ResourceLoader.exists(MIXAMO_MODEL_PATH)
+	if has_mixamo:
+		mixamo_model = (load(MIXAMO_MODEL_PATH) as PackedScene).instantiate() as Node3D
+		add_child(mixamo_model)
+		mixamo_model.rotation = Vector3.ZERO
+		# Skin bind matrices already convert the centimetre skeleton to metres.
+		# Measure deformed vertices; static mesh bounds omit that conversion.
+		mixamo_model.scale = Vector3.ONE
+		var upright_bounds := _skinned_model_bounds(mixamo_model)
+		var model_scale := DEFAULT_MIXAMO_HEIGHT / maxf(upright_bounds.size.y, 0.001)
+		mixamo_model.scale = Vector3.ONE * model_scale
+		_mixamo_base_height = -upright_bounds.position.y * model_scale
+		mixamo_model.position = Vector3(0.0, _mixamo_base_height, 0.0)
+		if get_parent().get("stand_height") != null:
+			get_parent().set("stand_height", DEFAULT_MIXAMO_HEIGHT)
+		mixamo_model.visible = true
+		if male_model:
+			male_model.visible = false
+		if model:
+			model.visible = false
+		_character_index = 3
+		var players := mixamo_model.find_children("*", "AnimationPlayer", true, false)
+		if not players.is_empty():
+			mixamo_anim_player = players[0] as AnimationPlayer
+			_setup_mixamo_animations()
+			_play_mixamo_clip("Idle_Natural")
 	for mesh_name in ["Body", "Head", "Legs"]:
 		var mesh := get_parent().get_node_or_null(mesh_name) as MeshInstance3D
 		if mesh:
@@ -242,14 +286,26 @@ func _ready() -> void:
 			mesh.visible = false
 
 func is_active() -> bool:
-	return (skeleton != null and model != null and model.visible) or (male_skeleton != null and male_model != null and male_model.visible)
+	return (skeleton != null and model != null and model.visible) \
+		or (male_skeleton != null and male_model != null and male_model.visible) \
+		or (mixamo_model != null and mixamo_model.visible)
 
 func toggle_character() -> String:
-	if model == null and male_model == null:
+	if model == null and male_model == null and mixamo_model == null:
 		return "Legacy Avatar"
 	if model == null:
-		_character_index = 1 if _character_index == 2 else 2
-		male_model.visible = _character_index == 1
+		if mixamo_model != null:
+			match _character_index:
+				1: _character_index = 2
+				2: _character_index = 3
+				3: _character_index = 1
+				_: _character_index = 1
+		else:
+			_character_index = 1 if _character_index == 2 else 2
+		if male_model:
+			male_model.visible = _character_index == 1
+		if mixamo_model:
+			mixamo_model.visible = _character_index == 3
 		for mesh_name in ["Body", "Head", "Legs"]:
 			var mesh := get_parent().get_node_or_null(mesh_name) as MeshInstance3D
 			if mesh:
@@ -262,11 +318,25 @@ func toggle_character() -> String:
 						_cached_meshes[mesh_name] = mesh.mesh
 					mesh.mesh = null
 					mesh.visible = false
-		return "Rahul" if _character_index == 1 else "Legacy Avatar"
-	_character_index = (_character_index + 1) % 3
-	model.visible = _character_index == 0
+		match _character_index:
+			1: return "Rahul"
+			3: return "Mixamo Soldier"
+			_: return "Legacy Avatar"
+	if mixamo_model != null:
+		match _character_index:
+			1: _character_index = 2
+			2: _character_index = 0
+			0: _character_index = 3
+			3: _character_index = 1
+			_: _character_index = 3
+	else:
+		_character_index = (_character_index + 1) % 3
+	if model:
+		model.visible = _character_index == 0
 	if male_model:
 		male_model.visible = _character_index == 1
+	if mixamo_model:
+		mixamo_model.visible = _character_index == 3
 	for mesh_name in ["Body", "Head", "Legs"]:
 		var mesh := get_parent().get_node_or_null(mesh_name) as MeshInstance3D
 		if mesh:
@@ -282,10 +352,149 @@ func toggle_character() -> String:
 	match _character_index:
 		0: return "Lady Character"
 		1: return "Rahul"
+		3: return "Mixamo Soldier"
 		_: return "Legacy Avatar"
+
+func select_mixamo() -> String:
+	if mixamo_model == null:
+		return toggle_character()
+	_character_index = 1 if _character_index == 3 else 3
+	if model:
+		model.visible = false
+	if male_model:
+		male_model.visible = _character_index == 1
+	mixamo_model.visible = _character_index == 3
+	for mesh_name in ["Body", "Head", "Legs"]:
+		var mesh := get_parent().get_node_or_null(mesh_name) as MeshInstance3D
+		if mesh:
+			if mesh.mesh != null and not _cached_meshes.has(mesh_name):
+				_cached_meshes[mesh_name] = mesh.mesh
+			mesh.mesh = null
+			mesh.visible = false
+	return "Mixamo Soldier" if _character_index == 3 else "Rahul"
+
+func play_grenade() -> void:
+	if mixamo_model != null and mixamo_model.visible and mixamo_anim_player != null:
+		_start_mixamo_action("Throw_Grenade" if _prone > 0.5 else "Grenade_Throw", 1.2)
+
+func _setup_mixamo_animations() -> void:
+	if mixamo_anim_player == null:
+		return
+	mixamo_skeleton = mixamo_model.find_children("*", "Skeleton3D", true, false)[0] as Skeleton3D
+	preload("res://scripts/player/mixamo_animation_library.gd").prepare(mixamo_anim_player, mixamo_skeleton)
+	mixamo_anim_player.mixer_applied.connect(_apply_mixamo_pose)
+
+func _play_mixamo_clip(clip_name: String, custom_speed: float = 1.0) -> void:
+	if mixamo_anim_player == null or not mixamo_anim_player.has_animation(clip_name):
+		return
+	if _mixamo_current_clip != clip_name:
+		_mixamo_current_clip = clip_name
+		mixamo_anim_player.play(clip_name, 0.15)
+	mixamo_anim_player.speed_scale = custom_speed
+
+func _process_mixamo(delta: float, body: CharacterBody3D, speed: float, on_floor: bool) -> void:
+	if mixamo_anim_player == null:
+		return
+	_mixamo_action_lock = maxf(0.0, _mixamo_action_lock - delta)
+
+	if _dead:
+		if _prone > 0.5:
+			_play_mixamo_clip("Prone_Death")
+		elif _crouch > 0.5:
+			_play_mixamo_clip("Crouch_Death")
+		else:
+			_play_mixamo_clip("Death_From_The_Front")
+		return
+
+	if seated:
+		_play_mixamo_clip("Drive_Seated")
+		return
+
+	if body.get("swimming") == true:
+		_play_mixamo_clip("Swimming" if speed > 0.2 else "Floating")
+		return
+
+	var armed: bool = body.has_method("is_weapon_equipped") and body.is_weapon_equipped()
+	# city_gameplay uses attack_until for rifle shots as well as punches.
+	var striking := not armed and int(get_meta("attack_until", 0)) > Time.get_ticks_msec()
+	if striking and not _prev_striking:
+		var clip_name: String = _melee_combo[_melee_index % _melee_combo.size()]
+		_melee_index += 1
+		_start_mixamo_action(clip_name, 1.2)
+	_prev_striking = striking
+
+	var reloading: bool = float(body.get("weapon_reload_time")) > 0.0 if body.get("weapon_reload_time") != null else false
+	if reloading and not _mixamo_reload_active:
+		var duration := maxf(float(body.get("weapon_reload_time")), 0.1)
+		_start_mixamo_action("Reload", mixamo_anim_player.get_animation("Reload").length / duration)
+	_mixamo_reload_active = reloading
+	if _mixamo_action_lock > 0.0:
+		return
+
+	var firing := body.get("weapon_kick") != null and float(body.get("weapon_kick")) > 0.001
+
+	if not on_floor:
+		var jump: float = float(body.get("jump_velocity")) if body.get("jump_velocity") != null else 7.0
+		var flight := 2.0 * jump / maxf(float(ProjectSettings.get_setting("physics/3d/default_gravity")), 0.1)
+		if _air_time <= flight:
+			var clip := "Rifle_Jump" if armed else ("Running_Jump" if speed > 3.0 else "Jump")
+			_play_mixamo_clip(clip, mixamo_anim_player.get_animation(clip).length / flight)
+		else:
+			_play_mixamo_clip("Jumping_Down", 1.0)
+		return
+
+	# Prone stance
+	if _prone > 0.5:
+		if speed > 0.2:
+			_play_mixamo_locomotion("Moving_Backward_In_Prone_Position" if _moving_backward else "Prone_Forward", speed)
+		else:
+			_play_mixamo_clip("Prone_Firing_Rifle" if armed and firing else "Prone_Idle")
+		return
+
+	# Crouch stance
+	if _crouch > 0.5:
+		if speed > 0.2:
+			_play_mixamo_locomotion("Crouch_Walking", speed)
+		else:
+			_play_mixamo_clip("Idle_Crouching")
+		return
+
+	if armed and firing:
+		_play_mixamo_clip("Firing_Rifle_while_walking" if speed > 0.3 else "Firing_Rifle")
+		return
+
+	var lateral := (body.global_basis.inverse() * body.velocity).x
+	if speed > 0.3 and absf(lateral) > speed * 0.7:
+		_play_mixamo_locomotion(("Walk_Left_with_gun" if lateral > 0.0 else "Walk_Right_with_gun") if armed else "Strafe", speed)
+		return
+	# Backward travel takes priority over the forward jog threshold.
+	if speed > 0.3 and _moving_backward:
+		_play_mixamo_locomotion("Sprint_Backward", speed)
+		return
+	# Standing locomotion
+	if speed > 2.8:
+		if armed:
+			_play_mixamo_locomotion("Walk_With_Rifle", speed)
+		else:
+			_play_mixamo_locomotion("Jogging", speed)
+	elif speed > 0.3:
+		if armed:
+			_play_mixamo_locomotion("Walk_With_Rifle", speed)
+		elif _moving_backward:
+			_play_mixamo_locomotion("Sprint_Backward", speed)
+		else:
+			_play_mixamo_locomotion("Walk_Loop", speed)
+	else:
+		if armed:
+			_play_mixamo_clip("Rifle_Aiming_Idle")
+		else:
+			_play_mixamo_clip("Idle_Natural", 1.0)
 
 ## Hip-joint height above the feet, so a car seat can place the hips on its cushion.
 func hip_height() -> float:
+	if mixamo_skeleton != null and mixamo_model.visible:
+		var hip := mixamo_skeleton.find_bone("mixamorig_Hips")
+		return to_local(mixamo_skeleton.to_global(mixamo_skeleton.get_bone_global_rest(hip).origin)).y
 	return _hip.y if _hip.y > 0.1 else 0.95
 
 func _scale_realistic_feet() -> void:
@@ -390,6 +599,10 @@ func _process(delta: float) -> void:
 	if male_skeleton != null:
 		_pose_static_male(speed, speed > 0.1)
 		_apply_heading(scripted)
+	if male_skeleton != null and vehicle_entry_bend > 0.001:
+		_pose_male_bone("CC_Base_Spine01", Vector3.RIGHT, 0.2 + vehicle_entry_bend * 0.62)
+		_pose_male_bone("CC_Base_NeckTwist01", Vector3.RIGHT, -vehicle_entry_bend * 0.20)
+		male_skeleton.force_update_all_bone_transforms()
 	_pose_male_face()
 	_pose_actions(body)
 	_pose_hit_and_head(delta)
@@ -417,6 +630,8 @@ func _process(delta: float) -> void:
 		right_grip_target = saved_right
 	if seated and use_vehicle_grips and _seat > 0.95:
 		_pose_vehicle_grips()
+	if mixamo_model != null and mixamo_model.visible:
+		_process_mixamo(delta, body, speed, on_floor)
 
 ## Where each hand holds the M416, in the rifle's own space (it is 0.85 m long, z forward, y up, +x its left).
 ## The right hand takes the pistol grip, the left cups the handguard. Other rifles carry their own grips as
@@ -501,6 +716,14 @@ func _rotate_bone_about(bone_name: String, world_axis: Vector3, angle: float) ->
 
 ## Where the chest is (the top of the spine), so the rifle is carried at the chest in every stance.
 func chest_position() -> Vector3:
+	if mixamo_model != null and mixamo_model.visible:
+		var skeletons := mixamo_model.find_children("*", "Skeleton3D", true, false)
+		if not skeletons.is_empty():
+			var sk := skeletons[0] as Skeleton3D
+			var bone_idx := sk.find_bone("mixamorig_Spine2")
+			if bone_idx >= 0:
+				return sk.to_global(sk.get_bone_global_pose(bone_idx).origin)
+		return global_position + Vector3.UP * 1.2
 	if male_skeleton == null or male_model == null or not male_model.visible:
 		return Vector3.INF
 	var chest := male_skeleton.find_bone("CC_Base_Spine02")
@@ -508,6 +731,9 @@ func chest_position() -> Vector3:
 
 ## A hit from `from_position`: the chest and head jolt away from the shot.
 func play_hit(from_position: Vector3) -> void:
+	if mixamo_model != null and mixamo_model.visible and mixamo_anim_player != null:
+		var hits := ["Big_Side_Hit", "Kidney_Hit", "Hit_Reaction", "Medium_Hit_To_Head"]
+		_start_mixamo_action(hits[randi() % hits.size()], 1.2)
 	var direction := global_position - from_position
 	direction.y = 0.0
 	if direction.length_squared() > 0.0001:
@@ -516,6 +742,8 @@ func play_hit(from_position: Vector3) -> void:
 
 ## The body drops over in the direction the shot was travelling. reset_death() stands it back up.
 func play_death(from_position: Vector3) -> void:
+	if mixamo_model != null and mixamo_model.visible and mixamo_anim_player != null:
+		_play_mixamo_clip("Death_From_The_Front")
 	var direction := global_position - from_position
 	direction.y = 0.0
 	_death_forward = direction.length_squared() < 0.0001 or direction.dot(global_basis.z) > 0.0
@@ -529,6 +757,13 @@ func reset_death() -> void:
 	if male_model != null:
 		male_model.rotation = Vector3.ZERO
 		male_model.position.y = _male_base_height
+	if mixamo_model != null:
+		mixamo_model.rotation = Vector3.ZERO
+		mixamo_model.position = Vector3(0.0, _mixamo_base_height, 0.0)
+		_mixamo_current_clip = ""
+		_mixamo_action_lock = 0.0
+		_mixamo_reload_active = false
+		_play_mixamo_clip("Idle_Natural")
 
 func is_dead() -> bool:
 	return _dead
@@ -1003,6 +1238,12 @@ func _pose_male_driving() -> void:
 		var hip_joint: Vector3 = to_local(male_skeleton.global_transform * male_skeleton.get_bone_global_pose(thigh).origin)
 		# Each foot on its own side of the footwell, straight ahead of its hip.
 		var ankle := Vector3(hip_joint.x, foot_target.y + ANKLE_HEIGHT, foot_target.z)
+		if vehicle_foot_half_width > 0.0:
+			ankle.x = signf(hip_joint.x) * vehicle_foot_half_width
+		if vehicle_mount_swing > 0.001 and side == "R":
+			ankle.x -= vehicle_mount_swing * 0.55
+			ankle.y += vehicle_mount_swing * 0.40
+			ankle.z -= vehicle_mount_swing * 0.45
 		_solve_male_limb("CC_Base_%s_Thigh" % side, "CC_Base_%s_Calf" % side, "CC_Base_%s_Foot" % side, ankle,
 			Vector3(0.0, 0.6, 1.0))
 	if not use_vehicle_grips:
@@ -1079,7 +1320,8 @@ func _pose_male_local(bone_name: String, axis: Vector3, angle: float) -> void:
 ## Analytic two-bone arm solve in skeleton space. Uses the current rig lengths,
 ## preserving the shoulders, proportions, and the vehicle's fixed grip contacts.
 func _pose_vehicle_grips() -> void:
-	var rig := male_skeleton if male_model != null and male_model.visible else skeleton
+	var mixamo := mixamo_model != null and mixamo_model.visible
+	var rig := mixamo_skeleton if mixamo else (male_skeleton if male_model != null and male_model.visible else skeleton)
 	if rig == null:
 		return
 	for side in ["L", "R"]:
@@ -1087,6 +1329,11 @@ func _pose_vehicle_grips() -> void:
 		var upper_name := "CC_Base_%s_Upperarm" % side if male else "DEF-upper_arm.%s" % side
 		var lower_name := "CC_Base_%s_Forearm" % side if male else "DEF-forearm.%s" % side
 		var hand_name := "CC_Base_%s_Hand" % side if male else "DEF-hand.%s" % side
+		if mixamo:
+			var prefix := "mixamorig_Left" if side == "L" else "mixamorig_Right"
+			upper_name = prefix + "Arm"
+			lower_name = prefix + "ForeArm"
+			hand_name = prefix + "Hand"
 		var upper := rig.find_bone(upper_name)
 		var lower := rig.find_bone(lower_name)
 		var hand := rig.find_bone(hand_name)
@@ -1109,7 +1356,7 @@ func _pose_vehicle_grips() -> void:
 		var desired_elbow := shoulder + forward * along + bend * height
 		_aim_bone_segment(rig, upper, lower, desired_elbow)
 		_aim_bone_segment(rig, lower, hand, target)
-		if not male:
+		if not male and not mixamo:
 			for finger: String in FINGERS:
 				for joint in [".01", ".02", ".03"]:
 					_curl("DEF-%s%s.%s" % [finger, joint, side], 0.85)
@@ -1257,3 +1504,169 @@ func _pose_actions(body: CharacterBody3D) -> void:
 		_pose_male_bone("CC_Base_R_Forearm", Vector3.RIGHT, 0.35)
 		if swimming:
 			_pose_male_bone("CC_Base_L_Upperarm", Vector3.RIGHT, -swing)
+
+# Bounds in target space, including skin bind matrices (also works headless).
+func _skinned_model_bounds(target: Node3D) -> AABB:
+	var bounds := AABB()
+	var first := true
+	for mesh: MeshInstance3D in target.find_children("*", "MeshInstance3D", true, false):
+		var rig := mesh.get_node_or_null(mesh.skeleton) as Skeleton3D
+		if rig == null or mesh.skin == null:
+			continue
+		var palettes: Array[Transform3D] = []
+		var to_target := target.global_transform.affine_inverse() * rig.global_transform
+		for i in mesh.skin.get_bind_count():
+			var bone := rig.find_bone(mesh.skin.get_bind_name(i))
+			if bone < 0:
+				bone = mesh.skin.get_bind_bone(i)
+			palettes.append(to_target * rig.get_bone_global_pose(bone) * mesh.skin.get_bind_pose(i))
+		for surface in mesh.mesh.get_surface_count():
+			var arrays := mesh.mesh.surface_get_arrays(surface)
+			var vertices: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+			var bones: PackedInt32Array = arrays[Mesh.ARRAY_BONES]
+			var weights: PackedFloat32Array = arrays[Mesh.ARRAY_WEIGHTS]
+			var influences := bones.size() / vertices.size()
+			for vertex in vertices.size():
+				var point := Vector3.ZERO
+				for influence in influences:
+					var index := vertex * influences + influence
+					point += (palettes[bones[index]] * vertices[vertex]) * weights[index]
+				if first:
+					bounds = AABB(point, Vector3.ZERO)
+					first = false
+				else:
+					bounds = bounds.expand(point)
+	return bounds
+
+func _start_mixamo_action(clip: String, speed: float = 1.0) -> void:
+	_mixamo_current_clip = ""
+	_play_mixamo_clip(clip, speed)
+	_mixamo_action_lock = mixamo_anim_player.get_animation(clip).length / speed
+
+# AnimationMixer applies first; contacts and doorway poses must be solved afterwards.
+func _apply_mixamo_pose() -> void:
+	if mixamo_skeleton == null or not mixamo_model.visible:
+		return
+	var rig := mixamo_skeleton
+	var hip := rig.find_bone("mixamorig_Hips")
+	# Full-body standing actions must not stand up a crouched/prone collider.
+	if not _dead and not seated and _mixamo_action_lock > 0.0 and (_prone > 0.5 or _crouch > 0.5):
+		var base := mixamo_anim_player.get_animation("Prone_Idle" if _prone > 0.5 else "Idle_Crouching")
+		var time := fposmod(mixamo_anim_player.current_animation_position,base.length)
+		for track in base.get_track_count():
+			var name := String(base.track_get_path(track)).get_slice(":",1)
+			if not ("Hips" in name or "UpLeg" in name or "Leg" in name or "Foot" in name or "Toe" in name or "Spine" in name):
+				continue
+			var bone := rig.find_bone(name)
+			if base.track_get_type(track) == Animation.TYPE_POSITION_3D and "Hips" in name:
+				rig.set_bone_pose_position(bone, base.position_track_interpolate(track, time))
+			elif base.track_get_type(track) == Animation.TYPE_ROTATION_3D:
+				rig.set_bone_pose_rotation(bone, base.rotation_track_interpolate(track, time))
+	if seated:
+		var position := rig.get_bone_pose_position(hip)
+		var desired := rig.to_local(to_global(Vector3(0.0, hip_height(), 0.0)))
+		rig.set_bone_pose_position(hip, position.lerp(desired, _seat))
+	if vehicle_entry_bend > 0.001:
+		var spine := rig.find_bone("mixamorig_Spine1")
+		var axis := rig.global_basis.orthonormalized().inverse() * global_basis.x
+		var pose := rig.get_bone_global_pose(spine)
+		var parent := rig.get_bone_parent(spine)
+		var rotation := Basis(Quaternion(axis.normalized(), vehicle_entry_bend * 0.7)) * pose.basis
+		rig.set_bone_pose_rotation(spine, (rig.get_bone_global_pose(parent).basis.inverse() * rotation).get_rotation_quaternion())
+	if seated:
+		for side in ["Left", "Right"]:
+			var foot := foot_target
+			foot.x += (1.0 if side == "Left" else -1.0) * (vehicle_foot_half_width if vehicle_foot_half_width > 0.0 else 0.12)
+			foot.y += ANKLE_HEIGHT
+			if side == "Right" and vehicle_mount_swing > 0.0:
+				foot += Vector3(-0.5, 0.45, -0.5) * vehicle_mount_swing
+			_solve_mixamo_limb(side+"UpLeg", side+"Leg", side+"Foot", foot, Vector3(0,0,1))
+			var ankle := rig.find_bone("mixamorig_"+side+"Foot")
+			var toe := rig.find_bone("mixamorig_"+side+"ToeBase")
+			var toe_target := rig.to_local(to_global(foot+Vector3(0.0,-0.05,0.13)))
+			_aim_bone_segment(rig,ankle,toe,toe_target)
+		if not use_vehicle_grips:
+			var centre := Vector3(0.0, hip_height()+WHEEL_ABOVE_HIP, WHEEL_AHEAD_OF_HIP)
+			var turn := -clampf(steering,-1.0,1.0)*0.6
+			left_grip_target = centre + Vector3(cos(turn),sin(turn),0.0)*WHEEL_RADIUS
+			right_grip_target = centre - Vector3(cos(turn),sin(turn),0.0)*WHEEL_RADIUS
+		_pose_vehicle_grips()
+	elif get_parent().has_method("is_weapon_equipped") and get_parent().is_weapon_equipped() and _mixamo_action_lock <= 0.0:
+		_rotate_mixamo_world("mixamorig_Spine1", Vector3.UP, -0.28)
+		_rotate_mixamo_world("mixamorig_Spine2", Vector3.UP, -0.28)
+		_rotate_mixamo_world("mixamorig_Head", Vector3.UP, 0.40)
+		var weapon: Node3D = get_parent().weapon
+		var saved_left := left_grip_target
+		var saved_right := right_grip_target
+		var fingers := {"Left": Vector3(0,0.1,0.995).normalized(), "Right": Vector3(0,-0.25,0.97).normalized()}
+		left_grip_target = to_local(weapon.to_global(weapon.get_meta("grip_left", GRIP_LEFT))-weapon.global_basis*fingers.Left*WRIST_TO_PALM)
+		right_grip_target = to_local(weapon.to_global(weapon.get_meta("grip_right", GRIP_RIGHT))-weapon.global_basis*fingers.Right*WRIST_TO_PALM)
+		_pose_vehicle_grips()
+		for side in ["Left","Right"]:
+			_orient_mixamo_hand(side, weapon.global_basis*fingers[side], weapon.global_basis*Vector3(-1 if side=="Left" else 1,0,0))
+		left_grip_target = saved_left
+		right_grip_target = saved_right
+	rig.force_update_all_bone_transforms()
+
+func _solve_mixamo_limb(upper_name: String, lower_name: String, tip_name: String, target: Vector3, pole: Vector3) -> void:
+	var rig := mixamo_skeleton
+	var upper := rig.find_bone("mixamorig_"+upper_name)
+	var lower := rig.find_bone("mixamorig_"+lower_name)
+	var tip := rig.find_bone("mixamorig_"+tip_name)
+	rig.force_update_all_bone_transforms()
+	var start := rig.get_bone_global_pose(upper).origin
+	var joint := rig.get_bone_global_pose(lower).origin
+	var end := rig.get_bone_global_pose(tip).origin
+	var goal := rig.to_local(to_global(target))
+	var a := start.distance_to(joint)
+	var b := joint.distance_to(end)
+	var reach := clampf(start.distance_to(goal), absf(a-b)+0.001, a+b-0.001)
+	var forward := (goal-start).normalized()
+	var hint := rig.global_basis.inverse()*global_basis*pole
+	var bend := (hint-forward*hint.dot(forward)).normalized()
+	var along := (a*a+reach*reach-b*b)/(2.0*reach)
+	var height := sqrt(maxf(0.0,a*a-along*along))
+	_aim_bone_segment(rig,upper,lower,start+forward*along+bend*height)
+	_aim_bone_segment(rig,lower,tip,start+forward*reach)
+
+func _play_mixamo_locomotion(clip: String, speed: float) -> void:
+	var native := float(mixamo_anim_player.get_animation(clip).get_meta("native_speed", 1.0))
+	_play_mixamo_clip(clip, clampf(speed/maxf(native,0.1),0.2,5.0))
+
+func _orient_mixamo_hand(side: String, finger_world: Vector3, palm_world: Vector3) -> void:
+	var rig := mixamo_skeleton
+	var hand := rig.find_bone("mixamorig_"+side+"Hand")
+	var middle := rig.find_bone("mixamorig_"+side+"HandMiddle1")
+	var thumb := rig.find_bone("mixamorig_"+side+"HandThumb1")
+	if mini(hand,mini(middle,thumb)) < 0:
+		return
+	var rest := rig.get_bone_global_rest(hand)
+	var finger := (rig.get_bone_global_rest(middle).origin-rest.origin).normalized()
+	var across := rig.get_bone_global_rest(thumb).origin-rest.origin
+	across = (across-finger*across.dot(finger)).normalized()
+	var local_finger := rest.basis.inverse()*finger
+	var local_palm := rest.basis.inverse()*finger.cross(across)*(1.0 if side=="Left" else -1.0)
+	var local_frame := Basis(local_finger,local_palm,local_finger.cross(local_palm))
+	var inverse := rig.global_basis.orthonormalized().inverse()
+	var direction := (inverse*finger_world).normalized()
+	var palm := inverse*palm_world
+	palm = (palm-direction*palm.dot(direction)).normalized()
+	var target := Basis(direction,palm,direction.cross(palm))
+	var parent := rig.get_bone_parent(hand)
+	rig.set_bone_pose_rotation(hand,(rig.get_bone_global_pose(parent).basis.orthonormalized().inverse()*target*local_frame.inverse()).get_rotation_quaternion())
+
+func _rotate_mixamo_world(name: String, world_axis: Vector3, angle: float) -> void:
+	var rig := mixamo_skeleton
+	var bone := rig.find_bone(name)
+	rig.force_update_all_bone_transforms()
+	var parent := rig.get_bone_parent(bone)
+	var parent_basis := rig.get_bone_global_pose(parent).basis.orthonormalized() if parent >= 0 else Basis.IDENTITY
+	var axis := parent_basis.inverse() * (rig.global_basis.orthonormalized().inverse() * world_axis)
+	rig.set_bone_pose_rotation(bone,Quaternion(axis.normalized(),angle)*rig.get_bone_pose_rotation(bone))
+
+## Mixamo's Spine2 is higher on the chest than Rahul's CC Spine02.
+func weapon_shoulder_lift() -> float:
+	return 0.10 if mixamo_model != null and mixamo_model.visible else 0.26
+
+func weapon_prone_reach() -> float:
+	return 0.38 if mixamo_model != null and mixamo_model.visible else 0.50

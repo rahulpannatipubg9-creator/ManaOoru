@@ -16,3 +16,6 @@ Code: `scripts/network/` (squad, sync), `scripts/tactical/` (Team Deathmatch). D
 ### Never trust a client's numbers
 - The host decides damage from the rifle id, limits the fire rate per rifle, and checks positions, range and
   walls (`_claim_problem()`). New claims must go through the same checks.
+
+### Shared character animations must tolerate remote controller fields (2026-10-31)
+- The local player exposes `weapon_kick` and reload timing; `NetworkPlayer` does not. Shared animation selection must read optional state through `get()` guards. Keep local and remote shoulder anchors consistent when a different visible skeleton is selected. Validated with `weapon_switch_regression`; no RPC format changed.

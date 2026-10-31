@@ -67,7 +67,9 @@
           "height_z": 1.12
         },
         "placement_reasoning": "Authentic placement of 2019 Lamborghini Aventador SVJ in Hotel Sai Leela Portico (sai_leela_hotel). Clean ground alignment with box collision."
-      }
+      },
+      "drivable_scene": "res://scenes/vehicles/imported/lamborghini_aventador_svj.tscn",
+      "vehicle_rig_profile": "lamborghini_aventador_svj"
     },
     {
       "id": "bmw_i8",
@@ -101,7 +103,9 @@
           "height_z": 1.36
         },
         "placement_reasoning": "Authentic placement of 2015 BMW i8 Hybrid in Hotel Sai Leela Portico (sai_leela_hotel). Clean ground alignment with box collision."
-      }
+      },
+      "drivable_scene": "res://scenes/vehicles/imported/bmw_i8.tscn",
+      "vehicle_rig_profile": "bmw_i8"
     },
     {
       "id": "porsche_boxster",
@@ -135,7 +139,9 @@
           "height_z": 1.28
         },
         "placement_reasoning": "Authentic placement of Porsche Boxster Roadster in Hotel Sai Leela Courtyard (sai_leela_hotel). Clean ground alignment with box collision."
-      }
+      },
+      "drivable_scene": "res://scenes/vehicles/imported/porsche_boxster.tscn",
+      "vehicle_rig_profile": "porsche_boxster"
     },
     {
       "id": "tesla_model_x",
@@ -169,7 +175,9 @@
           "height_z": 1.67
         },
         "placement_reasoning": "Authentic placement of Tesla Model X in Hotel Sai Leela Courtyard (sai_leela_hotel). Clean ground alignment with box collision."
-      }
+      },
+      "drivable_scene": "res://scenes/vehicles/imported/tesla_model_x.tscn",
+      "vehicle_rig_profile": "tesla_model_x"
     },
     {
       "id": "toyota_supra_gr",
@@ -203,7 +211,9 @@
           "height_z": 1.35
         },
         "placement_reasoning": "Authentic placement of Toyota Supra GR in Godavari River Bridge Highway (godavari_bridge). Clean ground alignment with box collision."
-      }
+      },
+      "drivable_scene": "res://scenes/vehicles/imported/toyota_supra_gr.tscn",
+      "vehicle_rig_profile": "toyota_supra_gr"
     },
     {
       "id": "hydrospace_benelli_s4",
@@ -271,7 +281,9 @@
           "height_z": 1.81
         },
         "placement_reasoning": "Authentic placement of 2014 BMW X5 in Vidyanagar Residential Quarter (vidyanagar_residential). Clean ground alignment with box collision."
-      }
+      },
+      "drivable_scene": "res://scenes/vehicles/imported/bmw_x5.tscn",
+      "vehicle_rig_profile": "bmw_x5"
     },
     {
       "id": "bmw_x6",
@@ -305,7 +317,9 @@
           "height_z": 1.7
         },
         "placement_reasoning": "Authentic placement of BMW X6 xDrive50i in Vidyanagar Residential Quarter (vidyanagar_residential). Clean ground alignment with box collision."
-      }
+      },
+      "drivable_scene": "res://scenes/vehicles/imported/bmw_x6.tscn",
+      "vehicle_rig_profile": "bmw_x6"
     },
     {
       "id": "mini_cooper_s",
@@ -339,7 +353,9 @@
           "height_z": 1.51
         },
         "placement_reasoning": "Authentic placement of 2015 Mini Cooper S in Vidyanagar Residential Quarter (vidyanagar_residential). Clean ground alignment with box collision."
-      }
+      },
+      "drivable_scene": "res://scenes/vehicles/imported/mini_cooper_s.tscn",
+      "vehicle_rig_profile": "mini_cooper_s"
     },
     {
       "id": "mazda_cx5",
@@ -373,7 +389,9 @@
           "height_z": 1.84
         },
         "placement_reasoning": "Authentic placement of Mazda CX-5 in Vidyanagar Residential Quarter (vidyanagar_residential). Clean ground alignment with box collision."
-      }
+      },
+      "drivable_scene": "res://scenes/vehicles/imported/mazda_cx5.tscn",
+      "vehicle_rig_profile": "mazda_cx5"
     },
     {
       "id": "volvo_xc40",
@@ -407,7 +425,9 @@
           "height_z": 1.62
         },
         "placement_reasoning": "Authentic placement of Volvo XC40 in Vidyanagar Residential Quarter (vidyanagar_residential). Clean ground alignment with box collision."
-      }
+      },
+      "drivable_scene": "res://scenes/vehicles/imported/volvo_xc40.tscn",
+      "vehicle_rig_profile": "volvo_xc40"
     },
     {
       "id": "audi_q8",
@@ -441,7 +461,9 @@
           "height_z": 1.72
         },
         "placement_reasoning": "Authentic placement of Audi Q8 2019 in Vidyanagar Residential Quarter (vidyanagar_residential). Clean ground alignment with box collision."
-      }
+      },
+      "drivable_scene": "res://scenes/vehicles/imported/audi_q8.tscn",
+      "vehicle_rig_profile": "audi_q8"
     },
     {
       "id": "volkswagen_id",
@@ -475,7 +497,9 @@
           "height_z": 1.76
         },
         "placement_reasoning": "Authentic placement of Volkswagen I.D. in Vidyanagar Residential Quarter (vidyanagar_residential). Clean ground alignment with box collision."
-      }
+      },
+      "drivable_scene": "res://scenes/vehicles/imported/volkswagen_id.tscn",
+      "vehicle_rig_profile": "volkswagen_id"
     },
     {
       "id": "mercedes_sedan",
@@ -509,7 +533,9 @@
           "height_z": 0.64
         },
         "placement_reasoning": "Authentic placement of Mercedes-Benz Luxury Sedan in Vidyanagar Residential Quarter (vidyanagar_residential). Clean ground alignment with box collision."
-      }
+      },
+      "drivable_scene": "res://scenes/vehicles/imported/mercedes_sedan.tscn",
+      "vehicle_rig_profile": "mercedes_sedan"
     },
     {
       "id": "scania_haul_truck",
@@ -543,7 +569,9 @@
           "height_z": 2.07
         },
         "placement_reasoning": "Authentic placement of Scania 2013 Commercial Truck in Singareni Collieries OCP 5 Incline (coal_mine). Clean ground alignment with box collision."
-      }
+      },
+      "drivable_scene": "res://scenes/vehicles/imported/scania_haul_truck.tscn",
+      "vehicle_rig_profile": "scania_haul_truck"
     },
     {
       "id": "ford_transit_camion",
@@ -577,7 +605,9 @@
           "height_z": 2.71
         },
         "placement_reasoning": "Authentic placement of Ford Transit Utility Van/Truck in Singareni Collieries OCP 5 Incline (coal_mine). Clean ground alignment with box collision."
-      }
+      },
+      "drivable_scene": "res://scenes/vehicles/imported/ford_transit_camion.tscn",
+      "vehicle_rig_profile": "ford_transit_camion"
     },
     {
       "id": "can_am_maverick",
@@ -611,7 +641,9 @@
           "height_z": 1.77
         },
         "placement_reasoning": "Authentic placement of Can-Am Maverick Buggy 2019 in Singareni Collieries OCP 5 Incline (coal_mine). Clean ground alignment with box collision."
-      }
+      },
+      "drivable_scene": "res://scenes/vehicles/imported/can_am_maverick.tscn",
+      "vehicle_rig_profile": "can_am_maverick"
     },
     {
       "id": "mercedes_amg_gla35",
@@ -645,7 +677,9 @@
           "height_z": 1.66
         },
         "placement_reasoning": "Authentic placement of Mercedes-AMG GLA 35 4MATIC in Chowrastha Urban Crossroads (chowrasta). Clean ground alignment with box collision."
-      }
+      },
+      "drivable_scene": "res://scenes/vehicles/imported/mercedes_amg_gla35.tscn",
+      "vehicle_rig_profile": "mercedes_amg_gla35"
     },
     {
       "id": "range_rover_classic",
@@ -679,7 +713,9 @@
           "height_z": 0.98
         },
         "placement_reasoning": "Authentic placement of Land Rover Range Rover in Saturday Market & Commercial Strip (market_street). Clean ground alignment with box collision."
-      }
+      },
+      "drivable_scene": "res://scenes/vehicles/imported/range_rover_classic.tscn",
+      "vehicle_rig_profile": "range_rover_classic"
     },
     {
       "id": "audi_q8_custom",
@@ -713,7 +749,9 @@
           "height_z": 1.71
         },
         "placement_reasoning": "Authentic placement of Audi Q8 Custom in Saturday Market & Commercial Strip (market_street). Clean ground alignment with box collision."
-      }
+      },
+      "drivable_scene": "res://scenes/vehicles/imported/audi_q8_custom.tscn",
+      "vehicle_rig_profile": "audi_q8_custom"
     },
     {
       "id": "ford_mustang_mach_40",
@@ -747,7 +785,9 @@
           "height_z": 1.2
         },
         "placement_reasoning": "Custom classic muscle sports car stationed on the Godavari Bridge approach."
-      }
+      },
+      "drivable_scene": "res://scenes/vehicles/imported/ford_mustang_mach_40.tscn",
+      "vehicle_rig_profile": "ford_mustang_mach_40"
     },
     {
       "id": "ford_f150_lightning",
@@ -781,7 +821,9 @@
           "height_z": 1.89
         },
         "placement_reasoning": "Modern electric full-size pickup parked in Hotel Sai Leela guest courtyard."
-      }
+      },
+      "drivable_scene": "res://scenes/vehicles/imported/ford_f150_lightning.tscn",
+      "vehicle_rig_profile": "ford_f150_lightning"
     },
     {
       "id": "ford_f150_raptor_2021",
@@ -815,12 +857,16 @@
           "height_z": 2.01
         },
         "placement_reasoning": "Heavy-duty off-road pickup deployed at the Singareni Collieries OCP 5 mining worksite."
-      }
+      },
+      "drivable_scene": "res://scenes/vehicles/imported/ford_f150_raptor_2021.tscn",
+      "vehicle_rig_profile": "ford_f150_raptor_2021"
     },
     {
       "id": "royal_enfield_bullet",
       "name": "Royal Enfield Bullet 350 Classic",
       "model_path": "res://assets/models/vehicles/royal_enfield_bullet/royal_enfield_bullet.glb",
+      "drivable_scene": "res://scenes/vehicles/royal_enfield_bullet.tscn",
+      "is_drivable": true,
       "category": "vehicles",
       "location_key": "vidyanagar_residential",
       "location_name": "Vidyanagar Residential Quarter",
@@ -889,6 +935,8 @@
       "id": "indian_tgsrtc_bus",
       "name": "TGSRTC Super Luxury Express Bus",
       "model_path": "res://assets/models/vehicles/indian_tgsrtc_bus/indian_tgsrtc_bus.glb",
+      "drivable_scene": "res://scenes/vehicles/imported/indian_tgsrtc_bus.tscn",
+      "is_drivable": true,
       "category": "vehicles",
       "location_key": "bus_station",
       "location_name": "TGSRTC Bus Station Depot",
@@ -917,7 +965,8 @@
           "height_z": 3.21
         },
         "placement_reasoning": "State transport passenger bus stationed at the main Godavarikhani TGSRTC Bus Station terminal bay."
-      }
+      },
+      "vehicle_rig_profile": "indian_tgsrtc_bus"
     },
     {
       "id": "dodge_charger_f8",
@@ -951,7 +1000,9 @@
           "height_z": 2.03
         },
         "placement_reasoning": "High-performance muscle car parked in Hotel Sai Leela visitor parking."
-      }
+      },
+      "drivable_scene": "res://scenes/vehicles/imported/dodge_charger_f8.tscn",
+      "vehicle_rig_profile": "dodge_charger_f8"
     },
     {
       "id": "ferrari_250_testa_rossa",
@@ -985,7 +1036,9 @@
           "height_z": 0.97
         },
         "placement_reasoning": "Classic collector supercar showcased in Hotel Sai Leela VIP portico."
-      }
+      },
+      "drivable_scene": "res://scenes/vehicles/imported/ferrari_250_testa_rossa.tscn",
+      "vehicle_rig_profile": "ferrari_250_testa_rossa"
     },
     {
       "id": "alfa_romeo_155_v6",
@@ -1019,7 +1072,9 @@
           "height_z": 1.33
         },
         "placement_reasoning": "Performance touring racecar stationed at Godavari River Bridge highway approach."
-      }
+      },
+      "drivable_scene": "res://scenes/vehicles/imported/alfa_romeo_155_v6.tscn",
+      "vehicle_rig_profile": "alfa_romeo_155_v6"
     },
     {
       "id": "lamborghini_diablo_sv",
@@ -1053,7 +1108,9 @@
           "height_z": 1.12
         },
         "placement_reasoning": "Classic 90s supercar stationed along the Godavari River Bridge northern approach highway."
-      }
+      },
+      "drivable_scene": "res://scenes/vehicles/imported/lamborghini_diablo_sv.tscn",
+      "vehicle_rig_profile": "lamborghini_diablo_sv"
     },
     {
       "id": "sa342m_gazelle_helicopter",
@@ -1121,7 +1178,9 @@
           "height_z": 1.67
         },
         "placement_reasoning": "High performance 1990s American muscle coupe parked on the Godavari River Bridge Highway shoulder."
-      }
+      },
+      "drivable_scene": "res://scenes/vehicles/imported/roush_mustang_96.tscn",
+      "vehicle_rig_profile": "roush_mustang_96"
     },
     {
       "id": "shelby_patrol_13",
@@ -1155,7 +1214,9 @@
           "height_z": 1.46
         },
         "placement_reasoning": "Highway patrol pursuit interceptor stationed at Singareni OCP 5 / Ramagundam security checkpoint."
-      }
+      },
+      "drivable_scene": "res://scenes/vehicles/imported/shelby_patrol_13.tscn",
+      "vehicle_rig_profile": "shelby_patrol_13"
     },
     {
       "id": "shelby_cobra_68",
@@ -1189,7 +1250,9 @@
           "height_z": 1.33
         },
         "placement_reasoning": "Pristine vintage classic muscle car showcased at Hotel Sai Leela VIP courtyard."
-      }
+      },
+      "drivable_scene": "res://scenes/vehicles/imported/shelby_cobra_68.tscn",
+      "vehicle_rig_profile": "shelby_cobra_68"
     },
     {
       "id": "little_bird_mh6",
@@ -1257,7 +1320,9 @@
           "height_z": 2.22
         },
         "placement_reasoning": "Low-floor public transit city commuter bus stationed at TGSRTC Godavarikhani bus station depot bay 2."
-      }
+      },
+      "drivable_scene": "res://scenes/vehicles/imported/city_transit_bus.tscn",
+      "vehicle_rig_profile": "city_transit_bus"
     }
   ]
 }

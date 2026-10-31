@@ -1,0 +1,103 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/vehicle/imported_vehicle.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/camera/camera_controller.gd" id="2"]
+[ext_resource type="PackedScene" path="res://assets/models/vehicles/city_transit_bus/city_transit_bus_rig.glb" id="3"]
+[ext_resource type="Script" path="res://scripts/player/engine_sound.gd" id="4"]
+[ext_resource type="Script" path="res://scripts/player/drivetrain_profile.gd" id="5"]
+
+[sub_resource type="Resource" id="Drivetrain"]
+script = ExtResource("5")
+gear_ratios = Array[float]([3.43, 2.01, 1.42, 1, 0.83, 0.59])
+reverse_ratio = 3.2
+final_drive = 5.13
+driveline_efficiency = 0.88
+automatic_available = true
+electric_motor = false
+shift_time = 0.3
+idle_rpm = 650.0
+redline_rpm = 2600.0
+torque_curve = Array[Vector2]([Vector2(650, 396.0), Vector2(850, 858.0), Vector2(1430.0, 1100), Vector2(2028.0, 1045.0), Vector2(2600, 638.0)])
+launch_rpm = 1700.0
+launch_torque_ratio = 1.4
+cylinders = 6
+diesel_clatter = 0.5
+turbo_whine = 0.04
+
+[sub_resource type="BoxShape3D" id="BodyCollision"]
+size = Vector3(2.58599, 2.6843, 11.067)
+
+[node name="CityTransitBus" type="RigidBody3D" groups=["enterable_vehicle"]]
+script = ExtResource("1")
+vehicle_id = "city_transit_bus"
+road_speed_limit = 25.0
+vehicle_mass = 11200.0
+wheel_radius = 0.55633
+suspension_rest_length = 0.34367
+suspension_bump_travel = 0.16
+suspension_droop_travel = 0.17
+suspension_frequency = 1.25
+suspension_damping_ratio = 0.6
+center_of_mass_height = 0.6
+center_of_mass_forward = 0.1
+braking_acceleration = 6.5
+drag_area = 5.408
+rolling_resistance = 0.012
+tyre_friction = 1.25
+max_steer_angle = 0.52
+high_speed_steer_share = 0.17
+rear_wheel_drive = true
+front_wheel_drive = false
+front_drive_share = 0.5
+seat_hip = Vector3(0.56476, 1.4, 4.046)
+pedal_point = Vector3(0.56476, 1.05, 4.696)
+entry_half_width = 1.486
+left_hand_grip = Vector3(0.73476, 1.8, 4.466)
+right_hand_grip = Vector3(0.39476, 1.8, 4.466)
+drivetrain = SubResource("Drivetrain")
+
+[node name="Chassis" type="Node3D" parent="."]
+
+[node name="FrontIndicator" type="Marker3D" parent="Chassis"]
+position = Vector3(0.0, 0.4, 5.95)
+
+[node name="FrontLeftWheel" type="Node3D" parent="."]
+position = Vector3(-1.08726, 0.55633, 3.21578)
+rotation = Vector3(0, 0, 1.5707963)
+
+[node name="FrontRightWheel" type="Node3D" parent="."]
+position = Vector3(1.08726, 0.55633, 3.21578)
+rotation = Vector3(0, 0, 1.5707963)
+
+[node name="RearLeftWheel" type="Node3D" parent="."]
+position = Vector3(-1.06483, 0.55633, -3.21578)
+rotation = Vector3(0, 0, 1.5707963)
+
+[node name="RearRightWheel" type="Node3D" parent="."]
+position = Vector3(1.06482, 0.55633, -3.21578)
+rotation = Vector3(0, 0, 1.5707963)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("BodyCollision")
+position = Vector3(0.0, 1.46215, 0.0)
+
+[node name="Model" parent="." instance=ExtResource("3")]
+
+[node name="CameraPivot" type="Node3D" parent="."]
+position = Vector3(0.0, 3.1843, 0.0)
+script = ExtResource("2")
+first_person_offset = Vector3(0.56476, 2.08, 4.146)
+first_person_follows_body = true
+first_person_min_pitch = -0.6
+first_person_max_pitch = 0.5
+
+[node name="SpringArm3D" type="SpringArm3D" parent="CameraPivot"]
+spring_length = 14.875
+collision_mask = 1
+margin = 0.2
+
+[node name="Camera3D" type="Camera3D" parent="CameraPivot/SpringArm3D"]
+fov = 68.0
+
+[node name="EngineAudio" type="AudioStreamPlayer3D" parent="."]
+script = ExtResource("4")

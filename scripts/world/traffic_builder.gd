@@ -2,7 +2,7 @@ class_name TrafficBuilder
 extends Node3D
 
 const TrafficVehicleScene := preload("res://scripts/world/traffic_vehicle.gd")
-const MAX_TRAFFIC := 10
+const MAX_TRAFFIC := 24
 const TRAFFIC_RADIUS := 1000.0
 const COLORS := [Color("#c13d32"), Color("#ece7d9"), Color("#315b91"), Color("#555b5f"), Color("#e0a52e"), Color("#447447")]
 
@@ -47,14 +47,32 @@ func build(world: Node, data: MapData) -> void:
 		vehicle.route = route
 		var surface_height := RoadStyle.surface_height(str(road.kind))
 		vehicle.ground_sampler = func(point: Vector2) -> float: return world.ground_height(point) + surface_height
-		vehicle.speed = 5.5 + float(index % 4) * 1.0
-		# The detailed Tuk Tuk is player-drivable. Ambient vehicles are not, so
-		# don't show a second Tuk Tuk that looks usable but cannot be entered.
-		vehicle.vehicle_kind = "bus" if index == 0 else ("municipal" if index == 4 else ("suv" if index == 3 or index == 7 else ("auto" if index % 3 == 0 else "car")))
-		if index == 2:
+		# Distribute vehicles authentically across Godavarikhani roads
+		if index == 0:
+			vehicle.vehicle_kind = "bus"
+			vehicle.speed = 5.2
+		elif index == 4:
+			vehicle.vehicle_kind = "municipal"
+			vehicle.speed = 4.8
+		elif index == 2:
 			vehicle.vehicle_kind = "scooter"
 			vehicle.speed = 3.5
 			vehicle.name = "TwoRiderScooter"
+		elif index in [1, 5, 8, 12, 16, 20]:
+			vehicle.vehicle_kind = "auto"
+			vehicle.speed = 5.0 + float(index % 3) * 0.6
+		elif index in [3, 9, 15, 21]:
+			vehicle.vehicle_kind = "bullet"
+			vehicle.speed = 6.2 + float(index % 3) * 0.8
+		elif index in [7, 13, 19]:
+			vehicle.vehicle_kind = "avenger"
+			vehicle.speed = 6.0 + float(index % 3) * 0.7
+		elif index in [6, 11, 18]:
+			vehicle.vehicle_kind = "suv"
+			vehicle.speed = 6.5
+		else:
+			vehicle.vehicle_kind = "car"
+			vehicle.speed = 5.8 + float(index % 4) * 0.6
 		vehicle.body_color = COLORS[index % COLORS.size()]
 		vehicle.signal_group = index % 2
 		vehicle.signal_controller = world.signage

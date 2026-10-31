@@ -7,8 +7,8 @@ extends Node3D
 ## creating a crowd of expensive skinned characters.
 
 const PEDESTRIAN_SCENE := preload("res://scenes/world/pedestrian.tscn")
-const MAX_SHOP_VISITORS := 10
-const MAX_CROSSING_PAIRS := 3
+const MAX_SHOP_VISITORS := 16
+const MAX_CROSSING_PAIRS := 5
 const SHIRTS := [Color("#2d6b4f"), Color("#354e83"), Color("#a34c35"), Color("#704a2e"), Color("#755491")]
 const SKINS := [Color("#7d4733"), Color("#a96b4a"), Color("#c98a64"), Color("#6d3f2d")]
 const ACTIVE_SHOP_KINDS := ["bakery", "tea", "general", "wine", "butcher", "dairy", "convenience", "supermarket", "fast_food", "pharmacy", "greengrocer", "car_wash", "fuel"]

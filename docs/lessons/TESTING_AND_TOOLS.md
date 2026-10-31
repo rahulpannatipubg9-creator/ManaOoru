@@ -81,3 +81,9 @@
 - Two Claude sessions worked in ManaOoru at once (player v2 swap and the AK-47).
 - **Rule:** back up or diff the files you will change, and check they are unchanged just before writing; merge by
   hand if not. Never overwrite someone else's change with an older copy.
+
+### Settings navigation and live-match input (2026-10-31)
+- A settings close may fail to save: callbacks must check panel.visible before opening missions or changing maps.
+- Live multiplayer deliberately does not pause SceneTree. Include visible settings in the shared input gate so movement, gyro and firing stop locally while the match continues.
+- Numeric slider labels need explicit refresh when a restored value equals the initial minimum; value_changed otherwise does not fire.
+- Capture helpers should call settings navigation instead of traversing fixed parent chains.

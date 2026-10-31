@@ -44,6 +44,11 @@ func _spawn_asset(world: Node, data: Dictionary) -> void:
 		push_warning("CustomAssetPlacements: Model path not found: " + model_path)
 		return
 	
+	var drivable_path: String = data.get("drivable_scene", "")
+	if not drivable_path.is_empty():
+		_spawn_drivable_asset(world, data, drivable_path)
+		return
+
 	var scene := load(model_path) as PackedScene
 	if scene == null:
 		push_warning("CustomAssetPlacements: Failed to load scene: " + model_path)
@@ -175,3 +180,37 @@ func _calculate_aabb(root: Node3D) -> AABB:
 	total_aabb.size.y = clampf(total_aabb.size.y, 0.2, 30.0)
 	total_aabb.size.z = clampf(total_aabb.size.z, 0.2, 30.0)
 	return total_aabb
+
+## Vehicle scenes own their collision, camera, audio and wheel rigs. Never add
+## the decorative static collider to a drivable vehicle or it becomes a wall.
+func _spawn_drivable_asset(world: Node, data: Dictionary, scene_path: String) -> void:
+	var scene := load(scene_path) as PackedScene
+	if scene == null:
+		push_error("CustomAssetPlacements: Missing vehicle scene: " + scene_path)
+		return
+	var vehicle := scene.instantiate() as PhysicsBody3D
+	if vehicle == null:
+		push_error("CustomAssetPlacements: Vehicle root must be a physics body: " + scene_path)
+		return
+	vehicle.name = data.get("id", "custom_vehicle")
+	var coordinates: Array = data.get("position", [0.0, 0.0, 0.0])
+	var x := float(coordinates[0])
+	var z := float(coordinates[2])
+	var y := float(world.ground_height(Vector2(x, z))) if world.has_method("ground_height") else float(coordinates[1])
+	vehicle.position = Vector3(x, y + 0.1, z)
+	vehicle.rotation.y = deg_to_rad(float(data.get("rotation_y_deg", 0.0)))
+	vehicle.set_meta("custom_asset", true)
+	vehicle.set_meta("location_name", data.get("location_name", "Unknown"))
+	vehicle.set_meta("placement_spawn", true)
+	vehicle.set_meta("district", data.get("district", "Godavarikhani"))
+	vehicle.add_to_group("enterable_vehicle")
+	vehicle.freeze = vehicle.get("keep_placement_spawn") == true
+	vehicle.set_driving_enabled(false)
+	vehicle.set_keyboard_input_enabled(false)
+	add_child(vehicle)
+	vehicle.respawn_position = vehicle.global_position
+	vehicle.settle_on_ground()
+	for node in vehicle.find_children("*", "GeometryInstance3D", true, false):
+		(node as GeometryInstance3D).visibility_range_end = float(data.get("visibility_range_end", DEFAULT_VISIBILITY))
+	spawned_nodes.append(vehicle)
+	loaded_count += 1
