@@ -5,6 +5,7 @@ extends "res://scripts/vehicle/rigid_vehicle.gd"
 @export var keep_placement_spawn := true
 var _extra_wheels: Array[Node3D] = []
 var _extra_rest_heights: Array[float] = []
+var _glass_materials: Array[StandardMaterial3D] = []
 
 func _ready() -> void:
  var model := get_node("Model")
@@ -27,12 +28,17 @@ func _ready() -> void:
  super._ready()
  _apply_vehicle_finish()
  _apply_wheel_finish()
+ _apply_glass_finish()
 
 func entry_door_position(side: float) -> Vector3:
  return global_transform * Vector3((entry_half_width + 0.35) * side, 0.1, seat_hip.z)
 
 func _update_visuals() -> void:
  super._update_visuals()
+ var pivot := get_node_or_null("CameraPivot")
+ var is_fpp: bool = driving_enabled and pivot != null and pivot.has_method("is_first_person") and bool(pivot.is_first_person())
+ for mat in _glass_materials:
+  mat.albedo_color.a = 0.0 if is_fpp else 0.18
  for index in _extra_wheels.size():
   var wheel := _extra_wheels[index]
   wheel.rotation = Vector3(_spin[2], 0.0, PI * 0.5)
@@ -115,7 +121,7 @@ func _apply_vehicle_finish() -> void:
    var source := instance.mesh.surface_get_material(surface) as StandardMaterial3D
    if source == null:
     continue
-   for pattern: String in finish.paint_materials:
+   for pattern: String in finish.get("paint_materials", []):
     if source.resource_name == pattern or (pattern.contains("Coloured_Material") and source.resource_name.contains(pattern)):
      var material := source.duplicate() as StandardMaterial3D
      material.albedo_color = Color(str(finish.paint_color))
@@ -142,3 +148,38 @@ func _apply_wheel_finish() -> void:
     material.metallic=.15
     material.roughness=.55
     instance.set_surface_override_material(surface,material)
+
+func _apply_glass_finish() -> void:
+ var catalog: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/vehicles/vehicle_finishes.json"))
+ var explicit_glass: Array = []
+ if catalog.has(vehicle_id) and catalog[vehicle_id].has("glass_materials"):
+  explicit_glass = catalog[vehicle_id].glass_materials
+ for child in get_node("Chassis").find_children("*", "MeshInstance3D", true, false):
+  var instance := child as MeshInstance3D
+  if instance.mesh == null:
+   continue
+  for surface in instance.mesh.get_surface_count():
+   var source := instance.mesh.surface_get_material(surface) as StandardMaterial3D
+   if source == null:
+    continue
+   var label := source.resource_name
+   var label_low := label.to_lower()
+   var is_glass := false
+   if label in explicit_glass:
+    is_glass = true
+   elif "glass" in label_low or "window" in label_low or "wind" in label_low or "vitre" in label_low or "parabrisas" in label_low:
+    is_glass = true
+   elif source.transparency != BaseMaterial3D.TRANSPARENCY_DISABLED and source.albedo_color.a < 0.95:
+    is_glass = true
+   if is_glass:
+    var glass := StandardMaterial3D.new()
+    glass.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+    glass.albedo_color = Color(0.20, 0.28, 0.35, 0.18)
+    glass.metallic = 0.2
+    glass.roughness = 0.05
+    glass.cull_mode = BaseMaterial3D.CULL_BACK
+    glass.clearcoat_enabled = true
+    glass.clearcoat = 1.0
+    glass.clearcoat_roughness = 0.05
+    instance.set_surface_override_material(surface, glass)
+    _glass_materials.append(glass)

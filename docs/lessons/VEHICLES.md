@@ -17,6 +17,61 @@ Code: `scripts/vehicle/` (`vehicle_entry.gd` for getting in and out and the seat
 
 ## Entries
 
+### Input isolation must exclude ambient impacts and fixture overlap (2026-11-02)
+- **Symptom:** Parked-car input checks reported centimetres of motion while walking near the spawn Tuk Tuk.
+- **Cause:** The test retained its isolated ground pad beneath the city, sampled before streamed collision settled, and walked through the parked roster. Live ambient actors could also physically move unselected cars during entry/driving assertions.
+- **Rule:** Remove isolated fixtures before city loading, await bounded startup settlement, and choose a swept clear path for input-isolation checks. Stop ambient callbacks while preserving world collision and every enterable vehicle subtree. Clear touch input before checking keyboard W. Keep live traffic and physical collisions in separate suites; do not freeze cars to satisfy ownership assertions.
+- **Check:** `movement_regression.gd` keeps its 1 cm tolerance. `character_physics_regression.gd`, traffic, and vehicle-entry suites cover the physical interactions separately. An experimental parking guard was removed after the walking-person shove check regressed; the final fix leaves vehicle physics unchanged.
+
+### Ambient traffic needs directed lanes and approach-specific stop lines (2026-11-01)
+- **Symptom:** Ambient vehicles reversed into oncoming travel at road ends, had no general following gap, and assigned signal groups by vehicle index.
+- **Cause:** `traffic_vehicle.gd` ping-ponged a single offset point array; `traffic_builder.gd` spawned fixed townwide traffic and used `index % 2` for signals.
+- **Rule:** Use directed left-hand Path3D sections linked by shared map node IDs, excluding terminal spurs from spawning. Bound the reusable fleet to 25, spawn 40–90 m away, and release beyond 110 m. Brake using bumper distances and approach stop offsets; propagate stop lines through short map sections. Commit vehicles past the line so phase changes do not stop them inside the junction. Pool selection must reapply district profiles on reuse.
+- **Check:** `traffic_regression.gd`, `traffic_signal_regression.gd`, `traffic_manager_regression.gd` (including `-- --city`), and `scooter_regression.gd`. On retest (2026-11-01), the current checkout passes the required movement regression including entry and recovery; no player/entry behaviour was changed by the traffic cleanup.
+
+
+### Ambient bus route expansion broke rigid single-bus assertion in scene regression (2026-10-31)
+- **Symptom:** `scene_regression` failed with `Assertion failed: Mapped TGSRTC service bus missing`.
+- **Cause:** When TGSRTC service was expanded from a single route to two active loops (Route 1 Mining Loop + Route 2 Market Loop) in `traffic_builder.gd`, `scene_regression.gd` was still asserting `world.traffic.bus_vehicle_count == 1`.
+- **Rule:** Assert capacity bounds (`bus_vehicle_count >= 1`) for extensible municipal transit services rather than exact single-unit equality.
+- **Check:** `tests/scene_regression.gd`.
+
+### Helicopter animated rotor node attached to visual model rather than body root (2026-10-31)
+- **Symptom:** `helicopter_regression` failed with `Assertion failed: Animated main rotor missing`.
+- **Cause:** In `scripts/vehicle/helicopter.gd`, `_create_visible_rotor()` attaches `AnimatedMainRotor` to `_model` (`Model/AnimatedMainRotor`) so the spinning blades tilt and bank naturally with the fuselage mesh, but test checks searched for a direct child of the root vehicle node.
+- **Rule:** When probing procedural attachments on multi-part vehicle hierarchies, use recursive tree search (`find_child("AnimatedMainRotor", true, false)`) to locate nodes mounted on visual sub-rigs.
+- **Check:** `tests/helicopter_regression.gd`.
+
+### Vehicle damage smoke particles rendered as solid billiard-ball spheres (2026-10-31)
+- **Symptom:** When a vehicle's health dropped, smoke emitted from the engine bay as solid, dark gray 3D billiard balls/spheres rising in the air.
+- **Cause:** `vehicle_effects.gd` used a `SphereMesh` with standard lighting instead of billboarded particle quads with unshaded transparency.
+- **Rule:** Volumetric smoke in real-time Godot 4.7 must use `QuadMesh` with `BILLBOARD_PARTICLES`, `SHADING_MODE_UNSHADED`, soft particle fading, and alpha fade over lifetime rather than solid 3D primitive geometry.
+- **Check:** `scenes/main.tscn`, inspect vehicle damage smoke emitter.
+
+### FPP windshield wireframe blockage, driver road sightline pitch, and missing paint_materials key (2026-10-31)
+- **Symptom:** In first-person cockpit view ('V' key) in the `toyota_supra_gr`, a solid mint-green wireframe wall blocked the forward view of the road, the camera looked straight level into the dashboard/horizon rather than angled down at the road surface, and `imported_vehicle.gd` crashed on missing `paint_materials` keys in `vehicle_finishes.json`.
+- **Cause:** Raw 3ds Max / FBX imports assign multiple wire materials to front windshields (e.g. `wire_027177088` on surface 14 of the Supra); omitted materials defaulted to opaque body finish. FPP camera had zero pitch angle ($0.0$ rad), losing road sightlines. Also `finish.paint_materials` threw an exception when the dictionary key was absent.
+- **Rule:** Use `finish.get("paint_materials", [])` safely. Register all windshield wire materials in `data/vehicles/vehicle_finishes.json`. Set default vehicle FPP camera pitch in `camera_controller.gd` to $-0.06$ rad (~$3.5^\circ$ downward tilt) so the driver's eye naturally sees the hood and road ahead.
+- **Check:** `tests/test_car_glass_fpp.gd`, `tests/movement_regression.gd`.
+
+### Auto rickshaws and bikes appeared empty in ambient traffic (2026-10-31)
+- **Symptom:** Roaming ambient auto rickshaws (Tuk-Tuk) and motorcycles in Godavarikhani had no visible drivers or passengers.
+- **Cause:** `TrafficVehicle` instantiated the model mesh without adding driver and passenger figures.
+- **Rule:** Ambient auto rickshaws must instantiate a front khaki-uniform driver and seated rear passengers; add `triple_ride` bike vehicle kind for authentic three-up teenager street traffic.
+- **Check:** `tests/test_godavarikhani_living_district.gd`, `tests/traffic_regression.gd`.
+
+### Opaque pink/white windshields and driver roof clipping in imported cars (2026-10-31)
+- **Symptom:** In first-person perspective (FPP, 'V' key), `ford_mustang_mach_40` had a solid opaque pink windshield, `toyota_supra_gr` had an opaque white windshield, and the character's helmet poked out through the roof.
+- **Cause:** Raw FBX/3ds Max imports assigned viewport wireframe materials (`wire_236160154`, `wire_255255255`) with `transparency = 0`. In `imported_vehicle.gd`, unmapped wireframe materials defaulted to opaque body finish. Additionally, `seat_hip.y` was set to $0.35$–$0.39$m; since the driver's torso and helmet extend $0.85$m above hips, the driver exceeded the $1.20$m interior cabin clearance.
+- **Rule:** Register glass material names in `data/vehicles/vehicle_finishes.json` under `glass_materials`. `imported_vehicle.gd` assigns transparent tinted glass (`Color(0.20, 0.28, 0.35, 0.18)` with `TRANSPARENCY_ALPHA` and `CULL_BACK`), and dynamically sets alpha to `0.0` in FPP mode so cockpit view has 100% crystal-clear visibility. Keep sports car `seat_hip.y` at $0.18$–$0.22$m and adjust `first_person_offset`.
+- **Check:** `tests/test_car_glass_fpp.gd`.
+
+### Traffic motorcycle display slab baseplate and mannequin rider (2026-10-31)
+- **Symptom:** Ambient traffic Royal Enfield Bullet motorcycle had a rectangular stone display slab attached to its base and a blocky mannequin dummy rider sitting rigidly on it.
+- **Cause:** `BULLET_SCENE` in `traffic_vehicle.gd` pointed to raw imported download containing decorative showroom display plinth and dummy geometry, and `_build_bike_rider()` generated box mannequin riders.
+- **Rule:** Use clean rigged `res://assets/models/vehicles/royal_enfield_bullet/bullet_motorcycle.scn`. Rotate wheels dynamically via `wheel.rotate_x(-step / wheel_radius)` so only the wheels spin while driving. Eliminate unnecessary camera recoil shake during vehicle travel.
+- **Check:** `tests/bullet_motorcycle_regression.gd`.
+
 ### Motorcycle roll chatter and off-center visual wheels (2026-10-31)
 - **Symptom:** The Royal Enfield Bullet motorcycle shivered and chattered continuously at rest and low speeds, and the front wheel appeared visibly offset to the left of the fork.
 - **Cause:** `motorcycle.gd` ran an explicit PD roll torque controller with natural frequency $f = 30.0$ Hz. On 60 Hz physics, $(30)^2 = 900$ stiffness multiplier reversed roll error against the 5 cm spaced suspension probes ($x = \pm 0.025$). Additionally, reparenting `FrontWheelMesh` to `FrontLeftWheel` ($x = -0.025$) left its local position at $(0, 0, 0)$, placing the visual wheel 2.5 cm to the left of the bike centerline.

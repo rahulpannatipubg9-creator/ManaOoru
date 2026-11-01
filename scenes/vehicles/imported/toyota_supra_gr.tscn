@@ -49,11 +49,11 @@ high_speed_steer_share = 0.23
 rear_wheel_drive = true
 front_wheel_drive = false
 front_drive_share = 0.5
-seat_hip = Vector3(0.37981, 0.35, -0.12)
-pedal_point = Vector3(0.37981, 0.12, 0.5)
+seat_hip = Vector3(0.32, 0.22, -0.1)
+pedal_point = Vector3(0.32, 0.08, 0.5)
 entry_half_width = 1.0
-left_hand_grip = Vector3(0.54981, 0.75, 0.3)
-right_hand_grip = Vector3(0.20981, 0.75, 0.3)
+left_hand_grip = Vector3(0.46, 0.62, 0.25)
+right_hand_grip = Vector3(0.18, 0.62, 0.25)
 drivetrain = SubResource("Drivetrain")
 
 [node name="Chassis" type="Node3D" parent="."]
@@ -86,7 +86,7 @@ position = Vector3(0.0, 0.6756, 0.0)
 [node name="CameraPivot" type="Node3D" parent="."]
 position = Vector3(0.0, 1.6112, 0.0)
 script = ExtResource("2")
-first_person_offset = Vector3(0.37981, 1.03, -0.02)
+first_person_offset = Vector3(0.32, 0.94, 0.12)
 first_person_follows_body = true
 first_person_min_pitch = -0.6
 first_person_max_pitch = 0.5

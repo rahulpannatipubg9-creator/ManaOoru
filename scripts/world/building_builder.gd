@@ -131,6 +131,10 @@ func setup(data: MapData, is_excluded: Callable) -> void:
 	# Rebuilding the same generator must replace its generated state.
 	for child in get_children():
 		child.free()
+	for cached in _chunk_cache.values():
+		if is_instance_valid(cached):
+			cached.free()
+	_chunk_cache.clear()
 	footprints.clear()
 	building_metadata.clear()
 	_styles.clear()
@@ -403,9 +407,21 @@ func _refresh_stream(center: Vector2) -> void:
 		if _cell_center(cell).distance_to(center) > unload_distance:
 			var chunk: Node = _stream_nodes[cell]
 			remove_child(chunk)
-			chunk.queue_free()
 			_stream_nodes.erase(cell)
 			_built.erase(cell)
+			_chunk_cache[cell] = chunk
+			if _chunk_cache.size() > MAX_CACHED_CHUNKS:
+				var oldest: Vector2i = _chunk_cache.keys()[0]
+				var evicted: Node = _chunk_cache[oldest]
+				_chunk_cache.erase(oldest)
+				if is_instance_valid(evicted):
+					evicted.queue_free()
+
+func _exit_tree() -> void:
+	for cached in _chunk_cache.values():
+		if is_instance_valid(cached):
+			cached.queue_free()
+	_chunk_cache.clear()
 
 func apply_view_distance(distance: float) -> void:
 	stream_radius = distance
@@ -417,6 +433,14 @@ func apply_view_distance(distance: float) -> void:
 func _build_chunk(cell: Vector2i) -> void:
 	if _built.has(cell):
 		return
+	if _chunk_cache.has(cell):
+		var cached: Node = _chunk_cache[cell]
+		_chunk_cache.erase(cell)
+		if is_instance_valid(cached):
+			add_child(cached)
+			_stream_nodes[cell] = cached
+			_built[cell] = true
+			return
 	_built[cell] = true
 	var surface := MeshSurface.new()
 	var tanks: Array[Transform3D] = []

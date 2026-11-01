@@ -9,7 +9,7 @@ var _elapsed := 0.0
 func setup(world: Node) -> void:
 	_world = world
 	process_mode = Node.PROCESS_MODE_PAUSABLE
-	for kind: String in ["rain", "birds", "market", "traffic", "industry"]:
+	for kind: String in ["rain", "market", "traffic", "industry"]:
 		var player := AudioStreamPlayer.new()
 		var stream := load("res://assets/audio/city/%s.wav" % kind) as AudioStreamWAV
 		if stream == null:
@@ -38,7 +38,7 @@ func update_mix(position: Vector3, night: float, rain: float, indoors: bool, del
 	if _world.coal_mine:
 		industrial = clampf(1.0 - point.distance_to(Vector2(_world.coal_mine.position.x, _world.coal_mine.position.z)) / 350.0, 0.0, 1.0)
 	var shelter := 0.18 if indoors else 1.0
-	var mix := {"rain": rain * (0.3 if indoors else 1.0), "birds": (1.0 - night) * (1.0 - rain * 0.85) * 0.30 * shelter,
+	var mix := {"rain": rain * (0.3 if indoors else 1.0),
 		"market": market * lerpf(0.65, 0.12, night) * shelter, "traffic": traffic * lerpf(0.28, 0.08, night) * shelter, "industry": industrial * 0.38 * shelter}
 	for key: String in _players:
 		var gain: float = clampf(float(mix[key]) * volume, 0.0, 1.0)

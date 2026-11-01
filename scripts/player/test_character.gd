@@ -37,7 +37,7 @@ const MALE_RUN_BLEND := Vector2(4.4, 6.8)
 ## his own clips, and a library authored on another body would override them with its joint offsets.
 const MALE_ANIMATIONS_PATH := ""
 const DEFAULT_MIXAMO_HEIGHT := 1.78
-const MIXAMO_MODEL_PATH := "res://assets/models/characters/rahul/rahul_mixamo.glb"
+const MIXAMO_MODEL_PATH := "res://assets/models/characters/virat/virat.glb"
 
 ## Gait clips authored for the speeds the game actually uses (tools/rahul_character, 17_game_clips.py):
 ## a planted foot then moves back under the body at exactly the body's speed, so feet do not slide.
@@ -256,6 +256,16 @@ func _ready() -> void:
 	if has_mixamo:
 		mixamo_model = (load(MIXAMO_MODEL_PATH) as PackedScene).instantiate() as Node3D
 		add_child(mixamo_model)
+		# Virat carries authored skin/hair/clothing colours in COLOR_0.
+		# Godot's glTF material import does not enable the albedo switch here.
+		if "/virat/" in MIXAMO_MODEL_PATH:
+			for part: MeshInstance3D in mixamo_model.find_children("*", "MeshInstance3D", true, false):
+				for surface in part.mesh.get_surface_count():
+					var imported_material := part.get_active_material(surface) as StandardMaterial3D
+					if imported_material:
+						var coloured_material := imported_material.duplicate() as StandardMaterial3D
+						coloured_material.vertex_color_use_as_albedo = true
+						part.set_surface_override_material(surface, coloured_material)
 		mixamo_model.rotation = Vector3.ZERO
 		# Skin bind matrices already convert the centimetre skeleton to metres.
 		# Measure deformed vertices; static mesh bounds omit that conversion.
@@ -320,7 +330,7 @@ func toggle_character() -> String:
 					mesh.visible = false
 		match _character_index:
 			1: return "Rahul"
-			3: return "Mixamo Soldier"
+			3: return "Virat"
 			_: return "Legacy Avatar"
 	if mixamo_model != null:
 		match _character_index:
@@ -352,7 +362,7 @@ func toggle_character() -> String:
 	match _character_index:
 		0: return "Lady Character"
 		1: return "Rahul"
-		3: return "Mixamo Soldier"
+		3: return "Virat"
 		_: return "Legacy Avatar"
 
 func select_mixamo() -> String:
@@ -371,7 +381,7 @@ func select_mixamo() -> String:
 				_cached_meshes[mesh_name] = mesh.mesh
 			mesh.mesh = null
 			mesh.visible = false
-	return "Mixamo Soldier" if _character_index == 3 else "Rahul"
+	return "Virat" if _character_index == 3 else "Rahul"
 
 func play_grenade() -> void:
 	if mixamo_model != null and mixamo_model.visible and mixamo_anim_player != null:
@@ -1604,6 +1614,7 @@ func _apply_mixamo_pose() -> void:
 		_pose_vehicle_grips()
 		for side in ["Left","Right"]:
 			_orient_mixamo_hand(side, weapon.global_basis*fingers[side], weapon.global_basis*Vector3(-1 if side=="Left" else 1,0,0))
+			_pose_mixamo_fingers(side, GRIP_CURL_RIGHT if side == "Right" else GRIP_CURL_LEFT)
 		left_grip_target = saved_left
 		right_grip_target = saved_right
 	rig.force_update_all_bone_transforms()
@@ -1654,6 +1665,31 @@ func _orient_mixamo_hand(side: String, finger_world: Vector3, palm_world: Vector
 	var target := Basis(direction,palm,direction.cross(palm))
 	var parent := rig.get_bone_parent(hand)
 	rig.set_bone_pose_rotation(hand,(rig.get_bone_global_pose(parent).basis.orthonormalized().inverse()*target*local_frame.inverse()).get_rotation_quaternion())
+
+func _pose_mixamo_local(bone_name: String, axis: Vector3, angle: float) -> void:
+	if mixamo_skeleton == null:
+		return
+	var index := mixamo_skeleton.find_bone(bone_name)
+	if index < 0:
+		return
+	var rest_quat := mixamo_skeleton.get_bone_rest(index).basis.get_rotation_quaternion()
+	mixamo_skeleton.set_bone_pose_rotation(index, rest_quat * Quaternion(axis, angle))
+
+func _pose_mixamo_fingers(side: String, curl: float) -> void:
+	if mixamo_skeleton == null:
+		return
+	var prefix := "mixamorig_" + side + "Hand"
+	var sign_val := 1.0 if side == "Left" else -1.0
+	for finger in ["Index", "Middle", "Ring", "Pinky"]:
+		var finger_curl := curl
+		if side == "Right" and finger == "Index":
+			finger_curl = 0.45 # Trigger finger poised on gun trigger
+		for joint in ["1", "2", "3"]:
+			var joint_angle := finger_curl * (0.85 if joint == "1" else 1.1) * sign_val
+			_pose_mixamo_local(prefix + finger + joint, Vector3(0, 0, 1), joint_angle)
+	for joint in ["1", "2", "3"]:
+		_pose_mixamo_local(prefix + "Thumb" + joint, Vector3(0, 1, 0), curl * 0.5 * sign_val)
+
 
 func _rotate_mixamo_world(name: String, world_axis: Vector3, angle: float) -> void:
 	var rig := mixamo_skeleton

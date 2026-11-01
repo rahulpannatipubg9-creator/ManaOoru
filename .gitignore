@@ -33,6 +33,8 @@ Godavarikhani_Bridge_3D/renders_test/
 # Temporary work directories, test captures, and local outputs
 work/
 outputs/
+__pycache__/
+*.pyc
 
 # OS-specific metadata & logs
 .DS_Store

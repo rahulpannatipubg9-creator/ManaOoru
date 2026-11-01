@@ -562,50 +562,53 @@ func _show_control_hint(message: String) -> void:
 		hud.set_interaction_prompt(message)
 
 func _teleport_to_godavari_bridge() -> void:
-	var bridge_target := Vector3(751.15, -24.8, -3275.0)
-	var bridge_yaw := deg_to_rad(-4.57)
+	var godavari_target := Vector3(751.15, -24.8, -3275.0)
+	var godavari_yaw := deg_to_rad(-4.57)
+	var flyover_target := Vector3(-178.0, -11.8, -2125.0)
+	var flyover_yaw := deg_to_rad(-25.0)
+	var chowrastha_target: Vector3 = $World.player_spawn.get("position", Vector3(120, 1.2, -105))
+	var chowrastha_yaw: float = float($World.player_spawn.get("yaw", 0.0))
+
 	var current_pos: Vector3 = active_vehicle.global_position if (control_state == ControlState.DRIVING and active_vehicle) else person.global_position
 
-	# If already near the bridge (within 1,500m), teleport back to Chowrastha
-	if current_pos.distance_to(bridge_target) < 1500.0:
-		var chowrastha_target: Vector3 = $World.player_spawn.get("position", Vector3(120, 1.2, -105))
-		var chowrastha_yaw: float = float($World.player_spawn.get("yaw", 0.0))
-		if control_state == ControlState.DRIVING and active_vehicle:
-			active_vehicle.global_position = chowrastha_target
-			active_vehicle.rotation = Vector3(0.0, chowrastha_yaw, 0.0)
-			active_vehicle.linear_velocity = Vector3.ZERO
-			active_vehicle.angular_velocity = Vector3.ZERO
-			active_vehicle.respawn_position = chowrastha_target
-			if active_vehicle.has_method("settle_on_ground"):
-				active_vehicle.settle_on_ground()
-			_show_control_hint("Teleported back to Chowrastha Junction")
-		elif control_state == ControlState.ON_FOOT and person:
-			person.global_position = chowrastha_target
-			person.rotation.y = chowrastha_yaw
-			_show_control_hint("Teleported back to Chowrastha Junction")
+	var target_pos: Vector3
+	var target_yaw: float
+	var hint_text: String
+
+	if current_pos.distance_to(godavari_target) < 1000.0:
+		target_pos = chowrastha_target
+		target_yaw = chowrastha_yaw
+		hint_text = "Teleported back to Chowrastha Junction"
+	elif current_pos.distance_to(flyover_target) < 600.0:
+		target_pos = godavari_target
+		target_yaw = godavari_yaw
+		hint_text = "Teleported to Godavari River Bridge (1,100 m)"
 	else:
-		if control_state == ControlState.DRIVING and active_vehicle:
-			active_vehicle.global_position = bridge_target
-			active_vehicle.rotation = Vector3(0.0, bridge_yaw, 0.0)
+		target_pos = flyover_target
+		target_yaw = flyover_yaw
+		hint_text = "Teleported to Ramagundam ROB Flyover (846 m)"
+
+	if control_state == ControlState.DRIVING and active_vehicle:
+		active_vehicle.global_position = target_pos
+		active_vehicle.rotation = Vector3(0.0, target_yaw, 0.0)
+		active_vehicle.linear_velocity = Vector3.ZERO
+		active_vehicle.angular_velocity = Vector3.ZERO
+		active_vehicle.respawn_position = target_pos
+		if active_vehicle.has_method("settle_on_ground"):
+			active_vehicle.settle_on_ground()
+		_show_control_hint(hint_text)
+	elif control_state == ControlState.ON_FOOT and person:
+		if active_vehicle:
+			active_vehicle.global_position = target_pos
+			active_vehicle.rotation = Vector3(0.0, target_yaw, 0.0)
 			active_vehicle.linear_velocity = Vector3.ZERO
 			active_vehicle.angular_velocity = Vector3.ZERO
-			active_vehicle.respawn_position = bridge_target
+			active_vehicle.respawn_position = target_pos
 			if active_vehicle.has_method("settle_on_ground"):
 				active_vehicle.settle_on_ground()
-			_show_control_hint("Teleported to Godavari River Bridge (1,100 m)")
-		elif control_state == ControlState.ON_FOOT and person:
-			# Also bring the active vehicle to the bridge approach so the player can drive immediately!
-			if active_vehicle:
-				active_vehicle.global_position = bridge_target
-				active_vehicle.rotation = Vector3(0.0, bridge_yaw, 0.0)
-				active_vehicle.linear_velocity = Vector3.ZERO
-				active_vehicle.angular_velocity = Vector3.ZERO
-				active_vehicle.respawn_position = bridge_target
-				if active_vehicle.has_method("settle_on_ground"):
-					active_vehicle.settle_on_ground()
-			person.global_position = bridge_target + Vector3(2.5, 0.2, 0.0)
-			person.rotation.y = bridge_yaw
-			_show_control_hint("Teleported to Godavari River Bridge (1,100 m)  •  [E] Drive across")
+		person.global_position = target_pos + Vector3(2.5, 0.2, 0.0)
+		person.rotation.y = target_yaw
+		_show_control_hint(hint_text + "  •  [E] Drive across")
 
 func _set_prompt(message: String) -> void:
 	if Time.get_ticks_msec() >= _hint_until_msec:

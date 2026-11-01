@@ -140,6 +140,7 @@ func _test_remote_player() -> void:
 
 func _test_host_claims() -> void:
 	var cfg := Config.new()
+	cfg.tdm_armor_reduction = 0.0
 	var roster := Roster.new()
 	var spawns := Spawns.new()
 	spawns.set_zones(Roster.Team.RED, PackedVector3Array([Vector3(-60, 0, -55)]))

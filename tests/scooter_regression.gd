@@ -1,27 +1,39 @@
 extends SceneTree
 
 func _init() -> void:
-	var world := Node3D.new()
-	root.add_child(world)
-	var traffic_root := Node3D.new()
-	world.add_child(traffic_root)
+	call_deferred("_run")
+
+func _run() -> void:
+	var lane := Path3D.new()
+	lane.curve = Curve3D.new()
+	lane.curve.add_point(Vector3.ZERO)
+	lane.curve.add_point(Vector3(0,0,50))
+	lane.set_meta("next", [])
+	root.add_child(lane)
 	var scooter := TrafficVehicle.new()
 	scooter.vehicle_kind = "scooter"
-	scooter.route = PackedVector3Array([Vector3.ZERO,Vector3(0,0,30)])
-	scooter.ground_sampler = func(_p: Vector2) -> float: return 0.0
-	traffic_root.add_child(scooter)
-	await process_frame
-	assert(scooter.has_node("Driver") and scooter.has_node("Passenger"),"Scooter requires two seated riders")
-	scooter._process(.2)
-	assert(scooter.position.z > 0 and is_zero_approx(scooter.position.y),"Scooter must advance grounded")
-	var blocker := TrafficVehicle.new()
-	blocker.position = scooter.position + Vector3(0,0,2)
-	traffic_root.add_child(blocker)
-	var before := scooter.position
-	scooter._process(.2)
-	assert(scooter.position == before,"Scooter must wait for traffic ahead")
-	blocker.position.x = 10
-	scooter._process(.2)
-	assert(scooter.position.z > before.z,"Scooter must resume when clear")
-	print("PASS scooter: two riders, grounded travel, obstacle stop and resume")
+	root.add_child(scooter)
+	assert(scooter.has_node("Driver") and scooter.has_node("Passenger"), "Scooter needs seated occupants")
+	scooter.activate(lane, 0.0)
+	var blocker := StaticBody3D.new()
+	var shape := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	box.size = Vector3(4, 2, 2)
+	shape.shape = box
+	blocker.add_child(shape)
+	blocker.position = Vector3(0,1,15)
+	root.add_child(blocker)
+	for frame in 300:
+		await physics_frame
+	assert(scooter.position.z > 1.0 and scooter.position.z < 10.0, "Scooter must approach and stop at obstacle")
+	assert(scooter.current_speed < 0.1, "Scooter did not stop")
+	blocker.position.x = 20.0
+	var before := scooter.position.z
+	for frame in 120:
+		await physics_frame
+	assert(scooter.position.z > before + 1.0, "Scooter did not resume")
+	scooter.free()
+	blocker.free()
+	lane.free()
+	print("PASS scooter: occupants, obstacle stop and resume")
 	quit()

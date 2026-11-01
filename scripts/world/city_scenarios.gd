@@ -625,3 +625,4 @@ func _sample_convoy_point(dist: float) -> Dictionary:
 			var tang := (_convoy_route[i] - _convoy_route[i - 1]).normalized()
 			return {"position": pt, "tangent": tang}
 	return {"position": _convoy_route[n - 1], "tangent": (_convoy_route[n - 1] - _convoy_route[n - 2]).normalized()}
+

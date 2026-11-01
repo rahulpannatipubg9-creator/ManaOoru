@@ -18,6 +18,43 @@
 
 ## Entries
 
+### Incremental Android installs can disappear after reporting success (2026-11-02)
+- **Symptom:** A successful incremental installation disappeared before launch. PackageManager subsequently removed its incremental storage mount. A separate session was also installing diagnostics under the original shared package ID.
+- **Cause:** Incremental installation reported success before the APK was fully delivered. That result did not establish a durable installation. The earlier source-patched APK separately failed script/remap parsing before reaching gameplay.
+- **Rule:** Use `adb install --no-incremental`, a unique benchmark package (`com.manaooru.pad7bench`) and a complete Godot export. Verify package presence after installation, clean script loading and actual gameplay before collecting FPS. Keep the device foreground stable and record interrupted runs as incomplete.
+- **Check:** `Android Performance` exports the complete current project; `tools/performance/run_pad7_probe.py` preserves raw device logs, frame distributions, memory and temperature samples. A parse or install failure is not an FPS result.
+
+### A signed and zip-aligned APK can still fail Android installation (2026-11-02)
+- **Symptom:** Pad 7 rejected the performance copy with error -124: Android R+ requires an uncompressed, 4-byte-aligned `resources.arsc`.
+- **Cause:** `tools/performance/package_probe.py` compressed every replacement, including the resource table. Signature verification and zipalign alone did not detect that requirement.
+- **Rule:** Store `resources.arsc` uncompressed, align the completed APK, verify its signature, and require successful installation before reporting gameplay results. Preserve the original game's package/data.
+- **Check:** Inspect the resource table's ZIP compression method as well as running zipalign and apksigner; the actual Pad 7 installation is the final packaging check.
+
+### Android profiling builds need signature and space checks (2026-11-02)
+- **Symptom:** Latest APK signing exhausted host disk space; installing a manually signed APK failed with `INSTALL_FAILED_UPDATE_INCOMPATIBLE`.
+- **Cause:** Export and signing held large APK copies alongside editor memory/swap. The installed tablet build's signature did not match either local debug key or the repository release key.
+- **Rule:** Verify signing identity before a large transfer, sign after the exporter exits when space is tight, and never uninstall a user's game to bypass the mismatch. Use an explicitly labelled, separate debug test package when the original signing key is unavailable. Verify ZIP alignment and the APK signature after any debug-source packaging.
+- **Check:** `package_probe.py` creates package `com.manaooru.perfcheck` labelled `MANA PERF`, preserving the original app. Its first launch profiles; subsequent launches run the normal scene. Read installation success and device logs before claiming tablet validation.
+
+### Custom rendering was replaced by tier defaults on restart (2026-11-02)
+- **Symptom:** Manually lowering rendering settings did not reliably survive the next launch.
+- **Cause:** `DevicePerformanceManager.setup()` saw the manual flag but regenerated the selected tier without restoring the saved performance fields. `save_settings()` also omitted weather effects. The tier-override test wrote its default path and could replace real user preferences.
+- **Rule:** Restore saved known performance fields over tier defaults for manual profiles; persist effects too. Allow setup and tier overrides to use an isolated settings path in tests. Do not equate a 60 FPS cap with measured 60 FPS rendering.
+- **Check:** `device_performance_manager_regression.gd` now saves custom scale, distances, actors, shadows, FPS and effects, creates a fresh manager, runs setup from the test file and checks all values survived.
+
+### Keep collision present when isolating ambient simulation (2026-11-02)
+- **Symptom:** Pausing the world fixture made parked cars fall; a rendered exit probe was refused immediately after zeroing velocity.
+- **Cause:** `PROCESS_MODE_DISABLED` can remove CollisionObject3D bodies through their disable mode. Separately, `main.gd.exit_vehicle()` checks controller `current_speed`, which was still the previous physics tick's driving speed.
+- **Rule:** For an input-ownership fixture, stop world process/physics callbacks while preserving collision and every enterable vehicle subtree. For rendered exit checks, brake normally and allow physics to update speed before requesting exit. Keep live-city smoke checks separate from isolated ownership checks.
+- **Check:** Required movement regression passes with parked physics enabled; the M1 smoke probe logs speed at the exit request.
+
+### Camera fixture quit with engine audio still playing (2026-11-01)
+- **Symptom:** Chase-camera assertions passed but the test leaked Ogg and generator playback resources at shutdown.
+- **Cause:** The standalone driving fixture was still running its engine when the test called `quit()`; queued audio teardown had not retired playback.
+- **Rule:** Park/mute the fixture, allow playback retirement, free owned fixture nodes and drain deferred frees before quitting. Keep the camera assertions intact. Accelerated fixed-FPS runs are not evidence of real-time audio teardown timing.
+- **Check:** `godot --headless --path . --verbose --script tests/chase_camera_regression.gd` passes without resource-leak warnings after fixture cleanup.
+
+
 ### Cloud CI/CD and Codespaces Godot Android export keystores and editor settings (2026-10-30)
 - **Symptom:** Cloud headless exports in GitHub Actions / Codespaces failed with errors regarding missing Android keystores or unconfigured Android SDK paths; local exports failed on non-developer machines due to hardcoded absolute Mac paths in `export_presets.cfg`.
 - **Cause:**

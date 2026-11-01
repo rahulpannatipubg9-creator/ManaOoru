@@ -80,20 +80,26 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 
 ## Setup called from main.gd during startup.
-func setup(owner_game: Node) -> void:
+func setup(owner_game: Node, settings_path: String = SETTINGS_PATH) -> void:
 	game = owner_game
 	hardware_info = detect_hardware()
-	var config := load_settings()
+	var config := load_settings(settings_path)
 	if config.has("device_profile") and not is_first_launch and config.device_profile.get("manual_override", false):
 		has_manual_override = true
 		active_tier = int(config.device_profile.get("selected_tier", detected_tier)) as DeviceTier
 		active_profile = get_profile_for_tier(active_tier, hardware_info)
+		# A manually tuned profile is more specific than its hardware tier.
+		# Restore only known performance fields, preserving tier metadata/defaults.
+		var saved_values: Dictionary = config.get("performance", {})
+		for key in active_profile:
+			if saved_values.has(key):
+				active_profile[key] = saved_values[key]
 	else:
 		detected_tier = classify_device(hardware_info) as DeviceTier
 		active_tier = detected_tier
 		has_manual_override = false
 		active_profile = get_profile_for_tier(active_tier, hardware_info)
-		save_settings(active_profile, false)
+		save_settings(active_profile, false, settings_path)
 	apply_profile(game, active_profile)
 
 ## Query GPU, RAM, CPU, screen refresh rate, resolution and aspect ratio.
@@ -386,17 +392,18 @@ func save_settings(profile: Dictionary, manual: bool = false, path: String = SET
 	config.set_value("performance", "view_distance", float(profile.get("view_distance", 550.0)))
 	config.set_value("performance", "simulation_distance", float(profile.get("simulation_distance", 220.0)))
 	config.set_value("performance", "actors", int(profile.get("actors", 28)))
+	config.set_value("performance", "effects", float(profile.get("effects", 0.6)))
 	config.set_value("performance", "tablet_hud_inset", bool(profile.get("tablet_hud_inset", false)))
 
 	has_manual_override = manual
 	return config.save(path)
 
 ## Player manual override from settings menu.
-func override_tier(tier: int, target_game: Node = null) -> void:
+func override_tier(tier: int, target_game: Node = null, settings_path: String = SETTINGS_PATH) -> void:
 	active_tier = tier as DeviceTier
 	has_manual_override = true
 	active_profile = get_profile_for_tier(active_tier, hardware_info)
 	var target = target_game if target_game != null else game
 	if target:
 		apply_profile(target, active_profile)
-	save_settings(active_profile, true)
+	save_settings(active_profile, true, settings_path)

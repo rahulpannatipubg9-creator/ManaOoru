@@ -51,6 +51,11 @@
     "paint_color": "#5e1924",
     "paint_materials": [
       "Ford:Ford_RoushStage3Mustang_1996Paint_Material1"
+    ],
+    "glass_materials": [
+      "Ford:Ford_RoushStage3Mustang_1996WindowA_Material1",
+      "Black_Window",
+      "Light_glass"
     ]
   },
   "shelby_patrol_13": {
@@ -105,6 +110,15 @@
     "paint_color": "#383b3e",
     "paint_materials": [
       "wire_216139066"
+    ],
+    "glass_materials": [
+      "wire_236160154",
+      "wire_159230118",
+      "wire_163092027",
+      "wire_066151096",
+      "wire_140023157",
+      "wire_046094162",
+      "wire_062250081"
     ]
   },
   "ford_transit_camion": {
@@ -136,6 +150,31 @@
     "paint_color": "#c0c4c8",
     "paint_materials": [
       "wire_177088027"
+    ],
+    "glass_materials": [
+      "wire_255255255",
+      "wire_028149177",
+      "wire_154215229",
+      "wire_153228153",
+      "wire_228153184",
+      "wire_008110135",
+      "wire_115115115",
+      "wire_027177088",
+      "wire_224198087"
+    ]
+  },
+  "shelby_cobra_68": {
+    "paint_color": "#183d2c",
+    "paint_materials": [],
+    "glass_materials": [
+      "Mat02"
+    ]
+  },
+  "can_am_maverick": {
+    "paint_color": "#e0a52e",
+    "paint_materials": [],
+    "glass_materials": [
+      "01 - Coro678"
     ]
   }
 }

@@ -87,6 +87,12 @@ Custom assets are recorded in [`data/world/custom_placements.json`](file:///User
 
 ## 5. Entries & Lessons Learned
 
+### Decimating monolithic arena compounds for zero-lag open-world exploration (2026-11-01)
+- **Symptom:** Community / Sketchfab map compounds (like PUBG/BGMI TDM warehouse arenas) exceed 1.3M - 1.5M triangles, creating severe frame-rate drops or out-of-memory crashes on Apple M1 (8GB) and budget mobile devices when placed in open-world city maps.
+- **Cause:** Raw map assets contain high subdivision bevels on every corrugated sheet, fence post, bolt, and container ridge.
+- **Rule:** Decimate monolithic arena compounds by 95%+ in Blender down to $\le 70,000$ triangles, strip internal cameras/lights, and set visibility distance limits (`visibility_range_end = 250.0m`). This allows players to roam seamlessly around adjacent areas (such as the Godavari River Bridge) with zero lag, while preserving full physical trimesh collision for exploration and tactical combat.
+- **Check:** `tests/test_custom_asset_placements.gd` and `tests/movement_regression.gd`.
+
 ### Automated 3D asset import & smart placement pipeline (2026-10-30)
 - **Problem:** Manual asset conversion required writing one-off scripts, manually stripping lamps, guessing ground origins, fixing mobile polygon budgets, and manually coding placement coordinates in Godot builders.
 - **Solution:** Built automated pipeline in `tools/asset_pipeline/pipeline.py` (supported by `scanner.py`, `blender_processor.py`, and `placement_engine.py`) and runtime loader `scripts/world/custom_asset_placements.gd`.

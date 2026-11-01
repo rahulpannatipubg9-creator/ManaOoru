@@ -14,8 +14,8 @@ const Weapons := preload("res://scripts/gameplay/weapon_catalog.gd")
 var respawn_position := DEFAULT_SPAWN
 ## Below this height the body is treated as fallen out of the world; lowered for deep terrain.
 var fall_limit := -10.0
-@export var walk_speed: float = 4.2
-@export var run_speed: float = 7.0
+@export var walk_speed: float = 2.4
+@export var run_speed: float = 6.8
 @export var acceleration: float = 16.0
 @export var stopping_acceleration: float = 24.0
 ## With a rifle out the body faces the aim, so moving sideways and backwards is slower than forwards, as in

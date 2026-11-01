@@ -81,7 +81,14 @@ var _ads_sight := false
 var _since_recoil := 0.0
 
 func _process(delta: float) -> void:
-	if not _camera or not _camera.current:
+	if not _camera:
+		return
+	var is_active: bool = _camera.current
+	if not is_active:
+		var parent := get_parent()
+		if parent and parent.get("input_authority") == true:
+			is_active = true
+	if not is_active:
 		return
 	if GameplayControls.blocked:
 		if stabilized_vehicle_mount:
@@ -181,7 +188,9 @@ func _capture_mouse() -> void:
 func reset_view() -> void:
 	if view_mode == ViewMode.FIRST_PERSON:
 		_yaw = _forward_yaw()
-		_pitch = 0.0
+		var parent := get_parent()
+		var in_vehicle: bool = parent != null and (parent.has_method("recover_vehicle") or parent is RigidBody3D)
+		_pitch = -0.06 if in_vehicle else 0.0
 	else:
 		_yaw = PI * 0.5
 		_pitch = -0.18
@@ -435,12 +444,10 @@ func clear_touch_look() -> void:
 	_gyro.reset()
 
 func add_recoil(pitch_kick: float = 0.022, yaw_kick: float = 0.008) -> void:
-	if not camera_shake_enabled:
-		pitch_kick *= 0.15
-		yaw_kick *= 0.15
-	else:
-		pitch_kick *= camera_shake_scale
-		yaw_kick *= camera_shake_scale
+	if not camera_shake_enabled or stabilized_vehicle_mount:
+		return
+	pitch_kick *= camera_shake_scale
+	yaw_kick *= camera_shake_scale
 	_since_look = 0.0
 	_pitch = clamp_pitch_value(_pitch + pitch_kick, _min_pitch(), _max_pitch())
 	_recoil_debt += pitch_kick

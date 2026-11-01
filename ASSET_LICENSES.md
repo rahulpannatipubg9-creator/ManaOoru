@@ -575,3 +575,36 @@ Includes `electrical_pylon.glb`, `metal_crash_barrier.glb`, `sign_slippery_road.
 - `shelby_cobra_68`: 1968 Ford Mustang Shelby Cobra GT500 Fastback (FINAL_MODEL_GT50067.fbx) -> `Hotel Sai Leela VIP Courtyard`
 - `little_bird_mh6`: MH-6 Little Bird Light Observation Helicopter (MH-6 Little Bird.obj) -> `Singareni Collieries OCP 5 Incline`
 - `city_transit_bus`: RoAZ 5236 Low-Floor City Transit Bus (RoAZ_5236.fbx) -> `TGSRTC Bus Station Depot`
+
+### TDM Arena Compound (`tdm_1`)
+- **Title:** Tdm (Warehouse / Arena Map)
+- **Author:** afnanklndr (https://sketchfab.com/afnanklndr)
+- **Source:** https://sketchfab.com/3d-models/tdm-a304a4345ced4ee7852c4dd7cfb2ce75
+- **License:** Creative Commons Attribution (CC-BY-4.0)
+- **Credit Notice:** This work is based on "Tdm" by afnanklndr licensed under CC-BY-4.0.
+- **Optimized Destination:** `assets/models/city_props/tdm_1.glb` (Decimated: 1,365,844 -> 68,883 tris for mobile/M1 performance)
+
+### BMW S1000 RR 2023 Superbike (`bmw_s1000_rr`)
+- **Source:** User download `bmw-s1000-rr.zip` (`source/10211.glb`)
+- **Processing:** Optimized from 313,000 tris to 38,690 tris, ground-aligned Z=0, rotation calibrated, independent steering handlebars, separate rotating wheels, critically damped motorcycle suspension (11 Hz).
+- **Drivable Scene:** `res://scenes/vehicles/bmw_s1000_rr.tscn`
+- **Location:** Godavarikhani Chowrasta Main Square (`[112.0, 0.0, -102.0]`)
+
+### 1965 Ford Mustang Hoonicorn RTR V2 (`hoonicorn_ken_block`)
+- **Source:** User download `hoonicorn-ken-block.zip` (`hoonicorn-_a_tribute_to_ken_block_updated.glb`)
+- **Processing:** Decimated from 313,148 tris to 48,497 tris, scaled 0.354 to real-world 4.54m length, separated and rigged into 4 rotating wheels + body, 1400hp twin-turbo AWD physics setup.
+- **Drivable Scene:** `res://scenes/vehicles/imported/hoonicorn_ken_block.tscn`
+- **Location:** Godavari River Bridge Highway (`[762.0, 0.0, -3260.0]`)
+
+
+
+### Virat (`virat`)
+- **Source:** Downloaded asset (`Virat.glb`)
+- **Category:** Custom import via automated asset pipeline
+- **License / Terms:** User-provided download (Standard offline personal/dev license; verified safe for local Godot game use)
+- **Destination:** `assets/models/.../virat.glb`
+
+## Virat character (local integration)
+- Source: user supplied `~/Downloads/Virat.glb`, 2026-11-01.
+- Author/licence: not supplied; redistribution permission unverified. Local testing only pending licence confirmation.
+- Adapted skin: `assets/models/characters/virat/virat.glb`; gameplay rig and clips retained from existing project.

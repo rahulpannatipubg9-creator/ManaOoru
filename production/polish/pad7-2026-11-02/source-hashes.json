@@ -1,0 +1,9 @@
+{
+  "scripts/main.gd": "b91341eb1c70b67153243e4531d87f04926b0f0d8f574294397b9ef21652e095",
+  "scripts/world/tree_builder.gd": "175585c9794a63577249aa6605e4020873c74ef521bed8262a1fb658dc6fc5ad",
+  "scripts/core/device_performance_manager.gd": "4140e9e7c4d61c161876c3cd89af2933fdf1efc6e156122dd61e80c2ec3bf261",
+  "scripts/performance/performance_controller.gd": "eb86242382f1b40812b6de43d4dbb32c637b841c7d932c0ab6b19455760e7b02",
+  "scripts/performance/frame_profile.gd": "2a539ce696496f0b88470bd210968adb9b89053ae827c0e274fa4c05efd23de5",
+  "scripts/performance/graphics_settings.gd": "c3fddcd32346dd0cf6e41acb217009b63d42ef5bfe0221f9eb49deda63827f7b",
+  "tools/performance/pad7_device_probe.gd": "51ab76e301526195842a0e7ccce04072ab97967a2ea5456e38dea4079877018e"
+}

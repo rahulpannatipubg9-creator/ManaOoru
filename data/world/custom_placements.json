@@ -877,7 +877,7 @@
         -360.0
       ],
       "use_ground_height": true,
-      "ground_offset_y": 0.02,
+      "ground_offset_y": 0.34,
       "rotation_y_deg": -45.0,
       "scale": [
         1.0,
@@ -1323,6 +1323,112 @@
       },
       "drivable_scene": "res://scenes/vehicles/imported/city_transit_bus.tscn",
       "vehicle_rig_profile": "city_transit_bus"
+    },
+    {
+      "id": "tdm_1",
+      "name": "TDM Arena Compound",
+      "model_path": "res://assets/models/city_props/tdm_1.glb",
+      "category": "city_buildings",
+      "location_key": "godavari_bridge",
+      "location_name": "Godavari River Bridge Approach",
+      "district": "Godavari River Bridge Highway",
+      "position": [
+        758.21,
+        0.0,
+        -3281.31
+      ],
+      "use_ground_height": true,
+      "ground_offset_y": 0.02,
+      "rotation_y_deg": 240.0,
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "collision_type": "trimesh",
+      "visibility_range_end": 250.0,
+      "metadata": {
+        "source_file": "scene.gltf",
+        "triangles": 68883,
+        "dimensions": {
+          "width_x": 255.054,
+          "depth_y": 303.11,
+          "height_z": 17.275
+        },
+        "placement_reasoning": "User explicitly selected location: Godavari River Bridge Approach (Godavari River Bridge Highway)."
+      }
+    },
+    {
+      "id": "bmw_s1000_rr",
+      "name": "BMW S1000 RR 2023 Superbike",
+      "model_path": "res://assets/models/vehicles/bmw_s1000_rr/bmw_s1000rr_rig.glb",
+      "drivable_scene": "res://scenes/vehicles/bmw_s1000_rr.tscn",
+      "is_drivable": true,
+      "category": "vehicles",
+      "location_key": "chowrasta_center",
+      "location_name": "Godavarikhani Chowrasta Main Square",
+      "district": "Godavarikhani Chowrasta",
+      "position": [
+        112.0,
+        0.0,
+        -102.0
+      ],
+      "use_ground_height": true,
+      "ground_offset_y": 0.25,
+      "rotation_y_deg": 35.0,
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "collision_type": "box",
+      "visibility_range_end": 250.0,
+      "metadata": {
+        "source_file": "10211.glb",
+        "triangles": 38690,
+        "dimensions": {
+          "width_x": 0.84,
+          "depth_y": 2.07,
+          "height_z": 1.15
+        },
+        "placement_reasoning": "High-performance 205-horsepower superbike parked right by Godavarikhani Chowrasta for immediate player ride access."
+      }
+    },
+    {
+      "id": "hoonicorn_ken_block",
+      "name": "1965 Ford Mustang Hoonicorn RTR V2 (Ken Block Tribute)",
+      "model_path": "res://assets/models/vehicles/hoonicorn_ken_block/hoonicorn_ken_block_rig.glb",
+      "drivable_scene": "res://scenes/vehicles/imported/hoonicorn_ken_block.tscn",
+      "is_drivable": true,
+      "category": "vehicles",
+      "location_key": "godavari_bridge",
+      "location_name": "Godavari River Bridge Highway",
+      "district": "Godavari River Bridge Highway",
+      "position": [
+        762.0,
+        0.0,
+        -3260.0
+      ],
+      "use_ground_height": true,
+      "ground_offset_y": 0.05,
+      "rotation_y_deg": 90.0,
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "collision_type": "box",
+      "visibility_range_end": 250.0,
+      "metadata": {
+        "source_file": "hoonicorn-_a_tribute_to_ken_block_updated.glb",
+        "triangles": 48497,
+        "dimensions": {
+          "width_x": 1.92,
+          "depth_y": 4.54,
+          "height_z": 1.25
+        },
+        "placement_reasoning": "1400hp twin-turbo AWD drift beast stationed on Godavari River Bridge Highway approach for high-speed bridge sprints."
+      }
     }
   ]
 }

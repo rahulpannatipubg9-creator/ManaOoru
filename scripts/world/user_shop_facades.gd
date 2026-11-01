@@ -15,7 +15,7 @@ static func build(builder: Node3D, data: MapData) -> void:
 		for shop: Dictionary in document.get("shops", []):
 			var point := GeoProjection.lon_lat_to_map(float(shop.lon), float(shop.lat))
 			if GeoProjection.is_playable(point):
-				_try_add_record(records, seen, builder, str(shop.name), point, true)
+				_try_add_record(records, seen, builder, str(shop.name), point, true, str(shop.get("shop_id", "")))
 
 	# 2. Retain verified facade boards; fill missing building lettering
 	for board: Dictionary in builder._boards:
@@ -119,6 +119,7 @@ static func build(builder: Node3D, data: MapData) -> void:
 			mount.position = Vector3(center.x, slot.bottom + height * 0.5, center.y) + normal * 0.24
 			mount.basis = Basis(Vector3.UP.cross(normal), Vector3.UP, normal)
 			mount.set_meta("shop_name", str(shop.name))
+			mount.set_meta("shop_id", str(shop.get("shop_id", "")))
 			mount.set_meta("placement", "approximate user-requested frontage")
 			mount.set_meta("building_id", building_id)
 			mount.set_meta("pin_distance_m", entry.distance)
@@ -160,15 +161,17 @@ static func build(builder: Node3D, data: MapData) -> void:
 		file.store_string(JSON.stringify({"mounted": count, "signs": report, "unplaced": unplaced}, "  "))
 	print("User-requested building signs mounted: ", count, "; unplaced: ", unplaced.size())
 
-static func _try_add_record(records: Array[Dictionary], seen: Dictionary, builder: Node3D, name: String, point: Vector2, requested: bool) -> bool:
+static func _try_add_record(records: Array[Dictionary], seen: Dictionary, builder: Node3D, name: String, point: Vector2, requested: bool, shop_id: String = "") -> bool:
 	var key: String = builder._sign_name_key(name)
-	if key.is_empty() or seen.has(key) or builder.has_facade_board(name):
+	if key.is_empty() or seen.has(key) or (not requested and builder.has_facade_board(name)):
 		return false
 	for prior in records:
 		var pkey: String = builder._sign_name_key(str(prior.name))
-		if pkey == key or ((pkey in key or key in pkey) and prior.point.distance_to(point) < 35.0):
+		if pkey == key:
 			return false
-	records.append({"name": name, "point": point, "requested": requested})
+		if not requested and (pkey in key or key in pkey) and prior.point.distance_to(point) < 35.0:
+			return false
+	records.append({"name": name, "point": point, "requested": requested, "shop_id": shop_id})
 	seen[key] = true
 	return true
 

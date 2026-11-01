@@ -12,6 +12,12 @@ Anything placed on the ground: trees, stalls, carts, pickups, poles, drains, cov
 
 ## Entries
 
+### Tree generation continued across the entire district during play (2026-11-02)
+- **Symptom:** M1 profiling found tree callbacks consuming about 553 ms per second, including a 49 ms callback, despite selecting a short view distance.
+- **Cause:** `TreeBuilder._pending` contained every map cell. `_process()` only sorted that global queue and built whole chunks without yielding inside a chunk; distant foliage/trunk physics were never retired. The graphics distance control only affected existing meshes.
+- **Rule:** Queue only cells near streaming focus, retire distant mesh/trunk ownership, recreate deterministic placements on return, and yield between source-tree evaluations under a 1.2 ms work budget. Apply distance settings to future chunks as well as existing foliage. Chunk commit remains a native allocation boundary and must still be profiled in dense areas.
+- **Check:** `tree_streaming_regression.gd` checks bounded selection, trunk collision, unload, deterministic return and resumption. The rendered M1 probe records actual walking/driving distance and frame percentiles; short near-60 FPS results do not certify high-speed or long-session performance.
+
 ### Instantiated GLB node does not have visibility_range_end (2026-10-30)
 - **Symptom:** Godot crashes with "Invalid assignment of property or key 'visibility_range_end' with value of type 'float' on a base object of type 'Node3D'".
 - **Cause:** Instantiating a `.glb` or `.tscn` scene returns a base `Node3D`, but `visibility_range_end` is only defined on `GeometryInstance3D` (e.g. `MeshInstance3D`).

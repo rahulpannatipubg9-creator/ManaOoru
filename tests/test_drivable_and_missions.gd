@@ -39,8 +39,17 @@ func _init() -> void:
 		root.add_child(tv)
 		await process_frame
 		assert(tv.get_child_count() > 0, "Traffic vehicle kind '%s' must have visual children" % kind)
-		tv._process(0.1)
-		assert(tv.position.z >= 0.0, "Traffic vehicle kind '%s' must advance" % kind)
+		var lane := Path3D.new()
+		lane.curve = Curve3D.new()
+		lane.curve.add_point(Vector3.ZERO)
+		lane.curve.add_point(Vector3(0,0,50))
+		lane.set_meta("next", [])
+		root.add_child(lane)
+		tv.activate(lane, 0.0)
+		for frame in 15:
+			await physics_frame
+		assert(tv.position.z > 0.0, "Traffic vehicle kind '%s' must advance" % kind)
+		lane.queue_free()
 		print("PASS: Ambient traffic model '%s' initialized and simulated successfully" % kind)
 		tv.queue_free()
 

@@ -2,6 +2,7 @@ extends "res://scripts/vehicle/rigid_vehicle.gd"
 ## Motorcycle with two visible wheels and paired centre-line suspension probes.
 ## Balance assistance keeps low-speed play usable; lean follows lateral acceleration.
 @export var rider_foot_half_width := 0.24
+@export var handlebars_position := Vector3(0, .75, .35)
 var _bike_body: Node3D
 var _handlebars: Node3D
 var _lean_target := 0.0
@@ -16,7 +17,7 @@ func _ready() -> void:
  _handlebars = model.find_child("Handlebars", true, false)
  if _handlebars:
   _handlebars.reparent(self, false)
-  _handlebars.position = Vector3(0, .75, .35)
+  _handlebars.position = handlebars_position
  model.queue_free()
  freeze = not driving_enabled
  super._ready()

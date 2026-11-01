@@ -49,6 +49,9 @@ func _init() -> void:
 	assert(absf(keyboard_displacement.z) > 0.1 or absf(keyboard_displacement.x) > 0.1,
 		"W action must change the player position")
 	player.queue_free()
+	# The isolated car pad must not overlap the city's terrain/road collision.
+	ground.queue_free()
+	await process_frame
 	var main_scene := load("res://scenes/main.tscn") as PackedScene
 	assert(main_scene != null, "Main scene must load")
 	var game := main_scene.instantiate()
@@ -68,6 +71,38 @@ func _init() -> void:
 	# Cars are live rigid bodies: let them settle onto their springs and fall asleep first.
 	for _frame in 60:
 		await physics_frame
+	# Streamed collision is built over multiple render frames. Adding those static
+	# bodies wakes nearby rigid cars; wait for loading and suspension settlement
+	# before measuring input isolation, with a bound so startup cannot hang.
+	for _frame in 900:
+		if game.get_node("World").buildings.pending_chunk_count() == 0:
+			break
+		await physics_frame
+	assert(game.get_node("World").buildings.pending_chunk_count() == 0, "Startup building collision must finish streaming")
+	# This suite measures player input ownership. Keep ambient actors stationary
+	# so traffic/pedestrian impacts cannot be mistaken for leaked player input.
+	# Their live behaviour and car impacts have separate regression suites.
+	for world_node in [game.get_node("World")] + game.get_node("World").find_children("*", "Node", true, false):
+		var player_vehicle := false
+		for vehicle in game.vehicles:
+			if world_node == vehicle or vehicle.is_ancestor_of(world_node):
+				player_vehicle = true
+				break
+		if player_vehicle:
+			continue
+		world_node.set_process(false)
+		world_node.set_physics_process(false)
+	var settled_frames := 0
+	for _frame in 900:
+		await physics_frame
+		var settled: bool = game.get_node("World").buildings.pending_chunk_count() == 0
+		for vehicle in game.vehicles:
+			if vehicle is RigidBody3D and not vehicle.freeze:
+				settled = settled and vehicle.sleeping
+		settled_frames = settled_frames + 1 if settled else 0
+		if settled_frames >= 60:
+			break
+	assert(settled_frames >= 60, "Parked vehicles must settle after startup collision streaming")
 	var tuk_ground_y: float = game.get_node("World").ground_height(GeoProjection.world_to_map(tuk_tuk.global_position))
 	# Roads have a thin rendered/collision deck above the terrain sample. The
 	# Tuk's bottom is on that deck; it must never hover by a visible distance.
@@ -82,6 +117,19 @@ func _init() -> void:
 	var parked_vehicle_positions: Dictionary = {}
 	for vehicle in game.vehicles:
 		parked_vehicle_positions[vehicle] = vehicle.global_position
+	# Pick a clear walking path beside the spawn vehicles. A kinematic person
+	# pushing a live car is a physical collision, not leaked driving authority.
+	var walk_pivot := world_player.get_node("CameraPivot")
+	var clear_path := false
+	for index in 16:
+		var yaw := TAU * float(index) / 16.0
+		var direction := Vector3.FORWARD.rotated(Vector3.UP, yaw)
+		if not world_player.test_move(world_player.global_transform, direction * 5.0):
+			walk_pivot._yaw = yaw
+			walk_pivot._apply_orbit_rotation()
+			clear_path = true
+			break
+	assert(clear_path, "Input isolation needs a collision-free walking path")
 	var world_start: Vector3 = world_player.global_position
 	world_player.set_touch_move_input(Vector2(0.0, -1.0))
 	for _frame in 30:
@@ -92,6 +140,7 @@ func _init() -> void:
 		assert(vehicle.global_position.distance_to(parked_vehicle_positions[vehicle]) < 0.01,
 			"Parked vehicle %s moved %.4f m while the person walks" % [vehicle.name, vehicle.global_position.distance_to(parked_vehicle_positions[vehicle])])
 		assert(vehicle.is_physics_processing(), "Parked vehicles must keep physics processing enabled")
+	world_player.set_touch_move_input(Vector2.ZERO)
 	Input.action_press("forward")
 	for _frame in 30:
 		await physics_frame

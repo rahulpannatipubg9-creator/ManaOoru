@@ -480,6 +480,15 @@ func update_streaming(center: Vector2) -> void:
 			add_child(_sectors[cell])
 			_active_sectors[cell] = true
 
+## Inactive sectors are detached for reuse, so freeing the scene does not
+## recursively own them. Release those orphans synchronously during teardown.
+func _exit_tree() -> void:
+	for sector: Node3D in _sectors.values():
+		if is_instance_valid(sector) and sector.get_parent() == null:
+			sector.free()
+	_sectors.clear()
+	_active_sectors.clear()
+
 func _mesh_instance(surface: MeshSurface, material: Material, view_distance: float) -> MeshInstance3D:
 	var instance := MeshInstance3D.new()
 	instance.mesh = surface.to_mesh()

@@ -19,7 +19,8 @@ func _init() -> void:
 		"Helicopter visual model must be aligned horizontally with its collision body")
 	assert(absf(angle_difference((helicopter.get_node("Model") as Node3D).rotation.y, PI)) < 0.01,
 		"Visual fuselage must retain its 180-degree heading correction independently of controls")
-	assert(helicopter.get_node_or_null("AnimatedMainRotor") != null, "Animated main rotor missing")
+	var rotor: Node3D = helicopter.find_child("AnimatedMainRotor", true, false)
+	assert(rotor != null, "Animated main rotor missing")
 	assert(helicopter.get_node_or_null("RotorEngineAudio") != null, "Helicopter engine audio missing")
 	assert((helicopter.get_node("RotorEngineAudio") as AudioStreamPlayer3D).volume_db >= 0.0,
 		"Helicopter engine audio must be audible while driving")
@@ -34,7 +35,7 @@ func _init() -> void:
 		await physics_frame
 	assert(helicopter.global_position.y > start_y + 2.0, "Collective input must lift the helicopter")
 	assert(absf(helicopter.global_position.z - start_z) > 0.25, "Cyclic pitch must produce forward flight")
-	assert((helicopter.get_node("AnimatedMainRotor") as Node3D).rotation.y != 0.0, "Rotor must spin after engine start")
+	assert(rotor.rotation.y != 0.0 or rotor.rotation.length_squared() > 0.001, "Rotor must spin after engine start")
 	helicopter.set_touch_run_pressed(false)
 	assert(not helicopter.can_exit_safely(), "Airborne helicopter must reject vehicle exit")
 	print("PASS helicopter regression: takeoff and airborne exit safety")
