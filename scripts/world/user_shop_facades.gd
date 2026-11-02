@@ -104,6 +104,9 @@ static func build(builder: Node3D, data: MapData) -> void:
 	var colors := [Color("164e70"), Color("7b252d"), Color("224b38"), Color("613c18"), Color("493561"), Color("2b4c6f"), Color("6a3528")]
 	var count := 0
 	var report: Array = []
+	var panel_transforms: Array[Transform3D] = []
+	var panel_colors: Array[Color] = []
+	var label_view_dist := 45.0 if OS.has_feature("mobile") else 75.0
 	for index: int in groups:
 		for entry: Dictionary in groups[index]:
 			var shop: Dictionary = entry.shop
@@ -125,16 +128,8 @@ static func build(builder: Node3D, data: MapData) -> void:
 			mount.set_meta("pin_distance_m", entry.distance)
 			mount.set_meta("board_width", width)
 
-			var panel := MeshInstance3D.new()
-			var mesh := BoxMesh.new()
-			mesh.size = Vector3(width, height, 0.15)
-			panel.mesh = mesh
-			var material := StandardMaterial3D.new()
-			material.albedo_color = colors[count % colors.size()]
-			material.roughness = 0.8
-			panel.material_override = material
-			panel.visibility_range_end = 160.0
-			mount.add_child(panel)
+			panel_transforms.append(Transform3D(mount.basis.scaled(Vector3(width, height, 1.0)), mount.position))
+			panel_colors.append(colors[count % colors.size()])
 
 			var label := Label3D.new()
 			var text := _format_sign_text(str(shop.name))
@@ -149,12 +144,33 @@ static func build(builder: Node3D, data: MapData) -> void:
 			label.outline_size = 4
 			label.modulate = Color("fff1cc")
 			label.no_depth_test = false
-			label.visibility_range_end = 160.0
+			label.visibility_range_end = label_view_dist
 			mount.add_child(label)
 
 			builder._board_names[str(shop.name).to_upper()] = true
 			report.append({"name": shop.name, "building_id": building_id, "pin_distance_m": entry.distance, "placement": "generated shopfront near source pin" if index < 0 else "approximate user-requested frontage", "requested_five": shop.requested, "wall_a": [slot.a.x, slot.a.y], "wall_b": [slot.b.x, slot.b.y], "bottom": slot.bottom, "height": height, "width": width})
 			count += 1
+
+	if not panel_transforms.is_empty():
+		var box_mesh := BoxMesh.new()
+		box_mesh.size = Vector3(1.0, 1.0, 0.15)
+		var material := StandardMaterial3D.new()
+		material.vertex_color_use_as_albedo = true
+		material.roughness = 0.8
+		var multimesh := MultiMesh.new()
+		multimesh.transform_format = MultiMesh.TRANSFORM_3D
+		multimesh.use_colors = true
+		multimesh.mesh = box_mesh
+		multimesh.instance_count = panel_transforms.size()
+		for i in panel_transforms.size():
+			multimesh.set_instance_transform(i, panel_transforms[i])
+			multimesh.set_instance_color(i, panel_colors[i])
+		var multimesh_instance := MultiMeshInstance3D.new()
+		multimesh_instance.name = "UserShopPanelsMultiMesh"
+		multimesh_instance.multimesh = multimesh
+		multimesh_instance.material_override = material
+		multimesh_instance.visibility_range_end = 160.0
+		builder.add_child(multimesh_instance)
 
 	var file := FileAccess.open("user://user_shop_facade_report.json", FileAccess.WRITE)
 	if file:

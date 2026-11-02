@@ -164,6 +164,7 @@ func _create_ground() -> void:
 			mesh.visibility_range_end = 2500.0
 			chunk.add_child(mesh)
 			var shape := ConcavePolygonShape3D.new()
+			shape.backface_collision = true
 			shape.set_faces(surface.collision)
 			var collision := CollisionShape3D.new()
 			collision.shape = shape

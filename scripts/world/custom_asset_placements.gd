@@ -39,6 +39,14 @@ func build(world: Node) -> void:
 	print("CustomAssetPlacements: Successfully spawned %d custom assets into the world." % loaded_count)
 
 func _spawn_asset(world: Node, data: Dictionary) -> void:
+	# On mobile / benchmark devices, do not load heavy distant assets (> 500m) at startup to stay within RAM limits.
+	if OS.has_feature("mobile") or OS.has_feature("pad7_benchmark"):
+		var pos_arr: Array = data.get("position", [0.0, 0.0, 0.0])
+		var map_x: float = float(pos_arr[0])
+		var map_z: float = float(pos_arr[2]) if pos_arr.size() > 2 else float(pos_arr[1])
+		if Vector2(map_x, map_z).length() > 500.0:
+			return
+
 	var model_path: String = data.get("model_path", "")
 	if model_path.is_empty() or not (FileAccess.file_exists(model_path) or ResourceLoader.exists(model_path)):
 		push_warning("CustomAssetPlacements: Model path not found: " + model_path)

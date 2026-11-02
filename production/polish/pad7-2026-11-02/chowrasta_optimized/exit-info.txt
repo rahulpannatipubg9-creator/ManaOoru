@@ -1,0 +1,44 @@
+ACTIVITY MANAGER PROCESS EXIT INFO (dumpsys activity exit-info)
+Last Timestamp of Persistence Into Persistent Storage: 2026-11-02 06:16:52.718
+  package: com.manaooru.pad7bench
+    Historical Process Exit for uid=10358
+        ApplicationExitInfo #0:
+          timestamp=2026-11-02 05:50:29.285 pid=4470 realUid=10358 packageUid=10358 definingUid=10358 user=0
+          process=com.manaooru.pad7bench reason=3 (LOW_MEMORY) subreason=0 (UNKNOWN) status=0
+          importance=400 pss=1.8GB rss=578MB description=null state=empty trace=null
+        ApplicationExitInfo #1:
+          timestamp=2026-11-02 05:42:07.138 pid=21352 realUid=10358 packageUid=10358 definingUid=10358 user=0
+          process=com.manaooru.pad7bench reason=10 (USER REQUESTED) subreason=21 (FORCE STOP) status=0
+          importance=100 pss=1.8GB rss=892MB description=stop com.manaooru.pad7bench due to from process:4041 state=empty trace=null
+        ApplicationExitInfo #2:
+          timestamp=2026-11-02 05:39:36.836 pid=9306 realUid=10358 packageUid=10358 definingUid=10358 user=0
+          process=com.manaooru.pad7bench reason=3 (LOW_MEMORY) subreason=0 (UNKNOWN) status=0
+          importance=100 pss=1.4GB rss=577MB description=null state=empty trace=null
+        ApplicationExitInfo #3:
+          timestamp=2026-11-02 05:19:19.745 pid=8469 realUid=10358 packageUid=10358 definingUid=10358 user=0
+          process=com.manaooru.pad7bench reason=2 (SIGNALED) subreason=0 (UNKNOWN) status=9
+          importance=100 pss=0.00 rss=0.00 description=null state=empty trace=null
+        ApplicationExitInfo #4:
+          timestamp=2026-11-02 05:16:22.400 pid=7233 realUid=10358 packageUid=10358 definingUid=10358 user=0
+          process=com.manaooru.pad7bench reason=2 (SIGNALED) subreason=0 (UNKNOWN) status=9
+          importance=100 pss=0.00 rss=0.00 description=null state=empty trace=null
+        ApplicationExitInfo #5:
+          timestamp=2026-11-02 05:03:08.229 pid=31993 realUid=10358 packageUid=10358 definingUid=10358 user=0
+          process=com.manaooru.pad7bench reason=3 (LOW_MEMORY) subreason=0 (UNKNOWN) status=0
+          importance=100 pss=1.4GB rss=520MB description=null state=empty trace=null
+        ApplicationExitInfo #6:
+          timestamp=2026-11-02 04:58:39.705 pid=28710 realUid=10358 packageUid=10358 definingUid=10358 user=0
+          process=com.manaooru.pad7bench reason=3 (LOW_MEMORY) subreason=0 (UNKNOWN) status=0
+          importance=100 pss=1.3GB rss=520MB description=null state=empty trace=null
+        ApplicationExitInfo #7:
+          timestamp=2026-11-02 04:48:40.365 pid=24237 realUid=10358 packageUid=10358 definingUid=10358 user=0
+          process=com.manaooru.pad7bench reason=3 (LOW_MEMORY) subreason=0 (UNKNOWN) status=0
+          importance=100 pss=1.5GB rss=517MB description=null state=empty trace=null
+        ApplicationExitInfo #8:
+          timestamp=2026-11-02 04:41:30.215 pid=20381 realUid=10358 packageUid=10358 definingUid=10358 user=0
+          process=com.manaooru.pad7bench reason=3 (LOW_MEMORY) subreason=0 (UNKNOWN) status=0
+          importance=100 pss=1.2GB rss=520MB description=null state=empty trace=null
+        ApplicationExitInfo #9:
+          timestamp=2026-11-02 04:40:33.398 pid=17341 realUid=10358 packageUid=10358 definingUid=10358 user=0
+          process=com.manaooru.pad7bench reason=3 (LOW_MEMORY) subreason=0 (UNKNOWN) status=0
+          importance=100 pss=1.6GB rss=537MB description=null state=empty trace=null

@@ -423,6 +423,7 @@ func _commit() -> void:
 				body.collision_layer = 1 | (1 << (ROAD_LAYER - 1))
 				body.collision_mask = 0
 				var shape := ConcavePolygonShape3D.new()
+				shape.backface_collision = true
 				shape.set_faces(surface.collision)
 				var collision := CollisionShape3D.new()
 				collision.shape = shape

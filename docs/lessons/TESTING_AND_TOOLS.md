@@ -124,3 +124,8 @@
 - Live multiplayer deliberately does not pause SceneTree. Include visible settings in the shared input gate so movement, gyro and firing stop locally while the match continues.
 - Numeric slider labels need explicit refresh when a restored value equals the initial minimum; value_changed otherwise does not fire.
 - Capture helpers should call settings navigation instead of traversing fixed parent chains.
+
+### Android export template disables CLI path overrides (2026-11-02)
+- **Symptom:** Godot Android export template aborts immediately upon boot with `ERROR: Scene path was specified on the command line, but this Godot binary was compiled without support for path overrides. Aborting.`
+- **Cause:** Specifying a `.tscn` path inside `command_line/extra_args` in `export_presets.cfg` or passing a scene path in the launch Intent. Official Godot Android templates are compiled with `disable_path_overrides=yes` for security and stability.
+- **Rule:** Never pass scene paths via `extra_args` or CLI flags for Android exports. Use Godot's built-in feature overrides in `project.godot`: e.g. `run/main_scene.android="res://scenes/performance/android_probe_boot.tscn"`. Keep `command_line/extra_args=""` in `export_presets.cfg`.

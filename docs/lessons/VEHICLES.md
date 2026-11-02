@@ -17,6 +17,12 @@ Code: `scripts/vehicle/` (`vehicle_entry.gd` for getting in and out and the seat
 
 ## Entries
 
+### High-speed lookahead streaming and collision tunneling prevention at 120+ km/h (2026-11-02)
+- **Symptom:** At high velocities (120–135 km/h), vehicle lead vector capped at 100 m trailed chunk extrusion, single-sided concave terrain/road meshes lacked backface collision response risking physics tunneling on high-velocity frame steps, suspension wheel raycasts ignored backfaces, and default `fall_limit = -10.0 m` triggered false teleports in deep sectors like the Godavari River Bridge (deck Y = -25.1 m to -26.3 m) or Coal Mine (-30 m).
+- **Cause:** Lookahead lead wasn't scaled for high velocities (>33 m/s), `world.trees.focus` was unassigned in `main.gd`, `ConcavePolygonShape3D.backface_collision` defaults to `false` in Godot 4.7, suspension wheel ray queries had `hit_back_faces = false`, and `fall_limit` was hardcoded without checking the DEM elevation envelope (-30 m to +60 m).
+- **Rule:** Velocity-aware streaming must scale lookahead up to 250 m at 130 km/h and assign focus to both `world.buildings` and `world.trees`. Always set `backface_collision = true` on road, bridge, and terrain concave polygon shapes. Set `hit_back_faces = true` on suspension wheel raycast queries so wheels retain upward spring force even during deep step penetrations. Set vehicle default `fall_limit = -80.0 m` to encompass all district DEM topography safely.
+- **Check:** `tests/movement_regression.gd`, `tools/performance/pad7_chowrasta_high_speed_probe.gd` on physical Xiaomi Pad 7 (`tunneling_events: 0`, `fall_events: 0`, `collision_integrity_pct: 100.0%`, `pending_trees: 0`, `pending_buildings: 0.07 mean`).
+
 ### Input isolation must exclude ambient impacts and fixture overlap (2026-11-02)
 - **Symptom:** Parked-car input checks reported centimetres of motion while walking near the spawn Tuk Tuk.
 - **Cause:** The test retained its isolated ground pad beneath the city, sampled before streamed collision settled, and walked through the parked roster. Live ambient actors could also physically move unselected cars during entry/driving assertions.

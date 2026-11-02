@@ -18,6 +18,7 @@ const CHARACTER_WIDTH := 0.3
 const MAX_BOARD_WIDTH := 7.5
 const BOARD_BOTTOM := 2.3
 const LABEL_VIEW_DISTANCE := 140.0
+const MOBILE_LABEL_VIEW_DISTANCE := 45.0
 const SIGNAL_CYCLE := [["green", 12.0], ["amber", 3.0], ["red", 15.0]]
 const SIGNAL_ROAD_KINDS := ["trunk", "primary", "secondary", "tertiary"]
 const SIGNAL_CLUSTER_DISTANCE := 30.0
@@ -425,7 +426,7 @@ func _add_label(at: Vector2, angle: float, text: String, width: float, height: f
 	label.double_sided = false
 	label.position = Vector3(at.x, height + _ground(at), at.y)
 	label.rotation.y = angle
-	label.visibility_range_end = LABEL_VIEW_DISTANCE
+	label.visibility_range_end = MOBILE_LABEL_VIEW_DISTANCE if OS.has_feature("mobile") else LABEL_VIEW_DISTANCE
 	add_child(label)
 
 func _box(surface: MeshSurface, center: Vector2, size: Vector2, bottom: float, top: float, color: Color) -> void:

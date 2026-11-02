@@ -119,7 +119,7 @@ var current_speed := 0.0
 ## 0 = full grip, 1 = sliding; drives tyre squeal.
 var tyre_slip := 0.0
 var respawn_position := Vector3.ZERO
-var fall_limit := -10.0
+var fall_limit := -80.0
 var wheel_contacts: Array[bool] = [false, false, false, false]
 var wheel_loads: Array[float] = [0.0, 0.0, 0.0, 0.0]
 var wheel_surfaces: Array[int] = [Surface.ROAD, Surface.ROAD, Surface.ROAD, Surface.ROAD]
@@ -433,6 +433,7 @@ func _apply_wheels(delta: float, drive_force: float, brake: float) -> void:
 		var origin := global_transform * _mounts[index]
 		var query := PhysicsRayQueryParameters3D.create(origin, origin - up * (max_length + wheel_radius),
 			1, [get_rid()])
+		query.hit_back_faces = true
 		var hit := space.intersect_ray(query)
 		# Wheels roll over the world, not over people.
 		if not hit.is_empty() and hit.collider is CharacterBody3D:

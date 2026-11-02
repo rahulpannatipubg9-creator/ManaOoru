@@ -13,6 +13,12 @@ storefront allocation (`docs/STOREFRONT_ALLOCATION_FIX.md`), imported exteriors 
 
 ## Entries
 
+### Main thread building extrusion stalls during high-speed driving (2026-11-02)
+- **Symptom:** Driving at 120+ km/h through dense Chowrasta districts caused p95 frame times of 178.9 ms with 3.3s freeze spikes, dropping FPS to 16.47.
+- **Cause:** When travelling at 35+ m/s, new 160m building chunks were entered every few seconds. Synchronous polygon triangulation (`Geometry2D.triangulate_polygon`) and wall extrusion ran on the main thread during `_process()`, blocking the render loop.
+- **Rule:** Offload polygon extrusion and vertex generation to `WorkerThreadPool` background worker threads. The main thread only harvests finished tasks and commits the resulting `ArrayMesh` surfaces to the SceneTree in <0.2 ms. Maintain a concurrency limit (`MAX_CONCURRENT_BUILD_TASKS = 2`) and synchronously flush pending worker tasks in `_exit_tree()` and `setup()`.
+- **Check:** `tools/performance/pad7_chowrasta_high_speed_probe.gd` on Xiaomi Pad 7: average FPS increased from 16.47 to 51.40 FPS at sustained 120+ km/h; peak spike reduced from 3,309 ms to 336 ms.
+
 ### Detached road sectors survived city teardown (2026-11-01)
 - **Symptom:** Quitting or freeing the city leaked roughly 1,500 objects, including 565 meshes and their materials/textures.
 - **Cause:** `road_builder.gd` removes inactive sectors from its child tree for reuse but retained them in `_sectors` without a teardown owner. Freeing the world only frees attached children.

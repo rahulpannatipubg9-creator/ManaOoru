@@ -14,6 +14,7 @@ parser.add_argument('--drive-seconds', type=int, default=180)
 parser.add_argument('--idle-seconds', type=int, default=60)
 parser.add_argument('--soak', action='store_true')
 parser.add_argument('--patch', type=Path)
+parser.add_argument('--probe-script', type=Path, default=Path(__file__).with_name('pad7_device_probe.gd'))
 args = parser.parse_args()
 args.output.mkdir(parents=True, exist_ok=True)
 adb = ['adb', '-s', args.serial]
@@ -35,7 +36,8 @@ if args.patch:
     run('shell', 'run-as', args.package, 'cp', '/data/local/tmp/pad7bench_patch.pck', 'files/pad7_patch.pck')
 else:
     run('shell', 'run-as', args.package, 'rm', '-f', 'files/pad7_patch.pck')
-for source, destination in [(Path(__file__).with_name('pad7_device_probe.gd'), 'stress_test.gd'),
+run('shell', 'run-as', args.package, 'rm', '-f', 'files/pad7_results.json')
+for source, destination in [(args.probe_script, 'stress_test.gd'),
                             (config_path, 'pad7_config.json')]:
     remote = '/data/local/tmp/pad7bench_' + destination
     run('push', str(source), remote)
@@ -67,17 +69,20 @@ with (args.output / 'godot.log').open('wb') as log:
                 break
             if 'PAD7_COMPLETE' in contents or 'PAD7_FAIL' in contents or 'SCRIPT ERROR' in contents:
                 break
-            time.sleep(30)
+            time.sleep(5)
         else:
             print('Probe timeout; partial evidence retained', flush=True)
         (args.output / 'exit-info.txt').write_text(run('shell', 'dumpsys', 'activity', 'exit-info', args.package))
         result = subprocess.run(adb + ['exec-out', 'run-as', args.package, 'cat', 'files/pad7_results.json'], capture_output=True)
-        if result.returncode == 0:
-            payload = json.loads(result.stdout)
-            if payload.get('config', {}).get('run_id') == config['run_id']:
-                (args.output / 'results.json').write_bytes(result.stdout)
-            else:
-                print('Ignoring stale results from a previous run', flush=True)
+        if result.returncode == 0 and result.stdout.strip():
+            try:
+                payload = json.loads(result.stdout)
+                if int(payload.get('config', {}).get('run_id', 0)) == int(config['run_id']):
+                    (args.output / 'results.json').write_bytes(result.stdout)
+                else:
+                    print('Ignoring stale results from a previous run', flush=True)
+            except Exception as e:
+                print(f'Failed to parse results: {e}', flush=True)
         screenshot = run('exec-out', 'screencap', '-p', binary=True)
         (args.output / 'final-screen.png').write_bytes(screenshot)
     finally:

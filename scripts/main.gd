@@ -116,13 +116,15 @@ func _ready() -> void:
 		# Velocity-Aware Lookahead Streaming (e.g. driving at 130 km/h = 36 m/s):
 		# Pre-lead streaming focus ahead along the velocity vector so upcoming chunks build before arrival.
 		if speed > 3.0:
-			var lead_sec := clampf(1.0 + (speed / 36.1) * 1.5, 1.0, 2.5)
+			var lead_sec := clampf(1.0 + (speed / 36.1) * 2.5, 1.0, 4.0)
 			var lead_vec := Vector2(vel.x, vel.z) * lead_sec
-			if lead_vec.length() > 100.0:
-				lead_vec = lead_vec.normalized() * 100.0
+			if lead_vec.length() > 250.0:
+				lead_vec = lead_vec.normalized() * 250.0
 			return pos + lead_vec
 		return pos
 	world.buildings.focus = player_focus
+	if world.trees:
+		world.trees.focus = player_focus
 	if world.roads:
 		world.roads.focus = player_focus
 	hud.configure_map(world.map_data, world.rendered_building_footprints, world.map_data.landmarks, navigator)

@@ -127,3 +127,9 @@ Custom assets are recorded in [`data/world/custom_placements.json`](file:///User
 - **Cause:** Raw FBX models exported from 3ds Max/V-Ray often retain 0.001 scale transforms or centimeter mesh bounding boxes (e.g. 4,357 mm). When `custom_asset_placements.gd` calculated bounding boxes using raw un-transformed `mesh.get_aabb()`, the resulting BoxShape3D was 4,357 meters wide—spanning across the entire city and swallowing the spawn point.
 - **Rule:** `_setup_collision` in `custom_asset_placements.gd` must prioritize verified real-world metric dimensions from `data.metadata.dimensions` (width_x, depth_y, height_z). When calculating AABB from child meshes, it must transform by the relative hierarchy transform to root (`t * box`) and clamp sizes to sane physical bounds ($\le 30\text{ m}$).
 - **Check:** `tests/test_custom_asset_placements.gd` and `tests/movement_regression.gd`.
+
+### Synchronous GLB loading and mobile distance culling (2026-11-02)
+- **Symptom:** Android process terminated at startup by Low Memory Killer (`reason=3 (LOW_MEMORY)`, `memavailable critical lower`).
+- **Cause:** `custom_asset_placements.gd` spawned all 40 registered custom GLBs simultaneously at world generation, loading ~320 MB of raw GLB data and hundreds of uncompressed textures at once—even models located 2 to 3.5 km away at the Coal Mine and Godavari River Bridge (e.g. 45.8 MB `broken_bricks.glb`).
+- **Solution:** In `custom_asset_placements.gd` (`_spawn_asset()`), check `if OS.has_feature("mobile") or OS.has_feature("pad7_benchmark")` and skip assets located $>500.0\text{ m}$ from the active district center during initial world spawn.
+- **Check:** Headless movement regression test, verify asset count spawned on mobile is filtered (e.g., 21 local assets spawned vs 40 on desktop).

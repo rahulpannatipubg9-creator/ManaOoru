@@ -51,14 +51,15 @@ var _resort_timer := 0.0
 var stream_radius := MOBILE_VIEW_DISTANCE if OS.has_feature("mobile") else DESKTOP_VIEW_DISTANCE
 var _built: Dictionary = {}
 var _stream_nodes: Dictionary = {}
-var _work_active := false
-var _work_cell := Vector2i.ZERO
-var _work_data := PackedFloat32Array()
-var _work_index := 0
-var _work_transforms: Array[Transform3D] = []
-var _work_tints: Array[Color] = []
+const MAX_CONCURRENT_BUILD_TASKS := 2
+var _thread_tasks: Dictionary = {} # cell -> task_id
+var _thread_data: Dictionary = {} # cell -> Dictionary (transforms, tints)
 
 func setup(world: Node, data: MapData) -> void:
+	for task_id: int in _thread_tasks.values():
+		WorkerThreadPool.wait_for_task_completion(task_id)
+	_thread_tasks.clear()
+	_thread_data.clear()
 	name = "Trees"
 	_world = world
 	_mesh = _impostor_mesh()
@@ -108,7 +109,7 @@ func keep_clear(at: Vector3, radius: float) -> void:
 	_keep_clear.append(Vector3(at.x, at.z, radius))
 
 func pending_chunk_count() -> int:
-	return _pending.size() + (1 if _work_active else 0)
+	return _pending.size() + _thread_tasks.size()
 
 func build_around(center: Vector2, radius: float) -> void:
 	for cell in _pending.duplicate():
@@ -130,21 +131,34 @@ func _process(delta: float) -> void:
 	if _resort_timer <= 0.0:
 		_resort_timer = 0.25
 		_refresh_stream(source.call() if source.is_valid() else Vector2.ZERO)
-	var deadline := Time.get_ticks_usec() + FRAME_BUDGET_USEC
-	while Time.get_ticks_usec() < deadline:
-		if not _work_active:
-			if _pending.is_empty(): break
-			_start_chunk(_pending.pop_front())
-		_advance_chunk(deadline)
+
+	# 1. Harvest finished background worker tasks and commit multimeshes in <0.1ms
+	var finished_cells: Array[Vector2i] = []
+	for cell: Vector2i in _thread_tasks.keys():
+		var task_id: int = _thread_tasks[cell]
+		if WorkerThreadPool.is_task_completed(task_id):
+			WorkerThreadPool.wait_for_task_completion(task_id)
+			finished_cells.append(cell)
+	for cell in finished_cells:
+		var data: Dictionary = _thread_data[cell]
+		_thread_tasks.erase(cell)
+		_thread_data.erase(cell)
+		var center: Vector2 = source.call() if source.is_valid() else Vector2.ZERO
+		var unload_distance := stream_radius + CHUNK_SIZE * 2.0
+		if center == Vector2.ZERO or _cell_center(cell).distance_to(center) <= unload_distance:
+			_commit_chunk(cell, data.transforms, data.tints)
+		_built[cell] = true
+
+	# 2. Dispatch background worker tasks from _pending without blocking main thread
+	while not _pending.is_empty() and _thread_tasks.size() < MAX_CONCURRENT_BUILD_TASKS:
+		var cell: Vector2i = _pending.pop_front()
+		if _built.has(cell) or _thread_tasks.has(cell):
+			continue
+		_start_worker_chunk(cell)
 
 func _refresh_stream(center: Vector2) -> void:
 	var load_distance := stream_radius + CHUNK_SIZE
 	var unload_distance := load_distance + CHUNK_SIZE * 2.0
-	if _work_active and _cell_center(_work_cell).distance_to(center) > unload_distance:
-		_work_active = false
-		_work_data = PackedFloat32Array()
-		_work_transforms.clear()
-		_work_tints.clear()
 	for cell: Vector2i in _built.keys():
 		if _cell_center(cell).distance_to(center) <= unload_distance: continue
 		if _stream_nodes.has(cell):
@@ -161,52 +175,59 @@ func _refresh_stream(center: Vector2) -> void:
 	for x in range(origin.x - count, origin.x + count + 1):
 		for y in range(origin.y - count, origin.y + count + 1):
 			var cell := Vector2i(x, y)
-			if _chunks.has(cell) and not _built.has(cell) and not (_work_active and cell == _work_cell) and _cell_center(cell).distance_to(center) <= load_distance:
+			if _chunks.has(cell) and not _built.has(cell) and not _thread_tasks.has(cell) and _cell_center(cell).distance_to(center) <= load_distance:
 				_pending.append(cell)
 	_pending.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
 		return _cell_center(a).distance_squared_to(center) < _cell_center(b).distance_squared_to(center))
 
-func _start_chunk(cell: Vector2i) -> void:
-	_work_active = true
-	_work_cell = cell
-	_work_data = _chunks[cell]
-	_work_index = 0
-	_work_transforms.clear()
-	_work_tints.clear()
+func _start_worker_chunk(cell: Vector2i) -> void:
+	if not _chunks.has(cell) or _thread_tasks.has(cell) or _built.has(cell):
+		return
+	var task_id := WorkerThreadPool.add_task(func() -> void:
+		_worker_scatter_chunk(cell))
+	_thread_tasks[cell] = task_id
 
-func _advance_chunk(deadline: int) -> void:
-	while _work_index < _work_data.size():
-		var index := _work_index
-		_work_index += 4
-		_append_tree(index)
-		if deadline > 0 and Time.get_ticks_usec() >= deadline: return
-	_commit_chunk(_work_cell, _work_transforms, _work_tints)
-	_built[_work_cell] = true
-	_work_active = false
-	_work_data = PackedFloat32Array()
+func _worker_scatter_chunk(cell: Vector2i) -> void:
+	var result := _scatter_chunk_data(cell)
+	_thread_data[cell] = result
+
+func _scatter_chunk_data(cell: Vector2i) -> Dictionary:
+	var transforms: Array[Transform3D] = []
+	var tints: Array[Color] = []
+	var data: PackedFloat32Array = _chunks.get(cell, PackedFloat32Array())
+	var buildings: BuildingBuilder = _world.buildings
+	var rng := RandomNumberGenerator.new()
+	for i in range(0, data.size(), 4):
+		var point := Vector2(data[i], data[i + 1])
+		if _blocked(point) or not buildings.is_clear(point, BUILDING_CLEARANCE):
+			continue
+		var height := data[i + 2]
+		var crown := data[i + 3]
+		rng.seed = hash(Vector2i(roundi(point.x * 10.0), roundi(point.y * 10.0)))
+		var up := height / MODEL_HEIGHT
+		var across := maxf(crown / MODEL_RADIUS, up * 0.8) * rng.randf_range(0.9, 1.15)
+		var basis := Basis(Vector3.UP, rng.randf_range(0.0, TAU)).scaled(Vector3(across, up, across))
+		var ground: float = _world.ground_height(point)
+		transforms.append(Transform3D(basis, Vector3(point.x, ground - 0.1, point.y)))
+		var shade := rng.randf_range(0.85, 1.08)
+		tints.append(Color(shade * rng.randf_range(0.95, 1.05), shade, shade * rng.randf_range(0.88, 1.0)))
+	return {"transforms": transforms, "tints": tints}
 
 func _build_chunk(cell: Vector2i) -> void:
-	if _built.has(cell): return
-	_start_chunk(cell)
-	_advance_chunk(0)
-
-func _append_tree(index: int) -> void:
-	var buildings: BuildingBuilder = _world.buildings
-	var point := Vector2(_work_data[index], _work_data[index + 1])
-	if _blocked(point) or not buildings.is_clear(point, BUILDING_CLEARANCE):
+	if _built.has(cell):
 		return
-	var height := _work_data[index + 2]
-	var crown := _work_data[index + 3]
-	var rng := RandomNumberGenerator.new()
-	rng.seed = hash(Vector2i(roundi(point.x * 10.0), roundi(point.y * 10.0)))
-	var up := height / MODEL_HEIGHT
-	# Keep crowns at least as broad as the model's own proportions; the map's crowns read narrow.
-	var across := maxf(crown / MODEL_RADIUS, up * 0.8) * rng.randf_range(0.9, 1.15)
-	var basis := Basis(Vector3.UP, rng.randf_range(0.0, TAU)).scaled(Vector3(across, up, across))
-	var ground: float = _world.ground_height(point)
-	_work_transforms.append(Transform3D(basis, Vector3(point.x, ground - 0.1, point.y)))
-	var shade := rng.randf_range(0.85, 1.08)
-	_work_tints.append(Color(shade * rng.randf_range(0.95, 1.05), shade, shade * rng.randf_range(0.88, 1.0)))
+	if _thread_tasks.has(cell):
+		var task_id: int = _thread_tasks[cell]
+		WorkerThreadPool.wait_for_task_completion(task_id)
+		var data: Dictionary = _thread_data[cell]
+		_thread_tasks.erase(cell)
+		_thread_data.erase(cell)
+		_commit_chunk(cell, data.transforms, data.tints)
+		_built[cell] = true
+		return
+	var data := _scatter_chunk_data(cell)
+	_commit_chunk(cell, data.transforms, data.tints)
+	_built[cell] = true
 
 func _commit_chunk(cell: Vector2i, transforms: Array[Transform3D], tints: Array[Color]) -> void:
 	if transforms.is_empty():
@@ -254,6 +275,10 @@ static func _multimesh(mesh: Mesh, transforms: Array[Transform3D], tints: Array[
 	return multimesh
 
 func _exit_tree() -> void:
+	for task_id: int in _thread_tasks.values():
+		WorkerThreadPool.wait_for_task_completion(task_id)
+	_thread_tasks.clear()
+	_thread_data.clear()
 	for child in get_children():
 		if child.has_meta("trunks"):
 			PhysicsServer3D.free_rid(child.get_meta("trunks"))

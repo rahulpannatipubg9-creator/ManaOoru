@@ -12,6 +12,17 @@ Anything placed on the ground: trees, stalls, carts, pickups, poles, drains, cov
 
 ## Entries
 
+### Main thread tree scattering and unbatched street props caused draw call and frame spikes (2026-11-02)
+- **Symptom:** Peak draw calls reached 2,160+ and frame times stuttered when entering tree-heavy arterial corridors at 120+ km/h on Xiaomi Pad 7.
+- **Cause:**
+  1. `TreeBuilder` evaluated tree points, road clearance envelope checks, and terrain elevation queries inside `_process()` on the main thread.
+  2. Loose street props (384 utility poles, 491 shop facade backings) and distant font labels/pedestrian meshes were instanced as individual `MeshInstance3D` nodes without mobile distance culling.
+- **Rule:**
+  1. Move tree chunk filtering and transform generation to `WorkerThreadPool` worker threads (`TreeBuilder._worker_scatter_chunk`); commit `MultiMesh` instances on the main thread.
+  2. Batch repeated street props into single `MultiMeshInstance3D` nodes (e.g. `UserShopPanelsMultiMesh` for facade boxes, `UtilityPolesMultiMesh` for street poles).
+  3. Enforce mobile visibility culling (`visibility_range_end = 45.0`) on all `Label3D` roadside signs and ambient pedestrian limbs/hair meshes (`scripts/world/pedestrian.gd`).
+- **Check:** `tools/performance/pad7_chowrasta_high_speed_probe.gd` on Xiaomi Pad 7 (`model: 2410CRP4CI`): p95 draw calls dropped from 1,579 to 806; idle draw calls dropped to 494; sustained 120+ km/h frame rate jumped from 16.5 FPS to 51.4 FPS (58.8 FPS post-drive).
+
 ### Tree generation continued across the entire district during play (2026-11-02)
 - **Symptom:** M1 profiling found tree callbacks consuming about 553 ms per second, including a 49 ms callback, despite selecting a short view distance.
 - **Cause:** `TreeBuilder._pending` contained every map cell. `_process()` only sorted that global queue and built whole chunks without yielding inside a chunk; distant foliage/trunk physics were never retired. The graphics distance control only affected existing meshes.
