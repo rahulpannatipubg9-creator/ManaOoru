@@ -100,6 +100,12 @@ Code: `scripts/network/` (squad, sync), `scripts/tactical/` (Team Deathmatch). D
   `leave_and_change_scene(path)` so that everyone is told first.
 - **Check:** the end of `tests/test_multiplayer_loopback.gd` removes a manager from the tree and watches the host.
 
+### TDM network test suites require explicit armor reduction calibration (2026-10-31)
+- **Symptom:** `tdm_network_regression` failed with `the client's validated hits killed the host` and 6 related checks.
+- **Cause:** When BGMI Level 2 Armor reduction (`tdm_armor_reduction = 0.40`) was added to `tdm_config.gd` to raise TTK to 5-6 shots in live gameplay, the test's 4-shot body kill scenario (4 * 28 = 112 raw damage) only dealt 67.2 damage, leaving the host alive.
+- **Rule:** Network regression suites verifying raw damage application and kill state transitions must explicitly set `config.tdm_armor_reduction = 0.0` (matching `tests/weapon_switch_regression.gd`).
+- **Check:** `tests/tdm_network_regression.gd`.
+
 ### Changing rules or messages without a version bump (2026-10-29)
 - **Rule:** any change to hit claims, damage, fire rate or RPC arguments bumps `PROTOCOL_VERSION` in
   `tdm_session.gd` (now 3). A joiner on another version is refused with "Different game version", so the tablet

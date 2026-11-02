@@ -46,6 +46,9 @@ func apply_settings() -> void:
 	var buildings = game.get_node("World").buildings
 	buildings.apply_view_distance(budget.distance)
 	buildings.stream_budget_usec = 1500 if settings.values.distance <= 550.0 else 2500
+	var trees: Variant = game.get_node("World").get("trees")
+	if trees != null and trees.has_method("apply_view_distance"):
+		trees.apply_view_distance(budget.distance)
 	for geometry in _detail_nodes:
 		if not is_instance_valid(geometry): continue
 		var original: float = _base_distances[geometry.get_instance_id()]

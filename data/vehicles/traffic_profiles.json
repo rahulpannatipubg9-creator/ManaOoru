@@ -1,0 +1,65 @@
+{
+  "profiles": [
+    {
+      "kind": "bike",
+      "spawn_weight": 35,
+      "max_speed": 9,
+      "acceleration": 2.8,
+      "length": 2.1
+    },
+    {
+      "kind": "auto",
+      "spawn_weight": 25,
+      "max_speed": 7,
+      "acceleration": 2,
+      "length": 3
+    },
+    {
+      "kind": "car",
+      "spawn_weight": 20,
+      "max_speed": 11,
+      "acceleration": 2.4,
+      "length": 4.2
+    },
+    {
+      "kind": "bus",
+      "spawn_weight": 8,
+      "max_speed": 9,
+      "acceleration": 1.2,
+      "length": 10
+    },
+    {
+      "kind": "coal_truck",
+      "spawn_weight": 7,
+      "max_speed": 7,
+      "acceleration": 1,
+      "length": 8
+    },
+    {
+      "kind": "tractor",
+      "spawn_weight": 5,
+      "max_speed": 5,
+      "acceleration": 1,
+      "length": 4.5
+    }
+  ],
+  "districts": {
+    "city": {
+      "speed_scale": 1,
+      "weights": {}
+    },
+    "mine": {
+      "speed_scale": 0.85,
+      "weights": {
+        "coal_truck": 4
+      }
+    },
+    "highway": {
+      "speed_scale": 1.4,
+      "weights": {
+        "bus": 3,
+        "coal_truck": 3
+      }
+    }
+  }
+}

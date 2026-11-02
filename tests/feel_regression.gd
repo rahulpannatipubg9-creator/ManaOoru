@@ -242,8 +242,8 @@ func test_ads_travel() -> void:
 	var arrived := -1.0
 	var elapsed := 0.0
 	while elapsed < 0.4:
-		await process_frame
-		var delta := maxf(root.get_process_delta_time(), 0.001)
+		await physics_frame
+		var delta := 1.0 / 60.0
 		elapsed += delta
 		worst = maxf(worst, camera.global_position.distance_to(last) / delta)
 		last = camera.global_position
@@ -258,8 +258,8 @@ func test_ads_travel() -> void:
 	last = camera.global_position
 	elapsed = 0.0
 	while elapsed < 0.4:
-		await process_frame
-		var delta := maxf(root.get_process_delta_time(), 0.001)
+		await physics_frame
+		var delta := 1.0 / 60.0
 		elapsed += delta
 		worst = maxf(worst, camera.global_position.distance_to(last) / delta)
 		last = camera.global_position

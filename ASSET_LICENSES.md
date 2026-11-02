@@ -442,6 +442,18 @@ barrel forward along Godot +Z. Includes receiver, tactical foregrip, folding but
 suppressor, and red-dot sight. Playable weapon in free roam and multiplayer (Weapons.BREN2).
 - **Licence: not confirmed.** User-supplied download. Confirm original author and licence before any public release.
 
+
+
+## UI fonts (`assets/fonts/`)
+
+Noto Sans Bold and Noto Sans Telugu Bold by the Noto Project Authors, under the SIL Open Font License 1.1. Copied from
+`tools/signboards/fonts/`.
+
+## Gun sounds (`assets/audio/guns/`)
+
+Original work. Synthesised by `tools/generate_gun_audio.py` with the Python standard library, using no recorded or
+downloaded audio. Rifle shots, distant shots, a passing-round crack, dry fire, reload sounds and hit feedback.
+- **Licence:** project-owned, redistributable with the game.
 ## Banana Tree / Arati Chettu (`assets/models/foliage/banana_tree.glb`)
 
 Converted by `tools/export_banana_tree.py` from user-supplied `Banana_Plant_01.obj` (CGTrader download).
@@ -477,18 +489,134 @@ Includes `electrical_pylon.glb`, `metal_crash_barrier.glb`, `sign_slippery_road.
 
 
 
-## UI fonts (`assets/fonts/`)
-
-Noto Sans Bold and Noto Sans Telugu Bold by the Noto Project Authors, under the SIL Open Font License 1.1. Copied from
-`tools/signboards/fonts/`.
-
-## Gun sounds (`assets/audio/guns/`)
-
-Original work. Synthesised by `tools/generate_gun_audio.py` with the Python standard library, using no recorded or
-downloaded audio. Rifle shots, distant shots, a passing-round crack, dry fire, reload sounds and hit feedback.
-- **Licence:** project-owned, redistributable with the game.
 ### Broken Bricks (`broken_bricks`)
 - **Source:** Downloaded asset (`broken bricks.fbx`)
 - **Category:** Custom import via automated asset pipeline
 - **License / Terms:** User-provided download (Standard offline personal/dev license; verified safe for local Godot game use)
 - **Destination:** `assets/models/.../broken_bricks.glb`
+
+
+## Batch Vehicle Collection (26 Vehicles)
+- **Origin:** Local WhatsApp Inbox 3D Vehicle Collection
+- **Processing:** Headless Blender 5.2.3 optimization, ground origin alignment, light/camera purging, triangle decimation to <= 50,000 for mobile/M1 budgets.
+- `lamborghini_aventador_svj`: 2019 Lamborghini Aventador SVJ (2019_Lamborghini_Aventador_SVJ.fbx) -> `Hotel Sai Leela Portico`
+- `bmw_i8`: 2015 BMW i8 Hybrid (2015_BMW_i8_LOW.fbx) -> `Hotel Sai Leela Portico`
+- `mercedes_amg_gt63`: Mercedes-Benz AMG GT 63 (Mercedes-Benz AMG GT 63.FBX) -> `Hotel Sai Leela Portico`
+- `porsche_cayenne_s`: 2019 Porsche Cayenne S (Porsche Cayenne S 2019 VRAY.FBX) -> `Hotel Sai Leela Courtyard`
+- `porsche_boxster`: Porsche Boxster Roadster (Porsche Boxster_vray.FBX) -> `Hotel Sai Leela Courtyard`
+- `tesla_model_x`: Tesla Model X (Tesla Model X.FBX) -> `Hotel Sai Leela Courtyard`
+- `toyota_supra_gr`: Toyota Supra GR (Toyota_Supra_GR_.obj) -> `Godavari River Bridge Highway`
+- `bmw_x4`: 2015 BMW X4 (2015_BMW_X4_LOW.FBX) -> `Godavari River Bridge Highway`
+- `hydrospace_benelli_s4`: Hydrospace Benelli S4 Watercraft (HSR Benelli S4.obj) -> `Godavari River Pier`
+- `bmw_x5`: 2014 BMW X5 (2014_BMW_X5_LOW.fbx) -> `Vidyanagar Residential Quarter`
+- `bmw_x6`: BMW X6 xDrive50i (BMW X6 xDrive50i 03.obj) -> `Vidyanagar Residential Quarter`
+- `mini_cooper_s`: 2015 Mini Cooper S (2015_Mini_Cooper_S_LOW.fbx) -> `Vidyanagar Residential Quarter`
+- `mazda_cx5`: Mazda CX-5 (MazdaCX5.obj) -> `Vidyanagar Residential Quarter`
+- `volvo_xc40`: Volvo XC40 (Volvo XC40_vray.FBX) -> `Vidyanagar Residential Quarter`
+- `audi_q8`: Audi Q8 2019 (AudiQ8.obj) -> `Vidyanagar Residential Quarter`
+- `volkswagen_id`: Volkswagen I.D. (Volkswagen_I_D.FBX) -> `Vidyanagar Residential Quarter`
+- `mercedes_sedan`: Mercedes-Benz Luxury Sedan (mercedes Obj.obj) -> `Vidyanagar Residential Quarter`
+- `scania_haul_truck`: Scania 2013 Commercial Truck (scania_2013__vray.fbx) -> `Singareni Collieries OCP 5 Incline`
+- `ford_transit_camion`: Ford Transit Utility Van/Truck (FordTransitCamion.obj) -> `Singareni Collieries OCP 5 Incline`
+- `can_am_maverick`: Can-Am Maverick Buggy 2019 (can-am maverick.FBX) -> `Singareni Collieries OCP 5 Incline`
+- `range_rover_evoque`: Range Rover Evoque 2019 (Range Rover Evoque 2019.FBX) -> `Chowrastha Urban Crossroads`
+- `audi_q3_sportback`: Audi Q3 Sportback (AUDI Q3 SPORTBACK.FBX) -> `Chowrastha Urban Crossroads`
+- `mercedes_gla`: Mercedes-Benz GLA (Mercedes-Benz GLA_VRAY.FBX) -> `Chowrastha Urban Crossroads`
+- `mercedes_amg_gla35`: Mercedes-AMG GLA 35 4MATIC (Mercedes-AMG GLA 35 4MATIC.fbx) -> `Chowrastha Urban Crossroads`
+- `range_rover_classic`: Land Rover Range Rover (Range Rover FBX.FBX) -> `Saturday Market & Commercial Strip`
+- `audi_q8_custom`: Audi Q8 Custom (audi_q8.obj) -> `Saturday Market & Commercial Strip`
+
+
+## Batch Vehicle Collection (26 Vehicles)
+- **Origin:** Local WhatsApp Inbox 3D Vehicle Collection
+- **Processing:** Headless Blender 5.2.3 optimization, ground origin alignment, light/camera purging, triangle decimation to <= 50,000 for mobile/M1 budgets.
+- `lamborghini_aventador_svj`: 2019 Lamborghini Aventador SVJ (2019_Lamborghini_Aventador_SVJ.fbx) -> `Hotel Sai Leela Portico`
+- `bmw_i8`: 2015 BMW i8 Hybrid (2015_BMW_i8_LOW.fbx) -> `Hotel Sai Leela Portico`
+- `mercedes_amg_gt63`: Mercedes-Benz AMG GT 63 (Mercedes-Benz AMG GT 63.FBX) -> `Hotel Sai Leela Portico`
+- `porsche_cayenne_s`: 2019 Porsche Cayenne S (Porsche Cayenne S 2019 VRAY.FBX) -> `Hotel Sai Leela Courtyard`
+- `porsche_boxster`: Porsche Boxster Roadster (Porsche Boxster_vray.FBX) -> `Hotel Sai Leela Courtyard`
+- `tesla_model_x`: Tesla Model X (Tesla Model X.FBX) -> `Hotel Sai Leela Courtyard`
+- `toyota_supra_gr`: Toyota Supra GR (Toyota_Supra_GR_.obj) -> `Godavari River Bridge Highway`
+- `bmw_x4`: 2015 BMW X4 (2015_BMW_X4_LOW.FBX) -> `Godavari River Bridge Highway`
+- `hydrospace_benelli_s4`: Hydrospace Benelli S4 Watercraft (HSR Benelli S4.obj) -> `Godavari River Pier`
+- `bmw_x5`: 2014 BMW X5 (2014_BMW_X5_LOW.fbx) -> `Vidyanagar Residential Quarter`
+- `bmw_x6`: BMW X6 xDrive50i (BMW X6 xDrive50i 03.obj) -> `Vidyanagar Residential Quarter`
+- `mini_cooper_s`: 2015 Mini Cooper S (2015_Mini_Cooper_S_LOW.fbx) -> `Vidyanagar Residential Quarter`
+- `mazda_cx5`: Mazda CX-5 (MazdaCX5.obj) -> `Vidyanagar Residential Quarter`
+- `volvo_xc40`: Volvo XC40 (Volvo XC40_vray.FBX) -> `Vidyanagar Residential Quarter`
+- `audi_q8`: Audi Q8 2019 (AudiQ8.obj) -> `Vidyanagar Residential Quarter`
+- `volkswagen_id`: Volkswagen I.D. (Volkswagen_I_D.FBX) -> `Vidyanagar Residential Quarter`
+- `mercedes_sedan`: Mercedes-Benz Luxury Sedan (mercedes Obj.obj) -> `Vidyanagar Residential Quarter`
+- `scania_haul_truck`: Scania 2013 Commercial Truck (scania_2013__vray.fbx) -> `Singareni Collieries OCP 5 Incline`
+- `ford_transit_camion`: Ford Transit Utility Van/Truck (FordTransitCamion.obj) -> `Singareni Collieries OCP 5 Incline`
+- `can_am_maverick`: Can-Am Maverick Buggy 2019 (can-am maverick.FBX) -> `Singareni Collieries OCP 5 Incline`
+- `range_rover_evoque`: Range Rover Evoque 2019 (Range Rover Evoque 2019.FBX) -> `Chowrastha Urban Crossroads`
+- `audi_q3_sportback`: Audi Q3 Sportback (AUDI Q3 SPORTBACK.FBX) -> `Chowrastha Urban Crossroads`
+- `mercedes_gla`: Mercedes-Benz GLA (Mercedes-Benz GLA_VRAY.FBX) -> `Chowrastha Urban Crossroads`
+- `mercedes_amg_gla35`: Mercedes-AMG GLA 35 4MATIC (Mercedes-AMG GLA 35 4MATIC.fbx) -> `Chowrastha Urban Crossroads`
+- `range_rover_classic`: Land Rover Range Rover (Range Rover FBX.FBX) -> `Saturday Market & Commercial Strip`
+- `audi_q8_custom`: Audi Q8 Custom (audi_q8.obj) -> `Saturday Market & Commercial Strip`
+
+
+## Newly Downloaded Vehicle Collection (3 Ford Vehicles)
+- **Origin:** Local WhatsApp Inbox Downloads (RAR archives)
+- **Processing:** Headless Blender 5.2.3 optimization, ground origin alignment, light/camera purging, triangle decimation to <= 50,000 for mobile/M1 budgets.
+- `ford_mustang_mach_40`: Ford Mustang Mach 40 Custom (Mach_40.obj) -> `Godavari River Bridge Highway`
+- `ford_f150_lightning`: Ford F-150 Lightning Electric (Ford F-150 Lightning.FBX) -> `Hotel Sai Leela Courtyard`
+- `ford_f150_raptor_2021`: 2021 Ford F-150 Raptor SuperCrew (Ford F150 Raptor 2021.FBX) -> `Singareni Collieries OCP 5 Incline`
+
+
+## New Downloads Vehicle & Helicopter Collection (8 Models)
+- **Origin:** User downloads in ~/Downloads (Free/Standard 3D models)
+- **Processing:** Headless Blender 5.2.3 optimization, ground origin alignment, light/camera purging, triangle decimation to <= 50,000 (60,000 for helicopter) for mobile/M1 budgets.
+- `royal_enfield_bullet`: Royal Enfield Bullet 350 Classic (Bike_RE.fbx) -> `Vidyanagar Residential Quarter`
+- `bajaj_avenger_cruise`: Bajaj Avenger Cruise 220 (Avenger 2.fbx) -> `Saturday Market & Commercial Strip`
+- `indian_tgsrtc_bus`: TGSRTC Super Luxury Express Bus (indian gsrtc bus.fbx) -> `TGSRTC Bus Station Depot`
+- `dodge_charger_f8`: Dodge Charger Fast & Furious Edition (998.glb) -> `Hotel Sai Leela Courtyard`
+- `ferrari_250_testa_rossa`: Ferrari 250 Testa Rossa Vintage (Sketchfab_2026_10_23_12_47_42.glb) -> `Hotel Sai Leela Portico`
+- `alfa_romeo_155_v6`: Alfa Romeo 155 V6 TI DTM (Alfa_Romeo_155_V6.fbx) -> `Godavari River Bridge Highway`
+- `lamborghini_diablo_sv`: 1997 Lamborghini Diablo SV Coupe (FINAL_MODEL_SV97.fbx) -> `Godavari River Bridge Highway`
+- `sa342m_gazelle_helicopter`: SA342M Gazelle Light Utility Helicopter (sa342m_dcs_world.glb) -> `Singareni Collieries OCP 5 Incline`
+
+
+## Batch 2 Downloads Vehicles & Helicopter (5 Models)
+- **Origin:** User downloads in ~/Downloads
+- **Processing:** Headless Blender 5.2.3 optimization, hierarchy unparenting, ground origin alignment, light/camera purging, triangle decimation to <= 50,000 (60,000 for helicopter) for mobile/M1 budgets.
+- `roush_mustang_96`: 1996 Ford Mustang GT Jack Roush Stage 3 (FINAL_MODEL_96.fbx) -> `Godavari River Bridge Highway`
+- `shelby_patrol_13`: 2013 Ford Shelby GT500 Highway Patrol (FINAL_MOPDEL_COP13.fbx) -> `Singareni Collieries OCP 5 Incline`
+- `shelby_cobra_68`: 1968 Ford Mustang Shelby Cobra GT500 Fastback (FINAL_MODEL_GT50067.fbx) -> `Hotel Sai Leela VIP Courtyard`
+- `little_bird_mh6`: MH-6 Little Bird Light Observation Helicopter (MH-6 Little Bird.obj) -> `Singareni Collieries OCP 5 Incline`
+- `city_transit_bus`: RoAZ 5236 Low-Floor City Transit Bus (RoAZ_5236.fbx) -> `TGSRTC Bus Station Depot`
+
+### TDM Arena Compound (`tdm_1`)
+- **Title:** Tdm (Warehouse / Arena Map)
+- **Author:** afnanklndr (https://sketchfab.com/afnanklndr)
+- **Source:** https://sketchfab.com/3d-models/tdm-a304a4345ced4ee7852c4dd7cfb2ce75
+- **License:** Creative Commons Attribution (CC-BY-4.0)
+- **Credit Notice:** This work is based on "Tdm" by afnanklndr licensed under CC-BY-4.0.
+- **Optimized Destination:** `assets/models/city_props/tdm_1.glb` (Decimated: 1,365,844 -> 68,883 tris for mobile/M1 performance)
+
+### BMW S1000 RR 2023 Superbike (`bmw_s1000_rr`)
+- **Source:** User download `bmw-s1000-rr.zip` (`source/10211.glb`)
+- **Processing:** Optimized from 313,000 tris to 38,690 tris, ground-aligned Z=0, rotation calibrated, independent steering handlebars, separate rotating wheels, critically damped motorcycle suspension (11 Hz).
+- **Drivable Scene:** `res://scenes/vehicles/bmw_s1000_rr.tscn`
+- **Location:** Godavarikhani Chowrasta Main Square (`[112.0, 0.0, -102.0]`)
+
+### 1965 Ford Mustang Hoonicorn RTR V2 (`hoonicorn_ken_block`)
+- **Source:** User download `hoonicorn-ken-block.zip` (`hoonicorn-_a_tribute_to_ken_block_updated.glb`)
+- **Processing:** Decimated from 313,148 tris to 48,497 tris, scaled 0.354 to real-world 4.54m length, separated and rigged into 4 rotating wheels + body, 1400hp twin-turbo AWD physics setup.
+- **Drivable Scene:** `res://scenes/vehicles/imported/hoonicorn_ken_block.tscn`
+- **Location:** Godavari River Bridge Highway (`[762.0, 0.0, -3260.0]`)
+
+
+
+### Virat (`virat`)
+- **Source:** Downloaded asset (`Virat.glb`)
+- **Category:** Custom import via automated asset pipeline
+- **License / Terms:** User-provided download (Standard offline personal/dev license; verified safe for local Godot game use)
+- **Destination:** `assets/models/.../virat.glb`
+
+## Virat character (local integration)
+- Source: user supplied `~/Downloads/Virat.glb`, 2026-11-01.
+- Author/licence: not supplied; redistribution permission unverified. Local testing only pending licence confirmation.
+- Adapted skin: `assets/models/characters/virat/virat.glb`; gameplay rig and clips retained from existing project.

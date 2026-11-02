@@ -54,6 +54,17 @@ func _init() -> void:
 		await physics_frame
 	_check(_behind_error(car, pivot) < 0.2, "Camera must swing back behind the car after the mouse goes quiet")
 
+	# Stop/free the live driving fixture and let the audio server retire playback
+	# before shutting down the test process.
+	car.set_driving_enabled(false)
+	car.get_node("EngineAudio").mute()
+	for frame in 12:
+		await physics_frame
+	car.queue_free()
+	ground.queue_free()
+	await process_frame
+	await process_frame
+
 	if _failures > 0:
 		print("FAIL chase camera regression: %d check(s) failed" % _failures)
 		quit(1)

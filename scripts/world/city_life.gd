@@ -332,6 +332,8 @@ func _build_ui() -> void:
 
 ## Queues a short message. See scripts/ui/toast_queue.gd.
 func toast(text: String) -> void:
+	if _game and _game.has_method("_in_match") and _game._in_match():
+		return
 	if _toasts:
 		_toasts.push(text)
 

@@ -1,0 +1,15 @@
+[gd_scene load_steps=3 format=3]
+[ext_resource type="Script" path="res://scripts/world/traffic_light_controller.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/world/traffic_stop_point.gd" id="2"]
+[node name="Junction01" type="Node3D"]
+script = ExtResource("1")
+[node name="StopNorth" type="Marker3D" parent="."]
+script = ExtResource("2")
+[node name="StopSouth" type="Marker3D" parent="."]
+script = ExtResource("2")
+[node name="StopEast" type="Marker3D" parent="."]
+script = ExtResource("2")
+phase_group = 1
+[node name="StopWest" type="Marker3D" parent="."]
+script = ExtResource("2")
+phase_group = 1

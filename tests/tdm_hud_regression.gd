@@ -90,6 +90,8 @@ func run() -> void:
 	await frames(20)
 
 	# Nothing from free roam sits on the match screen.
+	var entry: Node = game.hud.btn_menu
+	check(entry is Button and not entry.visible, "the desktop SETTINGS button is hidden in a match")
 	game.city_life.toast("Action mode enabled")
 	for _i in 3:
 		await process_frame
@@ -226,6 +228,7 @@ func run() -> void:
 	# Health shows on the screen, not just in a bar.
 	session.rules._lives[1].last_damage_at = -1000.0
 	session.rules.apply_hit(2, 1, 80.0, false)
+	session.rules.apply_hit(2, 1, 55.0, false)
 	await frames(40)
 	check(hud._wound.visible and hud._wound_strength > 0.3, "missing health reddens the screen edges")
 	check(hud._heartbeat.playing, "the heartbeat runs at low health")

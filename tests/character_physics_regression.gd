@@ -58,7 +58,8 @@ func _test_slope_and_ground() -> void:
 	await _frames(20)
 	_check(person.is_on_floor(), "Character must stand on flat ground")
 	var floating := 0.0
-	for _frame in 420:
+	# At 2.4 m/s walk speed, walking 24 m up the ramp to reach > 3.0 m elevation takes ~10 seconds (600+ frames).
+	for _frame in 650:
 		person.set_touch_move_input(_toward(person, Vector3(-20, 0, -55)))
 		await physics_frame
 		if person.is_on_floor():

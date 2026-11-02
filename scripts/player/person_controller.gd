@@ -15,8 +15,8 @@ const FOOTSTEP_SOUND := "res://assets/audio/gameplay/step.wav"
 var respawn_position := DEFAULT_SPAWN
 ## Below this height the body is treated as fallen out of the world; lowered for deep terrain.
 var fall_limit := -10.0
-@export var walk_speed: float = 4.2
-@export var run_speed: float = 7.0
+@export var walk_speed: float = 2.4
+@export var run_speed: float = 6.8
 @export var acceleration: float = 16.0
 @export var stopping_acceleration: float = 24.0
 ## With a rifle out the body faces the aim, so moving sideways and backwards is slower than forwards, as in
@@ -114,6 +114,7 @@ var muzzle: Marker3D
 var weapon_id := Weapons.M416
 var weapon_kick := 0.0
 ## 0..1 blends of the rifle presentation: raised to the shoulder when aiming, lowered while sprinting.
+const STEP_AUDIO := preload("res://assets/audio/gameplay/step.wav")
 var _aim_blend := 0.0
 var _carry_blend := 0.0
 var weapon_draw_time := 0.0
@@ -128,7 +129,8 @@ var camera_height_lag := 0.0
 var _stance_settle := 0.0
 var _slide_time := 0.0
 var _slide_direction := Vector2.ZERO
-var _footstep_player: AudioStreamPlayer
+var _footstep_player: AudioStreamPlayer3D
+var _step_distance_accumulator := 0.0
 ## Which reload the hands are in: its full length, read when weapon_reload_time is set.
 var _reload_total := 0.0
 var _reload_last := 0.0
@@ -166,6 +168,8 @@ func _ready() -> void:
 	_capsule = (collision_shape.shape as CapsuleShape3D).duplicate()
 	_stand_radius = _capsule.radius
 	collision_shape.shape = _capsule
+	_capsule.height = stand_height
+	collision_shape.position.y = stand_height * 0.5
 	floor_snap_length = step_height
 	floor_max_angle = deg_to_rad(46.0)
 	floor_constant_speed = true
@@ -173,9 +177,13 @@ func _ready() -> void:
 	safe_margin = 0.02
 	_last_health = health
 	health_changed.connect(_on_health_changed)
-	var character := get_node_or_null("TestCharacter")
-	if character != null and character.has_signal("foot_planted"):
-		character.foot_planted.connect(_on_foot_planted)
+	_footstep_player = AudioStreamPlayer3D.new()
+	_footstep_player.name = "FootstepAudio"
+	_footstep_player.stream = STEP_AUDIO
+	_footstep_player.unit_size = 3.5
+	_footstep_player.max_distance = 25.0
+	_footstep_player.bus = "Master"
+	add_child(_footstep_player)
 
 ## Health is also set directly by the Team Deathmatch host (tdm_local.gd), so any drop flinches the body.
 func _on_health_changed(value: float, _maximum: float) -> void:
@@ -183,19 +191,6 @@ func _on_health_changed(value: float, _maximum: float) -> void:
 	if value < _last_health and character != null and character.has_method("play_hit"):
 		character.play_hit(global_position + global_basis.z)
 	_last_health = value
-
-## A foot came down, on the character's own stride. Louder with speed, quieter crouched, silent prone or swimming.
-func _on_foot_planted(_side: int, speed: float) -> void:
-	if not input_authority or swimming or prone or not is_on_floor():
-		return
-	if _footstep_player == null:
-		_footstep_player = AudioStreamPlayer.new()
-		_footstep_player.stream = load(FOOTSTEP_SOUND)
-		add_child(_footstep_player)
-	_footstep_player.volume_db = lerpf(footstep_quiet_db, footstep_loud_db, clampf(speed / run_speed, 0.0, 1.0)) \
-		+ (footstep_crouch_db if crouching else 0.0)
-	_footstep_player.pitch_scale = randf_range(0.92, 1.08)
-	_footstep_player.play()
 
 ## One tick of ground velocity on the flat: eased into top speed, firm when stopping or reversing. Vector, not per
 ## axis, so a diagonal keeps its direction while the speed builds.
@@ -340,7 +335,17 @@ func _physics_process(delta: float) -> void:
 		velocity = Vector3.ZERO
 	stagger_time = maxf(stagger_time - delta, 0.0)
 	var water_height: float = water_system.surface_at(global_position) if water_system else -INF
-	swimming = is_finite(water_height) and global_position.y < water_height - 0.25
+	var water_depth := 0.0
+	if is_finite(water_height):
+		var ground_y := global_position.y
+		if not is_on_floor() and is_inside_tree():
+			var ground_ray := PhysicsRayQueryParameters3D.create(global_position + Vector3.UP * 0.5, global_position + Vector3.DOWN * 4.0, 1, [get_rid()])
+			var ground_hit := get_world_3d().direct_space_state.intersect_ray(ground_ray)
+			if not ground_hit.is_empty():
+				ground_y = (ground_hit.position as Vector3).y
+		water_depth = water_height - ground_y
+	# Shallow water (< 0.85m waist depth) is waded on foot; deeper water transitions to swimming
+	swimming = is_finite(water_height) and water_depth >= 0.85 and global_position.y < water_height - 0.25
 	if swimming:
 		_swim(delta, allowed, water_height)
 		return
@@ -440,6 +445,52 @@ func _physics_process(delta: float) -> void:
 		_safe_walk_position = global_position
 		_safe_walk_timer = 0.0
 	_animate(delta)
+	_update_footsteps(delta)
+
+func _update_footsteps(delta: float) -> void:
+	if not is_on_floor() or swimming:
+		_step_distance_accumulator = 0.0
+		return
+	var speed := Vector2(velocity.x, velocity.z).length()
+	if speed < 0.25:
+		_step_distance_accumulator = 0.0
+		return
+	_step_distance_accumulator += speed * delta
+	var step_interval := 0.72 if crouching else (1.18 if is_running else 0.88)
+	if _step_distance_accumulator >= step_interval:
+		_step_distance_accumulator = fmod(_step_distance_accumulator, step_interval)
+		_play_footstep(speed)
+
+func _play_footstep(speed: float) -> void:
+	if _footstep_player == null or not is_inside_tree():
+		return
+	var space := get_world_3d().direct_space_state
+	var from := global_position + Vector3.UP * 0.2
+	var to := global_position + Vector3.DOWN * 0.6
+	var ray := PhysicsRayQueryParameters3D.create(from, to, 1, [get_rid()])
+	var hit := space.intersect_ray(ray)
+	var pitch := 1.0
+	var db_volume := -6.0
+	if not hit.is_empty():
+		var col_name: String = str(hit.collider.name)
+		if col_name.contains("Terrain"):
+			pitch = randf_range(0.86, 0.94)
+			db_volume = -7.5
+		elif col_name.contains("Bridge") or col_name.contains("Road") or col_name.contains("Flyover") or col_name.contains("Street"):
+			pitch = randf_range(1.05, 1.15)
+			db_volume = -4.5
+		else:
+			pitch = randf_range(0.97, 1.06)
+			db_volume = -5.5
+	else:
+		pitch = randf_range(0.95, 1.05)
+	if crouching:
+		db_volume -= 7.0
+	elif is_running:
+		db_volume += 3.0
+	_footstep_player.pitch_scale = pitch
+	_footstep_player.volume_db = db_volume
+	_footstep_player.play()
 
 ## Climbs kerbs and stairs up to step_height: lift, move, then drop back onto the step.
 func _try_step_up(motion: Vector3) -> void:
@@ -514,12 +565,16 @@ func _update_crouch(wants_crouch: bool) -> void:
 	_update_stance(wants_crouch, false)
 
 func _has_headroom(check_height: float = stand_height) -> bool:
+	var current_h := _capsule.height if _capsule else crouch_height
+	var diff := check_height - current_h
+	if diff <= 0.01:
+		return true
 	var query := PhysicsShapeQueryParameters3D.new()
-	var standing := _capsule.duplicate() as CapsuleShape3D
-	standing.radius = minf(_stand_radius, check_height * 0.45)
-	standing.height = check_height
-	query.shape = standing
-	query.transform = global_transform.translated(Vector3.UP * (check_height * 0.5 + 0.02))
+	var test_shape := CapsuleShape3D.new()
+	test_shape.radius = minf(_stand_radius, check_height * 0.45)
+	test_shape.height = maxf(diff, test_shape.radius * 2.0)
+	query.shape = test_shape
+	query.transform = global_transform.translated(Vector3.UP * (current_h + diff * 0.5))
 	query.exclude = [get_rid()]
 	query.collision_mask = collision_mask
 	return get_world_3d().direct_space_state.intersect_shape(query, 1).is_empty()
@@ -546,15 +601,19 @@ func _swim(delta: float, allowed: bool, surface: float) -> void:
 	if not allowed:
 		input = Vector2.ZERO
 	var direction := Vector3(input.x, 0, input.y).rotated(Vector3.UP, camera_pivot.movement_yaw())
-	velocity.x = move_toward(velocity.x, direction.x * 3.0, delta * 5.0)
-	velocity.z = move_toward(velocity.z, direction.z * 3.0, delta * 5.0)
-	velocity.y = clampf((surface - 0.65 - global_position.y) * 4.0, -2.0, 3.0)
+	var moving := direction.length_squared() > 0.01
+	var target_speed := 3.2 if moving else 0.0
+	velocity.x = move_toward(velocity.x, direction.x * target_speed, delta * 5.0)
+	velocity.z = move_toward(velocity.z, direction.z * target_speed, delta * 5.0)
+	var move_factor := clampf(Vector2(velocity.x, velocity.z).length() / 2.0, 0.0, 1.0)
+	var target_y := surface - lerpf(1.25, 0.60, move_factor)
+	velocity.y = clampf((target_y - global_position.y) * 4.0, -2.5, 3.0)
 	if allowed and Input.is_action_pressed("jump"):
-		velocity.y = 4.0
+		velocity.y = 3.5
 	is_running = false
 	_fall_speed = 0.0
 	move_and_slide()
-	if direction.length_squared() > 0.01:
+	if moving:
 		rotation.y = lerp_angle(rotation.y, atan2(direction.x, direction.z), delta * 5.0)
 	_animate(delta)
 
@@ -597,10 +656,12 @@ func _update_weapon_presentation(delta: float) -> void:
 		if chest == Vector3.INF:
 			chest = global_position + Vector3.UP * (_stance_height() * 0.66 + 0.08)
 		var ready := chest - Vector3.UP * 0.08 + body_right * 0.16 + body_forward * 0.22
-		var shouldered := chest + Vector3.UP * 0.26 + body_right * 0.17 + body_forward * 0.30
+		var shoulder_lift: float = character.weapon_shoulder_lift() if character != null and character.has_method("weapon_shoulder_lift") else 0.26
+		var shouldered := chest + Vector3.UP * shoulder_lift + body_right * 0.17 + body_forward * 0.30
 		var lowered := chest - Vector3.UP * 0.16 + body_right * 0.18 + body_forward * 0.18
 		if prone:
-			ready = chest + body_forward * 0.5 + body_right * 0.12
+			var prone_reach: float = character.weapon_prone_reach() if character != null and character.has_method("weapon_prone_reach") else 0.5
+			ready = chest + body_forward * prone_reach + body_right * 0.12
 			shouldered = ready
 			lowered = ready
 		base = ready.lerp(shouldered, aim_ease).lerp(lowered, carry_ease)

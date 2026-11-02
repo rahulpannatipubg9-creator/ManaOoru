@@ -197,8 +197,11 @@ func _test_profiles() -> void:
 		"aspect_ratio": 1.6 # 16:10
 	}
 	var p4_tablet := DevicePerformanceManager.get_profile_for_tier(DevicePerformanceManager.DeviceTier.TIER_4_PRO_TABLET_DESKTOP, hw_tablet_3k)
-	_check(p4_tablet.target_fps == 120, "Tier 4 target FPS must unlock to 120 on 144Hz screen")
-	_check(is_equal_approx(p4_tablet.scaling_3d_scale, 0.75), "Tier 4 3K+ tablet scale must cap at 0.75 to prevent thermal throttling")
+	_check(p4_tablet.target_fps == 60, "Tier 4 mobile tablet target FPS must cap at 60 FPS to prevent thermal throttling")
+	_check(is_equal_approx(p4_tablet.scaling_3d_scale, 0.55), "Tier 4 3K+ tablet scale must cap at 0.55 (~1080p equivalent) to prevent fillrate bottlenecks")
+	_check(p4_tablet.directional_shadow_mode == DirectionalLight3D.SHADOW_ORTHOGONAL, "Tier 4 mobile tablet must use 1-cascade orthogonal shadow")
+	_check(is_equal_approx(p4_tablet.directional_shadow_max_distance, 35.0), "Tier 4 mobile tablet shadow distance must be 35 meters")
+	_check(is_equal_approx(p4_tablet.view_distance, 550.0), "Tier 4 mobile tablet view distance must be 550 meters")
 	_check(p4_tablet.tablet_hud_inset == true, "Tier 4 tablet with 16:10 aspect ratio must enable tablet HUD inset ergonomics")
 
 	var hw_desktop_pc := {
@@ -230,11 +233,31 @@ func _test_settings_persistence() -> void:
 	_check(bool(loaded.performance.shadow_enabled) == false, "Persisted shadow_enabled must match")
 
 	# Test manual override persistence
-	dpm.override_tier(DevicePerformanceManager.DeviceTier.TIER_3_FLAGSHIP_KILLER, null)
+	dpm.override_tier(DevicePerformanceManager.DeviceTier.TIER_3_FLAGSHIP_KILLER, null, TEST_SETTINGS_PATH)
 	dpm.save_settings(dpm.active_profile, true, TEST_SETTINGS_PATH)
 	var loaded_override := dpm.load_settings(TEST_SETTINGS_PATH)
 	_check(bool(loaded_override.device_profile.manual_override) == true, "Manual override flag must be true")
 	_check(int(loaded_override.device_profile.selected_tier) == 3, "Selected tier must be 3 after manual override")
+
+	# Restart through setup, not just ConfigFile: tier defaults must not replace
+	# the player's independently tuned render and simulation settings.
+	var custom := dpm.active_profile.duplicate(true)
+	custom.scaling_3d_scale = 0.55
+	custom.view_distance = 300.0
+	custom.simulation_distance = 100.0
+	custom.actors = 8
+	custom.shadow_enabled = false
+	custom.target_fps = 60
+	custom.effects = 0.15
+	_check(dpm.save_settings(custom, true, TEST_SETTINGS_PATH) == OK, "Custom profile must save")
+	var restarted := DevicePerformanceManager.new()
+	var test_game := Node3D.new()
+	root.add_child(test_game)
+	restarted.setup(test_game, TEST_SETTINGS_PATH)
+	for key in ["scaling_3d_scale", "view_distance", "simulation_distance", "actors", "shadow_enabled", "target_fps", "effects"]:
+		_check(restarted.active_profile[key] == custom[key], "Restart must preserve custom %s" % key)
+	restarted.free()
+	test_game.free()
 	dpm.free()
 
 func _test_apply_to_nodes() -> void:

@@ -1,0 +1,12 @@
+ACTIVITY MANAGER PROCESS EXIT INFO (dumpsys activity exit-info)
+Last Timestamp of Persistence Into Persistent Storage: 2026-11-02 04:11:14.935
+  package: com.manaooru.pad7bench
+    Historical Process Exit for uid=10357
+        ApplicationExitInfo #0:
+          timestamp=2026-11-02 04:26:49.868 pid=11374 realUid=10357 packageUid=10357 definingUid=10357 user=0
+          process=com.manaooru.pad7bench reason=3 (LOW_MEMORY) subreason=0 (UNKNOWN) status=0
+          importance=100 pss=2.3GB rss=611MB description=null state=empty trace=null
+        ApplicationExitInfo #1:
+          timestamp=2026-11-02 04:24:09.786 pid=7450 realUid=10357 packageUid=10357 definingUid=10357 user=0
+          process=com.manaooru.pad7bench reason=3 (LOW_MEMORY) subreason=0 (UNKNOWN) status=0
+          importance=100 pss=1.9GB rss=527MB description=null state=empty trace=null

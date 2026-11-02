@@ -455,10 +455,12 @@ func _update_rifle(_delta: float) -> void:
 		var height := PRONE_HEIGHT if (prone or is_downed) else (CROUCH_HEIGHT if crouching else STAND_HEIGHT)
 		chest = global_position + Vector3.UP * (height * 0.66 + 0.08)
 	var ready := chest - Vector3.UP * 0.08 + body_right * 0.16 + body_forward * 0.22
-	var shouldered := chest + Vector3.UP * 0.26 + body_right * 0.17 + body_forward * 0.30
+	var shoulder_lift: float = _character.weapon_shoulder_lift() if _character.has_method("weapon_shoulder_lift") else 0.26
+	var shouldered := chest + Vector3.UP * shoulder_lift + body_right * 0.17 + body_forward * 0.30
 	var lowered := chest - Vector3.UP * 0.16 + body_right * 0.18 + body_forward * 0.18
 	if prone:
-		ready = chest + body_forward * 0.5 + body_right * 0.12
+		var prone_reach: float = _character.weapon_prone_reach() if _character.has_method("weapon_prone_reach") else 0.5
+		ready = chest + body_forward * prone_reach + body_right * 0.12
 		shouldered = ready
 		lowered = ready
 	weapon.global_position = ready.lerp(shouldered, aim_ease).lerp(lowered, carry_ease)

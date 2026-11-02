@@ -4,7 +4,7 @@ const Catalog := preload("res://scripts/map/location_catalog.gd")
 
 func _init() -> void:
 	var catalog := Catalog.new()
-	_check(catalog.records.size() == 547, "Source catalog record count must match the generated inventory")
+	_check(catalog.records.size() == 600, "Source catalog record count must match the generated inventory")
 	_check(catalog.candidates.size() == 114, "Candidate names must remain separate from mapped source records")
 	var entrance := catalog.search("Vidya Nagar 2", Vector2.ZERO, 12)
 	_check(not entrance.is_empty(), "Search must find the mapped Vidya Nagar 2 entrance")

@@ -196,7 +196,7 @@ func _process(delta: float) -> void:
 
 func _match_hidden() -> Array[CanvasItem]:
 	var nodes: Array[CanvasItem] = [$TouchControls/Enter]
-	for node in [compass_bar, net_room_banner, btn_wheel, btn_revive, btn_loot]:
+	for node in [compass_bar, net_room_banner, btn_wheel, btn_menu, btn_revive, btn_loot]:
 		if is_instance_valid(node):
 			nodes.append(node)
 	return nodes
@@ -899,11 +899,84 @@ func _build_scope_overlay() -> void:
 func _draw_scope() -> void:
 	var size := _scope_overlay.size
 	var center := size * 0.5
-	var ring := minf(size.x, size.y) * 0.16
-	_scope_overlay.draw_arc(center, ring, 0.0, TAU, 96, Color(0.05, 0.05, 0.05, 0.85), maxf(ring * 0.06, 3.0), true)
-	_scope_overlay.draw_arc(center, ring * 1.04, 0.0, TAU, 96, Color(1, 1, 1, 0.25), 1.5, true)
-	_scope_overlay.draw_circle(center, maxf(ring * 0.028, 2.5), Color(1.0, 0.12, 0.1, 0.95))
-	_scope_overlay.draw_circle(center, maxf(ring * 0.06, 5.0), Color(1.0, 0.15, 0.1, 0.18))
+	var r := minf(size.x, size.y) * 0.34
+	var dark := Color(0.02, 0.03, 0.04, 0.94)
+
+	# 1. Dark ocular mask outside the lens aperture
+	# Top bar
+	_scope_overlay.draw_rect(Rect2(0, 0, size.x, center.y - r), dark, true)
+	# Bottom bar
+	_scope_overlay.draw_rect(Rect2(0, center.y + r, size.x, size.y - (center.y + r)), dark, true)
+	# Left bar
+	_scope_overlay.draw_rect(Rect2(0, center.y - r, center.x - r, r * 2.0), dark, true)
+	# Right bar
+	_scope_overlay.draw_rect(Rect2(center.x + r, center.y - r, size.x - (center.x + r), r * 2.0), dark, true)
+
+	# 2. Scope bevel housing rings
+	for i in range(4):
+		var ring_r := r + float(i) * 3.5
+		_scope_overlay.draw_arc(center, ring_r, 0.0, TAU, 96, Color(0.08, 0.10, 0.12, 0.95), 4.0, true)
+	_scope_overlay.draw_arc(center, r, 0.0, TAU, 96, Color(0.18, 0.22, 0.25, 0.95), 3.0, true)
+	_scope_overlay.draw_arc(center, r - 1.5, 0.0, TAU, 96, Color(0.5, 0.65, 0.75, 0.35), 1.5, true)
+
+	# 3. Precision Crosshairs & Mil-Dots
+	var hair_color := Color(0.12, 0.12, 0.12, 0.85)
+	# Horizontal fine crosshair
+	_scope_overlay.draw_line(Vector2(center.x - r * 0.92, center.y), Vector2(center.x + r * 0.92, center.y), hair_color, 1.5)
+	# Vertical fine crosshair
+	_scope_overlay.draw_line(Vector2(center.x, center.y - r * 0.92), Vector2(center.x, center.y + r * 0.92), hair_color, 1.5)
+
+	# Mil-dot subtension hash marks along axes
+	for dot in range(1, 5):
+		var dist := float(dot) * (r * 0.18)
+		var tick_len := 7.0 if dot % 2 == 0 else 4.0
+		# Horizontal ticks
+		_scope_overlay.draw_line(Vector2(center.x - dist, center.y - tick_len), Vector2(center.x - dist, center.y + tick_len), hair_color, 1.5)
+		_scope_overlay.draw_line(Vector2(center.x + dist, center.y - tick_len), Vector2(center.x + dist, center.y + tick_len), hair_color, 1.5)
+		# Vertical elevation drop ticks (BDC)
+		_scope_overlay.draw_line(Vector2(center.x - tick_len, center.y + dist), Vector2(center.x + tick_len, center.y + dist), hair_color, 1.5)
+		_scope_overlay.draw_line(Vector2(center.x - tick_len * 0.6, center.y - dist), Vector2(center.x + tick_len * 0.6, center.y - dist), hair_color, 1.2)
+
+	# 4. Weapon-Specific Reticle Optics
+	var wid: int = int(player.weapon_id) if is_instance_valid(player) else Weapons.M416
+	match wid:
+		Weapons.AK47:
+			# Russian optical chevron (^) + drop pips
+			var red := Color(0.95, 0.18, 0.12, 0.95)
+			var ch_pts := [
+				Vector2(center.x - 7.0, center.y + 6.0),
+				Vector2(center.x, center.y - 1.0),
+				Vector2(center.x + 7.0, center.y + 6.0)
+			]
+			_scope_overlay.draw_polyline(PackedVector2Array(ch_pts), red, 2.0)
+			# Bullet drop pips below chevron
+			_scope_overlay.draw_circle(Vector2(center.x, center.y + 14.0), 1.8, red)
+			_scope_overlay.draw_circle(Vector2(center.x, center.y + 26.0), 1.6, red)
+			_scope_overlay.draw_circle(Vector2(center.x, center.y + 40.0), 1.4, red)
+		Weapons.BREN2:
+			# Modern Tactical Holographic Red-Dot / Emerald Reflex
+			var em := Color(0.12, 0.95, 0.45, 0.95)
+			var halo := Color(0.12, 0.95, 0.45, 0.22)
+			_scope_overlay.draw_circle(center, 2.5, em)
+			_scope_overlay.draw_circle(center, 6.0, halo)
+			_scope_overlay.draw_arc(center, 18.0, 0.0, TAU, 32, em, 1.8, true)
+		_:
+			# M416: Classic illuminated tactical circle-dot reticle
+			var lit_red := Color(1.0, 0.15, 0.12, 0.95)
+			var red_halo := Color(1.0, 0.15, 0.12, 0.25)
+			_scope_overlay.draw_circle(center, 2.8, lit_red)
+			_scope_overlay.draw_circle(center, 7.0, red_halo)
+			_scope_overlay.draw_arc(center, 22.0, 0.0, TAU, 48, lit_red, 1.8, true)
+			# Segmented framing brackets
+			for angle_rad in [PI * 0.25, PI * 0.75, PI * 1.25, PI * 1.75]:
+				var bracket_dir := Vector2(cos(angle_rad), sin(angle_rad))
+				var p1 := center + bracket_dir * (r * 0.48)
+				var p2 := center + bracket_dir * (r * 0.58)
+				_scope_overlay.draw_line(p1, p2, Color(0.85, 0.2, 0.15, 0.8), 2.0)
+
+	# 5. Top Scope Optic Label
+	var weapon_name: String = Weapons.display_name(wid)
+	_scope_overlay.draw_string(ThemeDB.fallback_font, Vector2(center.x - 48.0, center.y - r + 26.0), "4X • %s" % weapon_name.to_upper(), HORIZONTAL_ALIGNMENT_CENTER, 96.0, 14, Color(0.85, 0.88, 0.92, 0.85))
 
 ## Shows the buttons this moment needs, and only those (UI_DESIGN.md, "Touch").
 func _refresh_touch() -> void:
@@ -1058,4 +1131,3 @@ func _on_net_peer_list_updated(peers_dict: Dictionary) -> void:
 func _on_net_notification(msg: String, _is_alert: bool) -> void:
 	if _game and _game.city_life and _game.city_life.has_method("toast"):
 		_game.city_life.toast(msg)
-

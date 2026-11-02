@@ -1,0 +1,5 @@
+Applications Memory Usage (in Kilobytes):
+Uptime: 4465391 Realtime: 5236262
+
+** MEMINFO in pid 7450 [com.manaooru.pad7bench] **
+Got RemoteException! android.os.DeadObjectException

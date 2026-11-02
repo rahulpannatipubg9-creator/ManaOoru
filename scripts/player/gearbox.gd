@@ -74,7 +74,7 @@ func overall_ratio(selected_gear: int = gear) -> float:
 ## Spinning engine, gears and wheels add to the mass the drive has to accelerate.
 func inertia_factor() -> float:
 	var ratio := overall_ratio()
-	return 1.04 + 0.0015 * ratio * ratio
+	return 1.04 if profile.electric_motor else 1.04 + 0.0015 * ratio * ratio
 
 func engine_torque(engine_rpm: float) -> float:
 	var curve := profile.torque_curve
@@ -107,16 +107,16 @@ func update(speed: float, throttle: float, wheel_radius: float, delta: float) ->
 	var redline := profile.redline_rpm
 	var road_rpm := _road_rpm(speed, wheel_radius, gear)
 	# The converter (or slipping clutch) lets the engine run above road speed until it locks up.
-	var launch_rpm := lerpf(profile.idle_rpm, profile.launch_rpm, pedal)
+	var launch_rpm := 0.0 if profile.electric_motor else lerpf(profile.idle_rpm, profile.launch_rpm, pedal)
 	rpm = minf(maxf(road_rpm, launch_rpm), redline)
-	var speed_ratio := clampf(road_rpm / rpm, 0.0, 1.0)
+	var speed_ratio := clampf(road_rpm / maxf(rpm, 0.001), 0.0, 1.0)
 	var multiplication := lerpf(profile.launch_torque_ratio, 1.0, speed_ratio)
 
 	var torque := engine_torque(rpm) * pedal * multiplication
 	if road_rpm >= redline:
 		torque = 0.0
 	elif pedal < 0.05 and road_rpm > profile.idle_rpm + 100.0:
-		torque = -_peak_torque * ENGINE_BRAKE_SHARE * road_rpm / redline
+		torque = -_peak_torque * (0.08 if profile.electric_motor else ENGINE_BRAKE_SHARE) * road_rpm / redline
 	if _shift_timer > 0.0:
 		torque *= SHIFT_TORQUE_SCALE
 	var force := torque * overall_ratio() * profile.driveline_efficiency / wheel_radius

@@ -18,6 +18,7 @@ const CHARACTER_WIDTH := 0.3
 const MAX_BOARD_WIDTH := 7.5
 const BOARD_BOTTOM := 2.3
 const LABEL_VIEW_DISTANCE := 140.0
+const MOBILE_LABEL_VIEW_DISTANCE := 45.0
 const SIGNAL_CYCLE := [["green", 12.0], ["amber", 3.0], ["red", 15.0]]
 const SIGNAL_ROAD_KINDS := ["trunk", "primary", "secondary", "tertiary"]
 const SIGNAL_CLUSTER_DISTANCE := 30.0
@@ -46,6 +47,8 @@ const KIND_LABELS := {
 var board_count := 0
 var terrain: TerrainData
 var signal_count := 0
+const TrafficLightController := preload("res://scripts/world/traffic_light_controller.gd")
+
 var street_plate_count := 0
 var junction_board_count := 0
 var _road_grid: Dictionary = {}
@@ -56,6 +59,7 @@ var _signal_lights: Dictionary = {}
 ## "group_colour" → lamp transforms; all lamps of one phase share one MultiMesh.
 var _lamps: Dictionary = {}
 var _signal_time := 0.0
+var traffic_controller: TrafficLightController
 
 func build(data: MapData, buildings: BuildingBuilder) -> void:
 	name = "Signage"
@@ -84,7 +88,7 @@ func _process(delta: float) -> void:
 		return
 	_signal_time = fmod(_signal_time + delta, _cycle_length() * 2.0)
 	for group: int in _signal_lights:
-		var phase := _phase_at(fmod(_signal_time + group * _cycle_length(), _cycle_length() * 2.0))
+		var phase := traffic_phase_for_group(group)
 		for colour in ["red", "amber", "green"]:
 			var material: StandardMaterial3D = _signal_lights[group][colour]
 			material.emission_energy_multiplier = 3.0 if colour == phase else 0.0
@@ -110,6 +114,8 @@ func _phase_at(time: float) -> String:
 ## Used by lightweight ambient road traffic.  Opposite approaches use the
 ## complementary group, matching the two alternating lamp phases above.
 func traffic_phase_for_group(group: int) -> String:
+	if traffic_controller != null:
+		return traffic_controller.phase_for_group(group)
 	return _phase_at(fmod(_signal_time + (group % 2) * _cycle_length(), _cycle_length() * 2.0))
 
 func _add_poi_board(poi: Dictionary, buildings: BuildingBuilder) -> void:
@@ -331,7 +337,6 @@ func _add_traffic_signal(nodes: PackedVector2Array) -> void:
 	if approaches.size() < 3:
 		return
 	# Phase groups per junction: arms roughly in line with the first arm share a phase.
-	var reference: Vector2 = approaches[0].direction
 	var placed := false
 	for approach in approaches:
 		if not approach.inbound:
@@ -348,7 +353,7 @@ func _add_traffic_signal(nodes: PackedVector2Array) -> void:
 		_box(_poles, pole, Vector2(0.18, 0.18), 0.0, 4.2, Color("#2a2d30"))
 		var head: Vector2 = pole + normal * 0.0
 		_box(_poles, head, Vector2(0.45, 0.35), 4.2, 5.6, Color("#1b1c1e"))
-		var group := 0 if absf(direction.dot(reference)) > 0.7 else 1
+		var group := 0 if absf(direction.y) >= absf(direction.x) else 1
 		for slot in 3:
 			var colour: String = ["red", "amber", "green"][slot]
 			# Lamps on the face that looks back down the approach, towards oncoming drivers.
@@ -423,7 +428,7 @@ func _add_label(at: Vector2, angle: float, text: String, width: float, height: f
 	label.double_sided = false
 	label.position = Vector3(at.x, height + _ground(at), at.y)
 	label.rotation.y = angle
-	label.visibility_range_end = LABEL_VIEW_DISTANCE
+	label.visibility_range_end = MOBILE_LABEL_VIEW_DISTANCE if OS.has_feature("mobile") else LABEL_VIEW_DISTANCE
 	add_child(label)
 
 func _box(surface: MeshSurface, center: Vector2, size: Vector2, bottom: float, top: float, color: Color) -> void:

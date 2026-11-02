@@ -118,18 +118,20 @@ func _check_armour() -> void:
 	person.heal_full()
 
 func _check_shot_pool() -> void:
-	var before: int = gameplay.get_child_count()
+	var fx: Node3D = gameplay.effects
+	var before: int = fx.get_child_count()
 	for shot in 40:
-		gameplay._tracer(Vector3(0, 2, 0), Vector3(0, 2, 10 + shot))
-		gameplay._shot_flash(Vector3(0, 2, 0))
-	check(gameplay.get_child_count() - before <= gameplay.SHOT_POOL_SIZE * 2, "Sustained fire must not add nodes")
-	var line: MeshInstance3D = gameplay._tracers[-1]
-	check(line.mesh == gameplay._tracers[0].mesh, "Tracers must share one mesh")
-	check(is_equal_approx(line.global_basis.y.length(), 49.0), "A tracer must span its shot, it spans %f" % line.global_basis.y.length())
-	check(line.global_position.is_equal_approx(Vector3(0, 2, 24.5)), "A tracer must sit between muzzle and hit")
-	check(line.global_basis.y.normalized().is_equal_approx(Vector3.BACK), "A tracer must point along its shot")
+		fx.tracer(Vector3(0, 2, 0), Vector3(0, 2, 10 + shot))
+		fx.flash(Vector3(0, 2, 0))
+	check(fx.get_child_count() - before <= fx.TRACER_POOL * 2, "Sustained fire must not add nodes")
+	var entry: Dictionary = fx._tracers[-1]
+	var line: MeshInstance3D = entry.line
+	check(line.mesh == fx._tracer_mesh, "Tracers must share one mesh")
+	check(is_equal_approx(entry.distance, 49.0), "A tracer must record its shot distance")
+	check(line.global_position.is_equal_approx(Vector3(0, 2, 3.5)), "A tracer must sit between muzzle and hit")
+	check(entry.direction.is_equal_approx(Vector3.BACK), "A tracer must point along its shot")
 	await create_timer(0.2).timeout
-	check(not line.visible and not gameplay._flashes[-1].visible, "Tracers and flashes must hide after their moment")
+	check(not fx.flash_visible(), "Flashes must hide after their moment")
 
 func _step(ctrl: bool) -> void:
 	Input.parse_input_event(_key(KEY_CTRL, ctrl))

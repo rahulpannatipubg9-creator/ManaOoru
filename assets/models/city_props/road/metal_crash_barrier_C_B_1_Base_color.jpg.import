@@ -3,9 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cp2u84bl6cm1m"
-path="res://.godot/imported/metal_crash_barrier_C_B_1_Base_color.jpg-dd6afaf268728d9deb08d35ea4e0a853.ctex"
+path.s3tc="res://.godot/imported/metal_crash_barrier_C_B_1_Base_color.jpg-dd6afaf268728d9deb08d35ea4e0a853.s3tc.ctex"
+path.etc2="res://.godot/imported/metal_crash_barrier_C_B_1_Base_color.jpg-dd6afaf268728d9deb08d35ea4e0a853.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "3a7baa896d3833aadee4c033dc5e56f4"
@@ -14,11 +16,11 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/city_props/road/metal_crash_barrier_C_B_1_Base_color.jpg"
-dest_files=["res://.godot/imported/metal_crash_barrier_C_B_1_Base_color.jpg-dd6afaf268728d9deb08d35ea4e0a853.ctex"]
+dest_files=["res://.godot/imported/metal_crash_barrier_C_B_1_Base_color.jpg-dd6afaf268728d9deb08d35ea4e0a853.s3tc.ctex", "res://.godot/imported/metal_crash_barrier_C_B_1_Base_color.jpg-dd6afaf268728d9deb08d35ea4e0a853.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
@@ -40,4 +42,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=1
+detect_3d/compress_to=0

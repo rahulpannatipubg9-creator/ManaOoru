@@ -16,6 +16,7 @@ extends Resource
 @export var shift_time: float = 0.25
 
 @export_group("Engine")
+@export var electric_motor := false
 @export var idle_rpm: float = 750.0
 @export var redline_rpm: float = 4200.0
 ## Torque (Nm) against rpm; Thar: flat 300 Nm from 1600 to 2800 rpm, 97 kW at 3750 rpm.

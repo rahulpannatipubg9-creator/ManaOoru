@@ -197,15 +197,16 @@ func apply_hit(shooter_id: int, victim_id: int, damage: float, headshot := false
 	var shooter := _life(shooter_id)
 	var victim := _life(victim_id)
 	shooter.protected_for = 0.0
-	victim.health = maxf(0.0, victim.health - damage)
+	var effective_damage := damage * (1.0 - (config.tdm_armor_reduction if config else 0.40))
+	victim.health = maxf(0.0, victim.health - effective_damage)
 	victim.last_damage_at = _clock
 	victim.regen_for = 0.0
-	victim.damage_log.append({"attacker": shooter_id, "amount": damage, "at": _clock})
-	player_damaged.emit(victim_id, shooter_id, damage, headshot, victim.health)
+	victim.damage_log.append({"attacker": shooter_id, "amount": effective_damage, "at": _clock})
+	player_damaged.emit(victim_id, shooter_id, effective_damage, headshot, victim.health)
 	var killed := victim.health <= 0.0
 	if killed:
 		_kill(shooter_id, victim_id, headshot)
-	return {"accepted": true, "reason": "", "killed": killed, "damage": damage}
+	return {"accepted": true, "reason": "", "killed": killed, "damage": effective_damage}
 
 ## A fall, going below the world or staying out of bounds. Credits an enemy who hit them recently.
 func environment_death(peer_id: int) -> void:

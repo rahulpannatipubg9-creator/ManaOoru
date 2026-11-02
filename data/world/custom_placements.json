@@ -34,6 +34,1401 @@
         },
         "placement_reasoning": "Asset 'broken_bricks' is classified as category 'debris' with semantic tags ['construction', 'coal_mine', 'debris', 'industrial']. Its physical footprint is 0.945m (W) x 1.04m (D) x 0.314m (H). The best authentic setting in Godavarikhani is 'Coal Mine OCP 5 Incline Worksite' in the Singareni Collieries OCP 5 Incline: Industrial haulage and quarry sector on the southeast rim. This provides natural context without disrupting vehicular carriageways."
       }
+    },
+    {
+      "id": "lamborghini_aventador_svj",
+      "name": "2019 Lamborghini Aventador SVJ",
+      "model_path": "res://assets/models/vehicles/lamborghini_aventador_svj/lamborghini_aventador_svj.glb",
+      "category": "vehicles",
+      "location_key": "sai_leela_hotel",
+      "location_name": "Hotel Sai Leela Portico",
+      "district": "Hotel Sai Leela Portico",
+      "position": [
+        -220.0,
+        0.0,
+        175.0
+      ],
+      "use_ground_height": true,
+      "ground_offset_y": 0.02,
+      "rotation_y_deg": 0.0,
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "collision_type": "box",
+      "visibility_range_end": 250.0,
+      "metadata": {
+        "source_file": "2019_Lamborghini_Aventador_SVJ.fbx",
+        "triangles": 74441,
+        "dimensions": {
+          "width_x": 2.23,
+          "depth_y": 4.85,
+          "height_z": 1.12
+        },
+        "placement_reasoning": "Authentic placement of 2019 Lamborghini Aventador SVJ in Hotel Sai Leela Portico (sai_leela_hotel). Clean ground alignment with box collision."
+      },
+      "drivable_scene": "res://scenes/vehicles/imported/lamborghini_aventador_svj.tscn",
+      "vehicle_rig_profile": "lamborghini_aventador_svj"
+    },
+    {
+      "id": "bmw_i8",
+      "name": "2015 BMW i8 Hybrid",
+      "model_path": "res://assets/models/vehicles/bmw_i8/bmw_i8.glb",
+      "category": "vehicles",
+      "location_key": "sai_leela_hotel",
+      "location_name": "Hotel Sai Leela Portico",
+      "district": "Hotel Sai Leela Portico",
+      "position": [
+        -225.0,
+        0.0,
+        175.0
+      ],
+      "use_ground_height": true,
+      "ground_offset_y": 0.02,
+      "rotation_y_deg": 0.0,
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "collision_type": "box",
+      "visibility_range_end": 250.0,
+      "metadata": {
+        "source_file": "2015_BMW_i8_LOW.fbx",
+        "triangles": 58377,
+        "dimensions": {
+          "width_x": 2.16,
+          "depth_y": 4.7,
+          "height_z": 1.36
+        },
+        "placement_reasoning": "Authentic placement of 2015 BMW i8 Hybrid in Hotel Sai Leela Portico (sai_leela_hotel). Clean ground alignment with box collision."
+      },
+      "drivable_scene": "res://scenes/vehicles/imported/bmw_i8.tscn",
+      "vehicle_rig_profile": "bmw_i8"
+    },
+    {
+      "id": "porsche_boxster",
+      "name": "Porsche Boxster Roadster",
+      "model_path": "res://assets/models/vehicles/porsche_boxster/porsche_boxster.glb",
+      "category": "vehicles",
+      "location_key": "sai_leela_hotel",
+      "location_name": "Hotel Sai Leela Courtyard",
+      "district": "Hotel Sai Leela Courtyard",
+      "position": [
+        -225.0,
+        0.0,
+        185.0
+      ],
+      "use_ground_height": true,
+      "ground_offset_y": 0.02,
+      "rotation_y_deg": 180.0,
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "collision_type": "box",
+      "visibility_range_end": 250.0,
+      "metadata": {
+        "source_file": "Porsche Boxster_vray.FBX",
+        "triangles": 66863,
+        "dimensions": {
+          "width_x": 4.36,
+          "depth_y": 2.0,
+          "height_z": 1.28
+        },
+        "placement_reasoning": "Authentic placement of Porsche Boxster Roadster in Hotel Sai Leela Courtyard (sai_leela_hotel). Clean ground alignment with box collision."
+      },
+      "drivable_scene": "res://scenes/vehicles/imported/porsche_boxster.tscn",
+      "vehicle_rig_profile": "porsche_boxster"
+    },
+    {
+      "id": "tesla_model_x",
+      "name": "Tesla Model X",
+      "model_path": "res://assets/models/vehicles/tesla_model_x/tesla_model_x.glb",
+      "category": "vehicles",
+      "location_key": "sai_leela_hotel",
+      "location_name": "Hotel Sai Leela Courtyard",
+      "district": "Hotel Sai Leela Courtyard",
+      "position": [
+        -230.0,
+        0.0,
+        185.0
+      ],
+      "use_ground_height": true,
+      "ground_offset_y": 0.02,
+      "rotation_y_deg": 180.0,
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "collision_type": "box",
+      "visibility_range_end": 250.0,
+      "metadata": {
+        "source_file": "Tesla Model X.FBX",
+        "triangles": 79112,
+        "dimensions": {
+          "width_x": 2.26,
+          "depth_y": 5.02,
+          "height_z": 1.67
+        },
+        "placement_reasoning": "Authentic placement of Tesla Model X in Hotel Sai Leela Courtyard (sai_leela_hotel). Clean ground alignment with box collision."
+      },
+      "drivable_scene": "res://scenes/vehicles/imported/tesla_model_x.tscn",
+      "vehicle_rig_profile": "tesla_model_x"
+    },
+    {
+      "id": "toyota_supra_gr",
+      "name": "Toyota Supra GR",
+      "model_path": "res://assets/models/vehicles/toyota_supra_gr/toyota_supra_gr.glb",
+      "category": "vehicles",
+      "location_key": "godavari_bridge",
+      "location_name": "Godavari River Bridge Highway",
+      "district": "Godavari River Bridge Highway",
+      "position": [
+        755.0,
+        0.0,
+        -3280.0
+      ],
+      "use_ground_height": true,
+      "ground_offset_y": 0.02,
+      "rotation_y_deg": 90.0,
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "collision_type": "box",
+      "visibility_range_end": 250.0,
+      "metadata": {
+        "source_file": "Toyota_Supra_GR_.obj",
+        "triangles": 84595,
+        "dimensions": {
+          "width_x": 4.35,
+          "depth_y": 1.99,
+          "height_z": 1.35
+        },
+        "placement_reasoning": "Authentic placement of Toyota Supra GR in Godavari River Bridge Highway (godavari_bridge). Clean ground alignment with box collision."
+      },
+      "drivable_scene": "res://scenes/vehicles/imported/toyota_supra_gr.tscn",
+      "vehicle_rig_profile": "toyota_supra_gr"
+    },
+    {
+      "id": "hydrospace_benelli_s4",
+      "name": "Hydrospace Benelli S4 Watercraft",
+      "model_path": "res://assets/models/vehicles/hydrospace_benelli_s4/hydrospace_benelli_s4.glb",
+      "category": "vehicles",
+      "location_key": "godavari_bridge",
+      "location_name": "Godavari River Pier",
+      "district": "Godavari River Pier",
+      "position": [
+        765.0,
+        0.0,
+        -3290.0
+      ],
+      "use_ground_height": true,
+      "ground_offset_y": 0.02,
+      "rotation_y_deg": 90.0,
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "collision_type": "box",
+      "visibility_range_end": 250.0,
+      "metadata": {
+        "source_file": "HSR Benelli S4.obj",
+        "triangles": 54609,
+        "dimensions": {
+          "width_x": 3.1,
+          "depth_y": 1.21,
+          "height_z": 1.45
+        },
+        "placement_reasoning": "Authentic placement of Hydrospace Benelli S4 Watercraft in Godavari River Pier (godavari_bridge). Clean ground alignment with box collision."
+      }
+    },
+    {
+      "id": "bmw_x5",
+      "name": "2014 BMW X5",
+      "model_path": "res://assets/models/vehicles/bmw_x5/bmw_x5.glb",
+      "category": "vehicles",
+      "location_key": "vidyanagar_residential",
+      "location_name": "Vidyanagar Residential Quarter",
+      "district": "Vidyanagar Residential Quarter",
+      "position": [
+        310.0,
+        0.0,
+        -335.0
+      ],
+      "use_ground_height": true,
+      "ground_offset_y": 0.02,
+      "rotation_y_deg": -45.0,
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "collision_type": "box",
+      "visibility_range_end": 250.0,
+      "metadata": {
+        "source_file": "2014_BMW_X5_LOW.fbx",
+        "triangles": 64060,
+        "dimensions": {
+          "width_x": 2.16,
+          "depth_y": 4.95,
+          "height_z": 1.81
+        },
+        "placement_reasoning": "Authentic placement of 2014 BMW X5 in Vidyanagar Residential Quarter (vidyanagar_residential). Clean ground alignment with box collision."
+      },
+      "drivable_scene": "res://scenes/vehicles/imported/bmw_x5.tscn",
+      "vehicle_rig_profile": "bmw_x5"
+    },
+    {
+      "id": "bmw_x6",
+      "name": "BMW X6 xDrive50i",
+      "model_path": "res://assets/models/vehicles/bmw_x6/bmw_x6.glb",
+      "category": "vehicles",
+      "location_key": "vidyanagar_residential",
+      "location_name": "Vidyanagar Residential Quarter",
+      "district": "Vidyanagar Residential Quarter",
+      "position": [
+        315.0,
+        0.0,
+        -340.0
+      ],
+      "use_ground_height": true,
+      "ground_offset_y": 0.02,
+      "rotation_y_deg": -45.0,
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "collision_type": "box",
+      "visibility_range_end": 250.0,
+      "metadata": {
+        "source_file": "BMW X6 xDrive50i 03.obj",
+        "triangles": 70170,
+        "dimensions": {
+          "width_x": 4.95,
+          "depth_y": 2.22,
+          "height_z": 1.7
+        },
+        "placement_reasoning": "Authentic placement of BMW X6 xDrive50i in Vidyanagar Residential Quarter (vidyanagar_residential). Clean ground alignment with box collision."
+      },
+      "drivable_scene": "res://scenes/vehicles/imported/bmw_x6.tscn",
+      "vehicle_rig_profile": "bmw_x6"
+    },
+    {
+      "id": "mini_cooper_s",
+      "name": "2015 Mini Cooper S",
+      "model_path": "res://assets/models/vehicles/mini_cooper_s/mini_cooper_s.glb",
+      "category": "vehicles",
+      "location_key": "vidyanagar_residential",
+      "location_name": "Vidyanagar Residential Quarter",
+      "district": "Vidyanagar Residential Quarter",
+      "position": [
+        320.0,
+        0.0,
+        -345.0
+      ],
+      "use_ground_height": true,
+      "ground_offset_y": 0.02,
+      "rotation_y_deg": -45.0,
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "collision_type": "box",
+      "visibility_range_end": 250.0,
+      "metadata": {
+        "source_file": "2015_Mini_Cooper_S_LOW.fbx",
+        "triangles": 58535,
+        "dimensions": {
+          "width_x": 1.94,
+          "depth_y": 3.86,
+          "height_z": 1.51
+        },
+        "placement_reasoning": "Authentic placement of 2015 Mini Cooper S in Vidyanagar Residential Quarter (vidyanagar_residential). Clean ground alignment with box collision."
+      },
+      "drivable_scene": "res://scenes/vehicles/imported/mini_cooper_s.tscn",
+      "vehicle_rig_profile": "mini_cooper_s"
+    },
+    {
+      "id": "mazda_cx5",
+      "name": "Mazda CX-5",
+      "model_path": "res://assets/models/vehicles/mazda_cx5/mazda_cx5.glb",
+      "category": "vehicles",
+      "location_key": "vidyanagar_residential",
+      "location_name": "Vidyanagar Residential Quarter",
+      "district": "Vidyanagar Residential Quarter",
+      "position": [
+        325.0,
+        0.0,
+        -350.0
+      ],
+      "use_ground_height": true,
+      "ground_offset_y": 0.02,
+      "rotation_y_deg": -45.0,
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "collision_type": "box",
+      "visibility_range_end": 250.0,
+      "metadata": {
+        "source_file": "MazdaCX5.obj",
+        "triangles": 68598,
+        "dimensions": {
+          "width_x": 4.95,
+          "depth_y": 2.27,
+          "height_z": 1.84
+        },
+        "placement_reasoning": "Authentic placement of Mazda CX-5 in Vidyanagar Residential Quarter (vidyanagar_residential). Clean ground alignment with box collision."
+      },
+      "drivable_scene": "res://scenes/vehicles/imported/mazda_cx5.tscn",
+      "vehicle_rig_profile": "mazda_cx5"
+    },
+    {
+      "id": "volvo_xc40",
+      "name": "Volvo XC40",
+      "model_path": "res://assets/models/vehicles/volvo_xc40/volvo_xc40.glb",
+      "category": "vehicles",
+      "location_key": "vidyanagar_residential",
+      "location_name": "Vidyanagar Residential Quarter",
+      "district": "Vidyanagar Residential Quarter",
+      "position": [
+        330.0,
+        0.0,
+        -355.0
+      ],
+      "use_ground_height": true,
+      "ground_offset_y": 0.02,
+      "rotation_y_deg": -45.0,
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "collision_type": "box",
+      "visibility_range_end": 250.0,
+      "metadata": {
+        "source_file": "Volvo XC40_vray.FBX",
+        "triangles": 64245,
+        "dimensions": {
+          "width_x": 4.39,
+          "depth_y": 4.74,
+          "height_z": 1.62
+        },
+        "placement_reasoning": "Authentic placement of Volvo XC40 in Vidyanagar Residential Quarter (vidyanagar_residential). Clean ground alignment with box collision."
+      },
+      "drivable_scene": "res://scenes/vehicles/imported/volvo_xc40.tscn",
+      "vehicle_rig_profile": "volvo_xc40"
+    },
+    {
+      "id": "audi_q8",
+      "name": "Audi Q8 2019",
+      "model_path": "res://assets/models/vehicles/audi_q8/audi_q8.glb",
+      "category": "vehicles",
+      "location_key": "vidyanagar_residential",
+      "location_name": "Vidyanagar Residential Quarter",
+      "district": "Vidyanagar Residential Quarter",
+      "position": [
+        305.0,
+        0.0,
+        -330.0
+      ],
+      "use_ground_height": true,
+      "ground_offset_y": 0.02,
+      "rotation_y_deg": -45.0,
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "collision_type": "box",
+      "visibility_range_end": 250.0,
+      "metadata": {
+        "source_file": "AudiQ8.obj",
+        "triangles": 25577,
+        "dimensions": {
+          "width_x": 4.95,
+          "depth_y": 2.05,
+          "height_z": 1.72
+        },
+        "placement_reasoning": "Authentic placement of Audi Q8 2019 in Vidyanagar Residential Quarter (vidyanagar_residential). Clean ground alignment with box collision."
+      },
+      "drivable_scene": "res://scenes/vehicles/imported/audi_q8.tscn",
+      "vehicle_rig_profile": "audi_q8"
+    },
+    {
+      "id": "volkswagen_id",
+      "name": "Volkswagen I.D.",
+      "model_path": "res://assets/models/vehicles/volkswagen_id/volkswagen_id.glb",
+      "category": "vehicles",
+      "location_key": "vidyanagar_residential",
+      "location_name": "Vidyanagar Residential Quarter",
+      "district": "Vidyanagar Residential Quarter",
+      "position": [
+        300.0,
+        0.0,
+        -325.0
+      ],
+      "use_ground_height": true,
+      "ground_offset_y": 0.02,
+      "rotation_y_deg": -45.0,
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "collision_type": "box",
+      "visibility_range_end": 250.0,
+      "metadata": {
+        "source_file": "Volkswagen_I_D.FBX",
+        "triangles": 50000,
+        "dimensions": {
+          "width_x": 2.16,
+          "depth_y": 4.65,
+          "height_z": 1.76
+        },
+        "placement_reasoning": "Authentic placement of Volkswagen I.D. in Vidyanagar Residential Quarter (vidyanagar_residential). Clean ground alignment with box collision."
+      },
+      "drivable_scene": "res://scenes/vehicles/imported/volkswagen_id.tscn",
+      "vehicle_rig_profile": "volkswagen_id"
+    },
+    {
+      "id": "mercedes_sedan",
+      "name": "Mercedes-Benz Luxury Sedan",
+      "model_path": "res://assets/models/vehicles/mercedes_sedan/mercedes_sedan.glb",
+      "category": "vehicles",
+      "location_key": "vidyanagar_residential",
+      "location_name": "Vidyanagar Residential Quarter",
+      "district": "Vidyanagar Residential Quarter",
+      "position": [
+        295.0,
+        0.0,
+        -320.0
+      ],
+      "use_ground_height": true,
+      "ground_offset_y": 0.02,
+      "rotation_y_deg": -45.0,
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "collision_type": "box",
+      "visibility_range_end": 250.0,
+      "metadata": {
+        "source_file": "mercedes Obj.obj",
+        "triangles": 82692,
+        "dimensions": {
+          "width_x": 2.19,
+          "depth_y": 4.65,
+          "height_z": 0.64
+        },
+        "placement_reasoning": "Authentic placement of Mercedes-Benz Luxury Sedan in Vidyanagar Residential Quarter (vidyanagar_residential). Clean ground alignment with box collision."
+      },
+      "drivable_scene": "res://scenes/vehicles/imported/mercedes_sedan.tscn",
+      "vehicle_rig_profile": "mercedes_sedan"
+    },
+    {
+      "id": "scania_haul_truck",
+      "name": "Scania 2013 Commercial Truck",
+      "model_path": "res://assets/models/vehicles/scania_haul_truck/scania_haul_truck.glb",
+      "category": "vehicles",
+      "location_key": "coal_mine",
+      "location_name": "Singareni Collieries OCP 5 Incline",
+      "district": "Singareni Collieries OCP 5 Incline",
+      "position": [
+        1535.0,
+        0.0,
+        1375.0
+      ],
+      "use_ground_height": true,
+      "ground_offset_y": 0.02,
+      "rotation_y_deg": 35.0,
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "collision_type": "box",
+      "visibility_range_end": 250.0,
+      "metadata": {
+        "source_file": "scania_2013__vray.fbx",
+        "triangles": 66623,
+        "dimensions": {
+          "width_x": 7.2,
+          "depth_y": 1.29,
+          "height_z": 2.07
+        },
+        "placement_reasoning": "Authentic placement of Scania 2013 Commercial Truck in Singareni Collieries OCP 5 Incline (coal_mine). Clean ground alignment with box collision."
+      },
+      "drivable_scene": "res://scenes/vehicles/imported/scania_haul_truck.tscn",
+      "vehicle_rig_profile": "scania_haul_truck"
+    },
+    {
+      "id": "ford_transit_camion",
+      "name": "Ford Transit Utility Van/Truck",
+      "model_path": "res://assets/models/vehicles/ford_transit_camion/ford_transit_camion.glb",
+      "category": "vehicles",
+      "location_key": "coal_mine",
+      "location_name": "Singareni Collieries OCP 5 Incline",
+      "district": "Singareni Collieries OCP 5 Incline",
+      "position": [
+        1545.0,
+        0.0,
+        1385.0
+      ],
+      "use_ground_height": true,
+      "ground_offset_y": 0.02,
+      "rotation_y_deg": 35.0,
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "collision_type": "box",
+      "visibility_range_end": 250.0,
+      "metadata": {
+        "source_file": "FordTransitCamion.obj",
+        "triangles": 84450,
+        "dimensions": {
+          "width_x": 5.3,
+          "depth_y": 2.32,
+          "height_z": 2.71
+        },
+        "placement_reasoning": "Authentic placement of Ford Transit Utility Van/Truck in Singareni Collieries OCP 5 Incline (coal_mine). Clean ground alignment with box collision."
+      },
+      "drivable_scene": "res://scenes/vehicles/imported/ford_transit_camion.tscn",
+      "vehicle_rig_profile": "ford_transit_camion"
+    },
+    {
+      "id": "can_am_maverick",
+      "name": "Can-Am Maverick Buggy 2019",
+      "model_path": "res://assets/models/vehicles/can_am_maverick/can_am_maverick.glb",
+      "category": "vehicles",
+      "location_key": "coal_mine",
+      "location_name": "Singareni Collieries OCP 5 Incline",
+      "district": "Singareni Collieries OCP 5 Incline",
+      "position": [
+        1550.0,
+        0.0,
+        1390.0
+      ],
+      "use_ground_height": true,
+      "ground_offset_y": 0.02,
+      "rotation_y_deg": 35.0,
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "collision_type": "box",
+      "visibility_range_end": 250.0,
+      "metadata": {
+        "source_file": "can-am maverick.FBX",
+        "triangles": 49999,
+        "dimensions": {
+          "width_x": 3.4,
+          "depth_y": 1.89,
+          "height_z": 1.77
+        },
+        "placement_reasoning": "Authentic placement of Can-Am Maverick Buggy 2019 in Singareni Collieries OCP 5 Incline (coal_mine). Clean ground alignment with box collision."
+      },
+      "drivable_scene": "res://scenes/vehicles/imported/can_am_maverick.tscn",
+      "vehicle_rig_profile": "can_am_maverick"
+    },
+    {
+      "id": "mercedes_amg_gla35",
+      "name": "Mercedes-AMG GLA 35 4MATIC",
+      "model_path": "res://assets/models/vehicles/mercedes_amg_gla35/mercedes_amg_gla35.glb",
+      "category": "vehicles",
+      "location_key": "chowrasta",
+      "location_name": "Chowrastha Urban Crossroads",
+      "district": "Chowrastha Urban Crossroads",
+      "position": [
+        -700.0,
+        0.0,
+        230.0
+      ],
+      "use_ground_height": true,
+      "ground_offset_y": 0.02,
+      "rotation_y_deg": -90.0,
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "collision_type": "box",
+      "visibility_range_end": 250.0,
+      "metadata": {
+        "source_file": "Mercedes-AMG GLA 35 4MATIC.fbx",
+        "triangles": 59945,
+        "dimensions": {
+          "width_x": 4.64,
+          "depth_y": 2.12,
+          "height_z": 1.66
+        },
+        "placement_reasoning": "Authentic placement of Mercedes-AMG GLA 35 4MATIC in Chowrastha Urban Crossroads (chowrasta). Clean ground alignment with box collision."
+      },
+      "drivable_scene": "res://scenes/vehicles/imported/mercedes_amg_gla35.tscn",
+      "vehicle_rig_profile": "mercedes_amg_gla35"
+    },
+    {
+      "id": "range_rover_classic",
+      "name": "Land Rover Range Rover",
+      "model_path": "res://assets/models/vehicles/range_rover_classic/range_rover_classic.glb",
+      "category": "vehicles",
+      "location_key": "market_street",
+      "location_name": "Saturday Market & Commercial Strip",
+      "district": "Saturday Market & Commercial Strip",
+      "position": [
+        130.0,
+        0.0,
+        -60.0
+      ],
+      "use_ground_height": true,
+      "ground_offset_y": 0.02,
+      "rotation_y_deg": 180.0,
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "collision_type": "box",
+      "visibility_range_end": 250.0,
+      "metadata": {
+        "source_file": "Range Rover FBX.FBX",
+        "triangles": 49959,
+        "dimensions": {
+          "width_x": 2.73,
+          "depth_y": 4.65,
+          "height_z": 0.98
+        },
+        "placement_reasoning": "Authentic placement of Land Rover Range Rover in Saturday Market & Commercial Strip (market_street). Clean ground alignment with box collision."
+      },
+      "drivable_scene": "res://scenes/vehicles/imported/range_rover_classic.tscn",
+      "vehicle_rig_profile": "range_rover_classic"
+    },
+    {
+      "id": "audi_q8_custom",
+      "name": "Audi Q8 Custom",
+      "model_path": "res://assets/models/vehicles/audi_q8_custom/audi_q8_custom.glb",
+      "category": "vehicles",
+      "location_key": "market_street",
+      "location_name": "Saturday Market & Commercial Strip",
+      "district": "Saturday Market & Commercial Strip",
+      "position": [
+        140.0,
+        0.0,
+        -60.0
+      ],
+      "use_ground_height": true,
+      "ground_offset_y": 0.02,
+      "rotation_y_deg": 180.0,
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "collision_type": "box",
+      "visibility_range_end": 250.0,
+      "metadata": {
+        "source_file": "audi_q8.obj",
+        "triangles": 81909,
+        "dimensions": {
+          "width_x": 2.17,
+          "depth_y": 4.95,
+          "height_z": 1.71
+        },
+        "placement_reasoning": "Authentic placement of Audi Q8 Custom in Saturday Market & Commercial Strip (market_street). Clean ground alignment with box collision."
+      },
+      "drivable_scene": "res://scenes/vehicles/imported/audi_q8_custom.tscn",
+      "vehicle_rig_profile": "audi_q8_custom"
+    },
+    {
+      "id": "ford_mustang_mach_40",
+      "name": "Ford Mustang Mach 40 Custom",
+      "model_path": "res://assets/models/vehicles/ford_mustang_mach_40/ford_mustang_mach_40.glb",
+      "category": "vehicles",
+      "location_key": "godavari_bridge",
+      "location_name": "Godavari River Bridge Highway",
+      "district": "Godavari River Bridge Highway",
+      "position": [
+        755.0,
+        0.0,
+        -3270.0
+      ],
+      "use_ground_height": true,
+      "ground_offset_y": 0.02,
+      "rotation_y_deg": 90.0,
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "collision_type": "box",
+      "visibility_range_end": 250.0,
+      "metadata": {
+        "source_file": "Mach_40.obj",
+        "triangles": 96829,
+        "dimensions": {
+          "width_x": 4.65,
+          "depth_y": 2.02,
+          "height_z": 1.2
+        },
+        "placement_reasoning": "Custom classic muscle sports car stationed on the Godavari Bridge approach."
+      },
+      "drivable_scene": "res://scenes/vehicles/imported/ford_mustang_mach_40.tscn",
+      "vehicle_rig_profile": "ford_mustang_mach_40"
+    },
+    {
+      "id": "ford_f150_lightning",
+      "name": "Ford F-150 Lightning Electric",
+      "model_path": "res://assets/models/vehicles/ford_f150_lightning/ford_f150_lightning.glb",
+      "category": "vehicles",
+      "location_key": "sai_leela_hotel",
+      "location_name": "Hotel Sai Leela Courtyard",
+      "district": "Hotel Sai Leela Courtyard",
+      "position": [
+        -235.0,
+        0.0,
+        185.0
+      ],
+      "use_ground_height": true,
+      "ground_offset_y": 0.02,
+      "rotation_y_deg": 180.0,
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "collision_type": "box",
+      "visibility_range_end": 250.0,
+      "metadata": {
+        "source_file": "Ford F-150 Lightning.FBX",
+        "triangles": 61033,
+        "dimensions": {
+          "width_x": 5.86,
+          "depth_y": 2.43,
+          "height_z": 1.89
+        },
+        "placement_reasoning": "Modern electric full-size pickup parked in Hotel Sai Leela guest courtyard."
+      },
+      "drivable_scene": "res://scenes/vehicles/imported/ford_f150_lightning.tscn",
+      "vehicle_rig_profile": "ford_f150_lightning"
+    },
+    {
+      "id": "ford_f150_raptor_2021",
+      "name": "2021 Ford F-150 Raptor SuperCrew",
+      "model_path": "res://assets/models/vehicles/ford_f150_raptor_2021/ford_f150_raptor_2021.glb",
+      "category": "vehicles",
+      "location_key": "coal_mine",
+      "location_name": "Singareni Collieries OCP 5 Incline",
+      "district": "Singareni Collieries OCP 5 Incline",
+      "position": [
+        1560.0,
+        0.0,
+        1395.0
+      ],
+      "use_ground_height": true,
+      "ground_offset_y": 0.02,
+      "rotation_y_deg": 35.0,
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "collision_type": "box",
+      "visibility_range_end": 250.0,
+      "metadata": {
+        "source_file": "Ford F150 Raptor 2021.FBX",
+        "triangles": 80853,
+        "dimensions": {
+          "width_x": 5.91,
+          "depth_y": 2.45,
+          "height_z": 2.01
+        },
+        "placement_reasoning": "Heavy-duty off-road pickup deployed at the Singareni Collieries OCP 5 mining worksite."
+      },
+      "drivable_scene": "res://scenes/vehicles/imported/ford_f150_raptor_2021.tscn",
+      "vehicle_rig_profile": "ford_f150_raptor_2021"
+    },
+    {
+      "id": "royal_enfield_bullet",
+      "name": "Royal Enfield Bullet 350 Classic",
+      "model_path": "res://assets/models/vehicles/royal_enfield_bullet/royal_enfield_bullet.glb",
+      "drivable_scene": "res://scenes/vehicles/royal_enfield_bullet.tscn",
+      "is_drivable": true,
+      "category": "vehicles",
+      "location_key": "vidyanagar_residential",
+      "location_name": "Vidyanagar Residential Quarter",
+      "district": "Vidyanagar Residential Quarter",
+      "position": [
+        335.0,
+        0.0,
+        -360.0
+      ],
+      "use_ground_height": true,
+      "ground_offset_y": 0.34,
+      "rotation_y_deg": -45.0,
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "collision_type": "box",
+      "visibility_range_end": 250.0,
+      "metadata": {
+        "source_file": "Bike_RE.fbx",
+        "triangles": 49999,
+        "dimensions": {
+          "width_x": 1.56,
+          "depth_y": 2.15,
+          "height_z": 1.36
+        },
+        "placement_reasoning": "Iconic Telangana motorcycle parked in Vidyanagar Road No. 2 residential driveway."
+      }
+    },
+    {
+      "id": "bajaj_avenger_cruise",
+      "name": "Bajaj Avenger Cruise 220",
+      "model_path": "res://assets/models/vehicles/bajaj_avenger_cruise/bajaj_avenger_cruise.glb",
+      "category": "vehicles",
+      "location_key": "market_street",
+      "location_name": "Saturday Market & Commercial Strip",
+      "district": "Saturday Market & Commercial Strip",
+      "position": [
+        125.0,
+        0.0,
+        -55.0
+      ],
+      "use_ground_height": true,
+      "ground_offset_y": 0.02,
+      "rotation_y_deg": 180.0,
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "collision_type": "box",
+      "visibility_range_end": 250.0,
+      "metadata": {
+        "source_file": "Avenger 2.fbx",
+        "triangles": 49761,
+        "dimensions": {
+          "width_x": 0.42,
+          "depth_y": 2.21,
+          "height_z": 0.76
+        },
+        "placement_reasoning": "Popular Indian cruiser motorcycle parked curbside by the Saturday Market tea and snack stalls."
+      }
+    },
+    {
+      "id": "indian_tgsrtc_bus",
+      "name": "TGSRTC Super Luxury Express Bus",
+      "model_path": "res://assets/models/vehicles/indian_tgsrtc_bus/indian_tgsrtc_bus.glb",
+      "drivable_scene": "res://scenes/vehicles/imported/indian_tgsrtc_bus.tscn",
+      "is_drivable": true,
+      "category": "vehicles",
+      "location_key": "bus_station",
+      "location_name": "TGSRTC Bus Station Depot",
+      "district": "TGSRTC Bus Station Depot",
+      "position": [
+        -715.0,
+        0.0,
+        245.0
+      ],
+      "use_ground_height": true,
+      "ground_offset_y": 0.02,
+      "rotation_y_deg": 45.0,
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "collision_type": "box",
+      "visibility_range_end": 250.0,
+      "metadata": {
+        "source_file": "indian gsrtc bus.fbx",
+        "triangles": 49530,
+        "dimensions": {
+          "width_x": 2.99,
+          "depth_y": 12.0,
+          "height_z": 3.21
+        },
+        "placement_reasoning": "State transport passenger bus stationed at the main Godavarikhani TGSRTC Bus Station terminal bay."
+      },
+      "vehicle_rig_profile": "indian_tgsrtc_bus"
+    },
+    {
+      "id": "dodge_charger_f8",
+      "name": "Dodge Charger Fast & Furious Edition",
+      "model_path": "res://assets/models/vehicles/dodge_charger_f8/dodge_charger_f8.glb",
+      "category": "vehicles",
+      "location_key": "sai_leela_hotel",
+      "location_name": "Hotel Sai Leela Courtyard",
+      "district": "Hotel Sai Leela Courtyard",
+      "position": [
+        -240.0,
+        0.0,
+        185.0
+      ],
+      "use_ground_height": true,
+      "ground_offset_y": 0.02,
+      "rotation_y_deg": 180.0,
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "collision_type": "box",
+      "visibility_range_end": 250.0,
+      "metadata": {
+        "source_file": "998.glb",
+        "triangles": 49976,
+        "dimensions": {
+          "width_x": 2.25,
+          "depth_y": 5.1,
+          "height_z": 2.03
+        },
+        "placement_reasoning": "High-performance muscle car parked in Hotel Sai Leela visitor parking."
+      },
+      "drivable_scene": "res://scenes/vehicles/imported/dodge_charger_f8.tscn",
+      "vehicle_rig_profile": "dodge_charger_f8"
+    },
+    {
+      "id": "ferrari_250_testa_rossa",
+      "name": "Ferrari 250 Testa Rossa Vintage",
+      "model_path": "res://assets/models/vehicles/ferrari_250_testa_rossa/ferrari_250_testa_rossa.glb",
+      "category": "vehicles",
+      "location_key": "sai_leela_hotel",
+      "location_name": "Hotel Sai Leela Portico",
+      "district": "Hotel Sai Leela Portico",
+      "position": [
+        -215.0,
+        0.0,
+        175.0
+      ],
+      "use_ground_height": true,
+      "ground_offset_y": 0.02,
+      "rotation_y_deg": 0.0,
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "collision_type": "box",
+      "visibility_range_end": 250.0,
+      "metadata": {
+        "source_file": "Sketchfab_2026_10_23_12_47_42.glb",
+        "triangles": 49925,
+        "dimensions": {
+          "width_x": 1.63,
+          "depth_y": 4.15,
+          "height_z": 0.97
+        },
+        "placement_reasoning": "Classic collector supercar showcased in Hotel Sai Leela VIP portico."
+      },
+      "drivable_scene": "res://scenes/vehicles/imported/ferrari_250_testa_rossa.tscn",
+      "vehicle_rig_profile": "ferrari_250_testa_rossa"
+    },
+    {
+      "id": "alfa_romeo_155_v6",
+      "name": "Alfa Romeo 155 V6 TI DTM",
+      "model_path": "res://assets/models/vehicles/alfa_romeo_155_v6/alfa_romeo_155_v6.glb",
+      "category": "vehicles",
+      "location_key": "godavari_bridge",
+      "location_name": "Godavari River Bridge Highway",
+      "district": "Godavari River Bridge Highway",
+      "position": [
+        755.0,
+        0.0,
+        -3260.0
+      ],
+      "use_ground_height": true,
+      "ground_offset_y": 0.02,
+      "rotation_y_deg": 90.0,
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "collision_type": "box",
+      "visibility_range_end": 250.0,
+      "metadata": {
+        "source_file": "Alfa_Romeo_155_V6.fbx",
+        "triangles": 49922,
+        "dimensions": {
+          "width_x": 1.7,
+          "depth_y": 4.4,
+          "height_z": 1.33
+        },
+        "placement_reasoning": "Performance touring racecar stationed at Godavari River Bridge highway approach."
+      },
+      "drivable_scene": "res://scenes/vehicles/imported/alfa_romeo_155_v6.tscn",
+      "vehicle_rig_profile": "alfa_romeo_155_v6"
+    },
+    {
+      "id": "lamborghini_diablo_sv",
+      "name": "1997 Lamborghini Diablo SV Coupe",
+      "model_path": "res://assets/models/vehicles/lamborghini_diablo_sv/lamborghini_diablo_sv.glb",
+      "category": "vehicles",
+      "location_key": "godavari_bridge",
+      "location_name": "Godavari River Bridge Highway",
+      "district": "Godavari River Bridge Highway",
+      "position": [
+        755.0,
+        0.0,
+        -3250.0
+      ],
+      "use_ground_height": true,
+      "ground_offset_y": 0.02,
+      "rotation_y_deg": 90.0,
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "collision_type": "box",
+      "visibility_range_end": 250.0,
+      "metadata": {
+        "source_file": "FINAL_MODEL_SV97.fbx",
+        "triangles": 49982,
+        "dimensions": {
+          "width_x": 2.13,
+          "depth_y": 4.46,
+          "height_z": 1.12
+        },
+        "placement_reasoning": "Classic 90s supercar stationed along the Godavari River Bridge northern approach highway."
+      },
+      "drivable_scene": "res://scenes/vehicles/imported/lamborghini_diablo_sv.tscn",
+      "vehicle_rig_profile": "lamborghini_diablo_sv"
+    },
+    {
+      "id": "sa342m_gazelle_helicopter",
+      "name": "SA342M Gazelle Light Utility Helicopter",
+      "model_path": "res://assets/models/vehicles/sa342m_gazelle_helicopter/sa342m_gazelle_helicopter.glb",
+      "category": "vehicles",
+      "location_key": "coal_mine",
+      "location_name": "Singareni Collieries OCP 5 Incline",
+      "district": "Singareni Collieries OCP 5 Incline",
+      "position": [
+        1575.0,
+        0.0,
+        1410.0
+      ],
+      "use_ground_height": true,
+      "ground_offset_y": 0.02,
+      "rotation_y_deg": 35.0,
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "collision_type": "box",
+      "visibility_range_end": 250.0,
+      "metadata": {
+        "source_file": "sa342m_dcs_world.glb",
+        "triangles": 59936,
+        "dimensions": {
+          "width_x": 9.11,
+          "depth_y": 11.97,
+          "height_z": 3.32
+        },
+        "placement_reasoning": "Aerial survey utility helicopter stationed on the elevated rim of Singareni Collieries OCP 5."
+      }
+    },
+    {
+      "id": "roush_mustang_96",
+      "name": "1996 Ford Mustang GT Jack Roush Stage 3",
+      "model_path": "res://assets/models/vehicles/roush_mustang_96/roush_mustang_96.glb",
+      "category": "vehicles",
+      "location_key": "godavari_bridge",
+      "location_name": "Godavari River Bridge Highway",
+      "district": "Godavari River Bridge Highway",
+      "position": [
+        755.0,
+        0.0,
+        -3240.0
+      ],
+      "use_ground_height": true,
+      "ground_offset_y": 0.02,
+      "rotation_y_deg": 90.0,
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "collision_type": "box",
+      "visibility_range_end": 250.0,
+      "metadata": {
+        "source_file": "FINAL_MODEL_96.fbx",
+        "triangles": 49984,
+        "dimensions": {
+          "width_x": 1.96,
+          "depth_y": 4.61,
+          "height_z": 1.67
+        },
+        "placement_reasoning": "High performance 1990s American muscle coupe parked on the Godavari River Bridge Highway shoulder."
+      },
+      "drivable_scene": "res://scenes/vehicles/imported/roush_mustang_96.tscn",
+      "vehicle_rig_profile": "roush_mustang_96"
+    },
+    {
+      "id": "shelby_patrol_13",
+      "name": "2013 Ford Shelby GT500 Highway Patrol",
+      "model_path": "res://assets/models/vehicles/shelby_patrol_13/shelby_patrol_13.glb",
+      "category": "vehicles",
+      "location_key": "coal_mine",
+      "location_name": "Singareni Collieries OCP 5 Incline",
+      "district": "Singareni Collieries OCP 5 Incline",
+      "position": [
+        1550.0,
+        0.0,
+        1380.0
+      ],
+      "use_ground_height": true,
+      "ground_offset_y": 0.02,
+      "rotation_y_deg": 45.0,
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "collision_type": "box",
+      "visibility_range_end": 250.0,
+      "metadata": {
+        "source_file": "FINAL_MOPDEL_COP13.fbx",
+        "triangles": 49990,
+        "dimensions": {
+          "width_x": 1.96,
+          "depth_y": 4.78,
+          "height_z": 1.46
+        },
+        "placement_reasoning": "Highway patrol pursuit interceptor stationed at Singareni OCP 5 / Ramagundam security checkpoint."
+      },
+      "drivable_scene": "res://scenes/vehicles/imported/shelby_patrol_13.tscn",
+      "vehicle_rig_profile": "shelby_patrol_13"
+    },
+    {
+      "id": "shelby_cobra_68",
+      "name": "1968 Ford Mustang Shelby Cobra GT500 Fastback",
+      "model_path": "res://assets/models/vehicles/shelby_cobra_68/shelby_cobra_68.glb",
+      "category": "vehicles",
+      "location_key": "sai_leela_hotel",
+      "location_name": "Hotel Sai Leela VIP Courtyard",
+      "district": "Hotel Sai Leela VIP Courtyard",
+      "position": [
+        -220.0,
+        0.0,
+        195.0
+      ],
+      "use_ground_height": true,
+      "ground_offset_y": 0.02,
+      "rotation_y_deg": 180.0,
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "collision_type": "box",
+      "visibility_range_end": 250.0,
+      "metadata": {
+        "source_file": "FINAL_MODEL_GT50067.fbx",
+        "triangles": 36955,
+        "dimensions": {
+          "width_x": 1.76,
+          "depth_y": 4.74,
+          "height_z": 1.33
+        },
+        "placement_reasoning": "Pristine vintage classic muscle car showcased at Hotel Sai Leela VIP courtyard."
+      },
+      "drivable_scene": "res://scenes/vehicles/imported/shelby_cobra_68.tscn",
+      "vehicle_rig_profile": "shelby_cobra_68"
+    },
+    {
+      "id": "little_bird_mh6",
+      "name": "MH-6 Little Bird Light Observation Helicopter",
+      "model_path": "res://assets/models/vehicles/little_bird_mh6/little_bird_mh6.glb",
+      "category": "vehicles",
+      "location_key": "coal_mine",
+      "location_name": "Singareni Collieries OCP 5 Incline",
+      "district": "Singareni Collieries OCP 5 Incline",
+      "position": [
+        1590.0,
+        0.0,
+        1425.0
+      ],
+      "use_ground_height": true,
+      "ground_offset_y": 0.02,
+      "rotation_y_deg": 25.0,
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "collision_type": "box",
+      "visibility_range_end": 250.0,
+      "metadata": {
+        "source_file": "MH-6 Little Bird.obj",
+        "triangles": 9776,
+        "dimensions": {
+          "width_x": 9.8,
+          "depth_y": 9.29,
+          "height_z": 3.66
+        },
+        "placement_reasoning": "Mining aerial survey tactical observation helicopter stationed on the OCP 5 open-cast mine rim."
+      }
+    },
+    {
+      "id": "city_transit_bus",
+      "name": "RoAZ 5236 Low-Floor City Transit Bus",
+      "model_path": "res://assets/models/vehicles/city_transit_bus/city_transit_bus.glb",
+      "category": "vehicles",
+      "location_key": "bus_station",
+      "location_name": "TGSRTC Bus Station Depot",
+      "district": "TGSRTC Bus Station Depot",
+      "position": [
+        -725.0,
+        0.0,
+        260.0
+      ],
+      "use_ground_height": true,
+      "ground_offset_y": 0.02,
+      "rotation_y_deg": 45.0,
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "collision_type": "box",
+      "visibility_range_end": 250.0,
+      "metadata": {
+        "source_file": "RoAZ_5236.fbx",
+        "triangles": 2588,
+        "dimensions": {
+          "width_x": 5.55,
+          "depth_y": 11.9,
+          "height_z": 2.22
+        },
+        "placement_reasoning": "Low-floor public transit city commuter bus stationed at TGSRTC Godavarikhani bus station depot bay 2."
+      },
+      "drivable_scene": "res://scenes/vehicles/imported/city_transit_bus.tscn",
+      "vehicle_rig_profile": "city_transit_bus"
+    },
+    {
+      "id": "tdm_1",
+      "name": "TDM Arena Compound",
+      "model_path": "res://assets/models/city_props/tdm_1.glb",
+      "category": "city_buildings",
+      "location_key": "godavari_bridge",
+      "location_name": "Godavari River Bridge Approach",
+      "district": "Godavari River Bridge Highway",
+      "position": [
+        758.21,
+        0.0,
+        -3281.31
+      ],
+      "use_ground_height": true,
+      "ground_offset_y": 0.02,
+      "rotation_y_deg": 240.0,
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "collision_type": "trimesh",
+      "visibility_range_end": 250.0,
+      "metadata": {
+        "source_file": "scene.gltf",
+        "triangles": 68883,
+        "dimensions": {
+          "width_x": 255.054,
+          "depth_y": 303.11,
+          "height_z": 17.275
+        },
+        "placement_reasoning": "User explicitly selected location: Godavari River Bridge Approach (Godavari River Bridge Highway)."
+      }
+    },
+    {
+      "id": "bmw_s1000_rr",
+      "name": "BMW S1000 RR 2023 Superbike",
+      "model_path": "res://assets/models/vehicles/bmw_s1000_rr/bmw_s1000rr_rig.glb",
+      "drivable_scene": "res://scenes/vehicles/bmw_s1000_rr.tscn",
+      "is_drivable": true,
+      "category": "vehicles",
+      "location_key": "chowrasta_center",
+      "location_name": "Godavarikhani Chowrasta Main Square",
+      "district": "Godavarikhani Chowrasta",
+      "position": [
+        112.0,
+        0.0,
+        -102.0
+      ],
+      "use_ground_height": true,
+      "ground_offset_y": 0.25,
+      "rotation_y_deg": 35.0,
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "collision_type": "box",
+      "visibility_range_end": 250.0,
+      "metadata": {
+        "source_file": "10211.glb",
+        "triangles": 38690,
+        "dimensions": {
+          "width_x": 0.84,
+          "depth_y": 2.07,
+          "height_z": 1.15
+        },
+        "placement_reasoning": "High-performance 205-horsepower superbike parked right by Godavarikhani Chowrasta for immediate player ride access."
+      }
+    },
+    {
+      "id": "hoonicorn_ken_block",
+      "name": "1965 Ford Mustang Hoonicorn RTR V2 (Ken Block Tribute)",
+      "model_path": "res://assets/models/vehicles/hoonicorn_ken_block/hoonicorn_ken_block_rig.glb",
+      "drivable_scene": "res://scenes/vehicles/imported/hoonicorn_ken_block.tscn",
+      "is_drivable": true,
+      "category": "vehicles",
+      "location_key": "godavari_bridge",
+      "location_name": "Godavari River Bridge Highway",
+      "district": "Godavari River Bridge Highway",
+      "position": [
+        762.0,
+        0.0,
+        -3260.0
+      ],
+      "use_ground_height": true,
+      "ground_offset_y": 0.05,
+      "rotation_y_deg": 90.0,
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "collision_type": "box",
+      "visibility_range_end": 250.0,
+      "metadata": {
+        "source_file": "hoonicorn-_a_tribute_to_ken_block_updated.glb",
+        "triangles": 48497,
+        "dimensions": {
+          "width_x": 1.92,
+          "depth_y": 4.54,
+          "height_z": 1.25
+        },
+        "placement_reasoning": "1400hp twin-turbo AWD drift beast stationed on Godavari River Bridge Highway approach for high-speed bridge sprints."
+      }
     }
   ]
 }

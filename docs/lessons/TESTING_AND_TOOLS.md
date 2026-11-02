@@ -80,6 +80,31 @@ in `tools/captures/`.
 - **Rule:** read the other branch's signatures before calling across workers. `has_method` proves a name, not its
   arguments, and `callv` defers the failure to play. One owner per readout: the HUD pulls, gameplay does not push.
 - **Check:** `tests/on_screen_text_regression.gd` (`_test_no_hud_push`, `_test_control_hints`).
+### Camera controller physics interpolation vs. orbit rotation jitter (2026-10-30)
+- **Symptom:** In third-person and first-person on-foot camera modes, rapid mouse/touch look produced visible jitter or micro-stuttering against 60 FPS physics bodies.
+- **Cause:** When physics interpolation (`physics/common/physics_interpolation=true`) is active in Godot 4, manual spatial modifications applied inside `_physics_process(delta)` fight with the interpolation engine between physics frames.
+- **Rule:** For smooth on-foot and vehicular camera movement in Godot 4 with physics interpolation enabled:
+  1. Let `SpringArm3D` and `CameraPivot` follow the player CharacterBody3D automatically via the scene tree hierarchy.
+  2. Set `top_level = false` on `CameraPivot` so its orientation updates instantly on the render frame while still inheriting the parent body's interpolated spatial position.
+  3. Call `_apply_orbit_rotation()` immediately upon mouse/touch look events and at the end of `_process(delta)` so render frames reflect real-time input without waiting for physics ticks.
+- **Check:** `tests/movement_regression.gd`, `tests/camera_regression.gd`, `tests/chase_camera_regression.gd`.
+
+### High-resolution mobile tablets (Xiaomi Pad 7 / 3.2K display) suffered severe lag under Tier 4 desktop settings (2026-10-30)
+- **Symptom:** "game is fulll lag" on Xiaomi Pad 7; measured frame rates dropped to 30-35 FPS with heavy frame drops and thermal throttling.
+- **Cause:** `DevicePerformanceManager.classify_device` assigned any high-resolution or 6GB+ tablet to Tier 4 (`TIER_4_PRO_TABLET_DESKTOP`). The Tier 4 profile unlocked 120 FPS, 4 shadow splits (`SHADOW_PARALLEL_4_SPLITS`), 100m shadow distance, 900m view distance, 400m simulation distance, 55 actors, and 0.75 resolution scale. On a 3200x2136 screen, 0.75 scale is 2400x1602 (3.84 million pixels per frame). Compounded by 4 cascaded shadow passes across 250+ building chunks in Godot Compatibility (GLES3) forward rendering, the mobile CPU and Adreno 732 GPU were completely choked.
+- **Rule:** Mobile tablets (`not is_desktop`) must never be assigned desktop PC settings. For mobile tablets in Tier 4: cap target FPS at 60 to prevent thermal throttling, use 0.55x 3D scale on 3K+ displays (~1760x1175 ~ 1080p equivalent) while keeping the 2D HUD at native resolution, use 1-cascade orthogonal shadow (`SHADOW_ORTHOGONAL`) with 35m range, 550m view distance, 220m simulation distance, and 28 actors. Frame time drops from 57ms down to 6ms-8ms (locked 60 FPS).
+- **Check:** `tests/device_performance_manager_regression.gd`, `tests/movement_regression.gd`, and live `dumpsys gfxinfo com.manaooru.prototype` on Xiaomi Pad 7 showing 6ms 50th percentile / 8ms 90th percentile.
+
+### Godot iOS export preset and iPhone multi-orientation support (2026-10-30)
+- **Symptom:** Mana Ooru lacked an iOS export pipeline; attempting to build for iPhone failed with missing export preset and Xcode configuration errors, while mouse capture on mobile disrupted touchscreen input.
+- **Cause:** `export_presets.cfg` only defined `preset.0` (Android). In addition, `main.gd` exclusively checked `OS.has_feature("android")` for bypassing mouse capture, leaving iOS falling through to desktop captured mouse mode. Furthermore, `window/handheld/orientation` was fixed at 0 (Landscape Left only), which prevented 180° rotation on iPhones with charging cables plugged in.
+- **Rule:** When configuring iOS export in Godot:
+  1. Add an iOS export preset with `application/targeted_device_family=2` (iPhone & iPad universal, mapping to `TARGETED_DEVICE_FAMILY = "1,2"` in Xcode).
+  2. Set `application/export_project_only=true` so the headless export writes a complete Xcode project (`ManaOoru.xcodeproj`) and data pack (`ManaOoru.pck`) that can be opened or built via Xcode or CI/CD without hardcoded developer team credentials.
+  3. Ensure `window/handheld/orientation=4` (Sensor Landscape) in `project.godot` so `UISupportedInterfaceOrientations` includes both `UIInterfaceOrientationLandscapeLeft` and `UIInterfaceOrientationLandscapeRight`.
+  4. Always check `OS.has_feature("android") or OS.has_feature("ios") or OS.has_feature("mobile")` when configuring mouse mode, HUD touch overlays, and platform performance tiers.
+- **Check:** `tools/build_ios.sh` and headless export `godot --headless --export-debug "iOS" builds/ios/ManaOoru.ipa` followed by `grep TARGETED_DEVICE_FAMILY builds/ios/ManaOoru.xcodeproj/project.pbxproj`.
+
 ### A test can print PASS after a script error (2026-10-30)
 - **Symptom:** `hud_states_regression` and `hud_layout_profiles_regression` printed PASS and exited 0 while most of a
   test function never ran.
@@ -99,6 +124,7 @@ in `tools/captures/`.
 - **Cause:** GPU, CPU cores, RAM, and screen refresh rate were not inspected at boot to choose appropriate viewport scaling, shadow cascades, and frame rates.
 - **Rule:** Use `DevicePerformanceManager` at boot to classify into Tier 1 (Budget Mobile 30 FPS, 0.65x scale, no shadows), Tier 2 (Mid-Range 60 FPS, 0.80x scale, 1-cascade 35m shadow), Tier 3 (Flagship Killer 90 FPS, 0.85x scale), and Tier 4 (Pro Tablet/Desktop, 0.75x scale on 3K+ tablets to prevent throttling, 1.0x native on PC/Mac, with tablet ergonomics insetting HUD on 4:3 and 16:10 screens). Persist device profiles to `user://settings.cfg`.
 - **Check:** `tests/device_performance_manager_regression.gd`, `tests/scene_regression.gd`, and `tests/performance_integration_regression.gd`.
+
 ### A real click reached a capture window (2026-10-30)
 - **Symptom:** `credits_mid.png` from `tests/capture_front_door.gd --screens` showed the loading screen, and Godot
   segfaulted on exit.

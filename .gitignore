@@ -9,10 +9,13 @@ builds/
 *.zip
 *.dmg
 *.app/
+*.ipa
+*.xcarchive
 
 # Intermediate Blender auto-backups and heavy 3D sculpting dumps (>100MB)
 *.blend1
 *.blend2
+showcase/
 tools/**/blend/*.blend1
 tools/hyper3d_character/
 tools/player_character_v2/
@@ -30,6 +33,8 @@ Godavarikhani_Bridge_3D/renders_test/
 # Temporary work directories, test captures, and local outputs
 work/
 outputs/
+__pycache__/
+*.pyc
 
 # Python bytecode
 __pycache__/

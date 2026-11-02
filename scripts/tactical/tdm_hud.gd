@@ -41,7 +41,7 @@ const TOUCH_TARGET_MIN := 60.0
 const TOUCH_TARGET_MAX := 79.0
 ## A full 8v8 lobby must still fit a 720-high landscape screen.
 const LOBBY_MAX_ROWS := 8
-const LOBBY_CHROME_HEIGHT := 330.0
+const LOBBY_CHROME_HEIGHT := 336.0
 const LOBBY_ROW_MIN := 48.0
 const SCORE_ROW_HEIGHT := 52.0
 const FEED_WIDTH := 300.0
@@ -323,9 +323,20 @@ func _apply_touch_sizes() -> void:
 	if not is_node_ready():
 		return
 	var height := touch_target() if touch_mode else BUTTON_HEIGHT
-	for panel: Control in [_lobby_panel, _menu_panel, _end_panel, _chat_wheel]:
+	for panel: Control in [_menu_panel, _end_panel, _chat_wheel]:
 		for button: Node in panel.find_children("*", "Button", true, false):
 			button.custom_minimum_size.y = height
+	var lobby_btn_height := clampf(height, 48.0, 52.0) if touch_mode else BUTTON_HEIGHT
+	for button: Node in _lobby_panel.find_children("*", "Button", true, false):
+		if _is_lobby_row_button(button):
+			continue
+		button.custom_minimum_size.y = lobby_btn_height
+
+func _is_lobby_row_button(button: Node) -> bool:
+	for col in _team_columns:
+		if col.get("rows") == button.get_parent():
+			return true
+	return false
 
 func team_color(team: int) -> Color:
 	return RED_COLOR if team == 0 else BLUE_COLOR
@@ -450,6 +461,8 @@ func _layout() -> void:
 	_chat_log.reset_size()
 	if minimap.has_area() and not map_on_top:
 		_chat_log.position = Vector2(minimap.position.x, minimap.position.y - 8.0 - _chat_log.size.y)
+	elif map_on_top and not map_on_right:
+		_chat_log.position = Vector2(minimap.position.x, minimap.end.y + 8.0)
 	else:
 		_chat_log.position = Vector2(left_edge, safe.position.y + SPACE_SMALL + TOUCH_BUTTON_SIZE.y + 8.0)
 

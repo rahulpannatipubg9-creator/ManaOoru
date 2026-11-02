@@ -60,7 +60,11 @@ var cctv: CctvBuilder
 var traffic: TrafficBuilder
 var local_activity: LocalActivityBuilder
 var godavari_bridge: GodavariBridgeBuilder
+const RamagundamFlyoverClass := preload("res://scripts/world/ramagundam_flyover_builder.gd")
+var ramagundam_flyover: Node3D
 var custom_placements: Node3D
+const CityScenariosBuilder := preload("res://scripts/world/city_scenarios.gd")
+var scenarios: Node3D
 const RoadsideDrainage := preload("res://scripts/world/roadside_drainage_builder.gd")
 var drainage: Node3D
 
@@ -75,8 +79,8 @@ func _ready() -> void:
 		return
 	await _stage(0.05, "Shaping the ground")
 	_create_ground()
-	await _stage(0.15, "Laying roads")
 	_create_distant_horizon()
+	await _stage(0.15, "Laying roads")
 	roads = RoadBuilder.new()
 	preload("res://scripts/performance/startup_profile.gd").mark("world: roads = RoadBuilder.new()")
 	add_child(roads)
@@ -129,6 +133,7 @@ func _ready() -> void:
 	_create_coal_gallery()
 	await _stage(0.64)
 	_create_godavari_bridge()
+	_create_ramagundam_flyover()
 	await _stage(0.68, "Opening the streets")
 	_choose_spawns()
 	await _stage(0.7)
@@ -162,6 +167,7 @@ func _ready() -> void:
 	custom_placements = preload("res://scripts/world/custom_asset_placements.gd").new()
 	add_child(custom_placements)
 	custom_placements.call("build", self)
+	_create_scenarios()
 	# Representative scenery is planned after existing assets/spawns so it yields
 	# to gameplay and source-backed placement. No GIS drainage geometry is loaded.
 	if "--representative-drainage" in OS.get_cmdline_user_args() and "--no-drainage" not in OS.get_cmdline_user_args():
@@ -245,8 +251,10 @@ func _create_ground() -> void:
 		# The visible ground sits 0.2 m below the collision surface so draped roads never z-fight with it.
 		mesh.position.y = -0.2
 		mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		mesh.visibility_range_end = 2500.0
 		chunk.add_child(mesh)
 		var shape := ConcavePolygonShape3D.new()
+		shape.backface_collision = true
 		shape.set_faces(built.vertices)
 		var collision := CollisionShape3D.new()
 		collision.shape = shape
@@ -462,6 +470,18 @@ func _create_godavari_bridge() -> void:
 	add_child(godavari_bridge)
 	godavari_bridge.build(self, map_data)
 
+func _create_ramagundam_flyover() -> void:
+	ramagundam_flyover = RamagundamFlyoverClass.new()
+	add_child(ramagundam_flyover)
+	ramagundam_flyover.build(self, map_data)
+
+func flyover_height_at(point: Vector2, fallback: float) -> float:
+	if ramagundam_flyover and ramagundam_flyover.has_method("deck_height_at"):
+		var dh: float = ramagundam_flyover.deck_height_at(point)
+		if dh != -INF:
+			return dh
+	return fallback
+
 ## Real trees from the canopy-height map, kept off spawns and the coal-gallery portal.
 func _create_trees() -> void:
 	trees = TreeBuilder.new()
@@ -551,6 +571,11 @@ func _create_local_activity() -> void:
 	local_activity = LocalActivityBuilder.new()
 	add_child(local_activity)
 	local_activity.build(self, map_data, bus_station)
+
+func _create_scenarios() -> void:
+	scenarios = CityScenariosBuilder.new()
+	add_child(scenarios)
+	scenarios.call("build", self, map_data)
 
 func _create_collectibles() -> void:
 	_coin_material = StandardMaterial3D.new()

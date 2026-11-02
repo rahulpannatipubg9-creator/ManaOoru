@@ -1,5 +1,5 @@
 extends CanvasLayer
-## Settings pages: Controls, Graphics, Audio, Time & Weather, and Developer when allowed.
+## Settings pages: Controls, Camera, Graphics, Audio, Time & Weather, Animations, and Developer.
 ## Opens from the pause menu or directly, and closes back to whatever was underneath.
 
 signal closed
@@ -30,6 +30,7 @@ var controls: Dictionary = {}
 var audio_controls: Dictionary = {}
 var hint: Label
 var graphics_controls: Dictionary = {}
+var camera_controls: Dictionary = {}
 var graphics_preset: OptionButton
 ## The front door sets this to its credits screen; the button stays hidden until then.
 var credits_action: Callable:
@@ -88,6 +89,8 @@ func setup(owner_hud: Node) -> void:
 	_build_graphics(_page("Graphics"))
 	_build_audio(_page("Audio"))
 	_build_time(_page("Time & Weather"))
+	_build_camera(_page("Camera"))
+	_build_animations_guide(_page("Animations"))
 	_build_developer(_page("Developer"))
 	_refresh_developer()
 	for control: Control in _touch_only:
@@ -184,6 +187,74 @@ func _toggle(parent: Node, title: String, callback: Callable) -> CheckButton:
 	check.toggled.connect(callback)
 	return check
 
+func _input(event: InputEvent) -> void:
+	if panel and panel.visible and event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
+		close_menu()
+		get_viewport().set_input_as_handled()
+
+func set_driving(_driving: bool) -> void:
+	pass
+
+func _get_camera_pivot() -> Node:
+	if hud and hud.player and "camera_pivot" in hud.player:
+		return hud.player.camera_pivot
+	elif hud and hud._game and hud._game.person and "camera_pivot" in hud._game.person:
+		return hud._game.person.camera_pivot
+	return null
+
+func _build_camera(page: VBoxContainer) -> void:
+	var desc := Label.new()
+	desc.text = "Switch between TPP and FPP, scale view distances, adjust field of view (FOV), and tune shoulder offset."
+	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	desc.add_theme_color_override("font_color", UiTheme.TEXT_MUTED)
+	page.add_child(desc)
+
+	var mode_opt := _options(page, "Perspective mode", ["Third Person (TPP)", "First Person (FPP)"])
+	camera_controls["view_mode"] = mode_opt
+	mode_opt.item_selected.connect(func(index: int) -> void:
+		if _syncing: return
+		var cam = _get_camera_pivot()
+		if cam != null:
+			cam.set_view_mode(index)
+	)
+
+	_add_camera_range(page, "TPP Camera Distance", "tpp_dist", 3.0, 9.0, 0.25, "m", func(val: float) -> void:
+		var cam = _get_camera_pivot()
+		if cam != null:
+			cam.set_tpp_distance(val)
+	)
+	_add_camera_range(page, "TPP Field of View (FOV)", "tpp_fov", 55.0, 95.0, 1.0, "°", func(val: float) -> void:
+		var cam = _get_camera_pivot()
+		if cam != null:
+			cam.set_tpp_fov(val)
+	)
+	_add_camera_range(page, "FPP Field of View (FOV)", "fpp_fov", 65.0, 110.0, 1.0, "°", func(val: float) -> void:
+		var cam = _get_camera_pivot()
+		if cam != null:
+			cam.set_fpp_fov(val)
+	)
+	_add_camera_range(page, "Shoulder View Offset", "shoulder", 0.35, 0.95, 0.05, "m", func(val: float) -> void:
+		var cam = _get_camera_pivot()
+		if cam != null:
+			cam.set_shoulder_offset(val)
+	)
+	_add_camera_range(page, "Camera Shake & Bobbing", "shake", 0.0, 2.0, 0.1, "x", func(val: float) -> void:
+		var cam = _get_camera_pivot()
+		if cam != null:
+			cam.camera_shake_scale = val
+	)
+
+func _add_camera_range(parent: Node, title: String, key: String, min_val: float, max_val: float, step: float, unit: String, callback: Callable) -> void:
+	var parts := _range(parent, title, min_val, max_val, step)
+	var slider: HSlider = parts[0]
+	var val_label: Label = parts[1]
+	camera_controls[key] = slider
+	slider.value_changed.connect(func(v: float) -> void:
+		val_label.text = ("%.2f " if step < 1.0 else "%.0f ") % v + unit
+		if not _syncing:
+			callback.call(v)
+	)
+
 func _build_controls(page: VBoxContainer) -> void:
 	preset = _options(page, "Sensitivity", PRESETS)
 	preset.item_selected.connect(func(index: int) -> void:
@@ -279,8 +350,103 @@ func _audio_slider(page: VBoxContainer, title: String, callback: Callable) -> HS
 		if not _syncing: callback.call(amount))
 	return slider
 
+func _build_animations_guide(page: VBoxContainer) -> void:
+	var desc := Label.new()
+	desc.text = "Comprehensive reference for character animations and input combinations. Every action maps to authentic Mixamo cycles with procedural IK and foot-grounding."
+	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	desc.add_theme_color_override("font_color", UiTheme.TEXT_MUTED)
+	page.add_child(desc)
+
+	var move_speed_opt := _options(page, "Movement mode (W)", ["Walk by Default (Shift to Run)", "Jog/Run by Default"])
+	var current_player: Node = hud._game.get("person") if hud._game != null else null
+	if current_player and current_player.get("walk_speed") != null:
+		move_speed_opt.select(0 if float(current_player.get("walk_speed")) < 3.0 else 1)
+	move_speed_opt.item_selected.connect(func(idx: int) -> void:
+		if current_player:
+			if idx == 0:
+				current_player.set("walk_speed", 2.2)
+			else:
+				current_player.set("walk_speed", 4.2))
+
+	var categories := [
+		{
+			"category": "LOCOMOTION & MOVEMENT",
+			"items": [
+				{"action": "Forward Walk", "keys": "W (Tap / Hold)", "clip": "Walk_Loop", "detail": "Human pace (~2.2 m/s). Feet planted to world speed."},
+				{"action": "Jog / Sprint Forward", "keys": "Shift + W / Sprint", "clip": "Jogging / Sprint (4.2 - 6.8 m/s)", "detail": "Full speed running with athletic arm swing."},
+				{"action": "Sprint Backward", "keys": "S (Hold)", "clip": "Sprint_Backward", "detail": "Tactical backward retreat while keeping eyes ahead."},
+				{"action": "Lateral Strafe", "keys": "A (Left) / D (Right)", "clip": "Strafe / Walk_Left/Right_with_gun", "detail": "Sideways evasive stepping."},
+				{"action": "Jump & Vault", "keys": "Spacebar", "clip": "Jump / Running_Jump", "detail": "Ballistic arc with knee compression landing."}
+			]
+		},
+		{
+			"category": "STANCES & TACTICAL COVER",
+			"items": [
+				{"action": "Crouch Stance", "keys": "C / Left Ctrl", "clip": "Crouch_Walking / Idle_Crouching", "detail": "Low profile stance with continuous seamless loop."},
+				{"action": "Prone Stance", "keys": "Z Key", "clip": "Prone_Forward / Prone_Idle", "detail": "Drops body to 0.55m; military crawl."},
+				{"action": "Tactical Lean / Peek", "keys": "Q (Left) / E (Right)", "clip": "Spine Roll", "detail": "Camera shifts around corners with wall clearance."}
+			]
+		},
+		{
+			"category": "COMBAT & WEAPON HANDLING",
+			"items": [
+				{"action": "Equip / Holster Rifle", "keys": "1 / P Key", "clip": "Low-Ready Stance", "detail": "Shoulders rifle; arms solve via two-bone IK."},
+				{"action": "Aim Down Sights (ADS)", "keys": "Right Mouse (Hold)", "clip": "Rifle_Aiming_Idle", "detail": "Aligns sights to camera center with recoil recovery."},
+				{"action": "Fire Weapon", "keys": "Left Mouse", "clip": "Firing_Rifle", "detail": "Simulates barrel kick and procedural muzzle impulse."},
+				{"action": "Tactical Reload", "keys": "R Key", "clip": "Reload", "detail": "Magazine swap locked to reload duration."},
+				{"action": "Throw Frag Grenade", "keys": "G Key", "clip": "Throw_Grenade", "detail": "Windup and throw trajectory."},
+				{"action": "Melee Martial Combo", "keys": "Left Mouse (Unarmed)", "clip": "Boxing / Kick Chain", "detail": "Seamless unarmed fighting moves."}
+			]
+		},
+		{
+			"category": "VEHICLES & ENVIRONMENT",
+			"items": [
+				{"action": "Enter / Exit Vehicle", "keys": "F Key", "clip": "Door step-in & drive seated", "detail": "0.35s physical doorway step-in crossfade."},
+				{"action": "First Person Cockpit", "keys": "V (While Driving)", "clip": "Driver Eye-Level View", "detail": "Road-aligned perspective with transparent windshield."},
+				{"action": "Swimming & Floating", "keys": "Enter River (>0.85m)", "clip": "Swimming / Floating", "detail": "Buoyant surface swimming with head clearance."}
+			]
+		}
+	]
+
+	for cat in categories:
+		var cat_title := Label.new()
+		cat_title.text = cat.category
+		cat_title.add_theme_font_size_override("font_size", UiTheme.FONT_BODY)
+		cat_title.add_theme_color_override("font_color", UiTheme.ACCENT)
+		page.add_child(cat_title)
+
+		for item in cat.items:
+			var card := PanelContainer.new()
+			card.add_theme_stylebox_override("panel", UiTheme.box(UiTheme.SURFACE, 4))
+			var c_box := HBoxContainer.new()
+			c_box.add_theme_constant_override("separation", UiTheme.SPACE_M)
+			card.add_child(c_box)
+
+			var left_box := VBoxContainer.new()
+			left_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			var act_lbl := Label.new()
+			act_lbl.text = item.action
+			act_lbl.add_theme_font_size_override("font_size", UiTheme.FONT_BODY)
+			left_box.add_child(act_lbl)
+
+			var det_lbl := Label.new()
+			det_lbl.text = "%s  •  %s" % [item.clip, item.detail]
+			det_lbl.add_theme_font_size_override("font_size", UiTheme.FONT_SMALL)
+			det_lbl.add_theme_color_override("font_color", UiTheme.TEXT_MUTED)
+			left_box.add_child(det_lbl)
+			c_box.add_child(left_box)
+
+			var key_lbl := Label.new()
+			key_lbl.text = item.keys
+			key_lbl.add_theme_font_size_override("font_size", UiTheme.FONT_SMALL)
+			key_lbl.add_theme_stylebox_override("normal", UiTheme.box(UiTheme.SURFACE_RAISED, 4))
+			c_box.add_child(key_lbl)
+
+			page.add_child(card)
+
 func _build_developer(page: VBoxContainer) -> void:
 	_button(page, "Bridge teleport", _leave_with.bind(func() -> void: hud._game._teleport_to_godavari_bridge()))
+	_button(page, "Flyover teleport", _leave_with.bind(func() -> void: hud._game._teleport_to_ramagundam_flyover()))
 	_button(page, "Sketch map", _leave_with.bind(func() -> void:
 		get_tree().change_scene_to_file("res://scenes/world/chowrasta_city.tscn")))
 	_button(page, "Full district", _leave_with.bind(func() -> void:
@@ -335,12 +501,37 @@ func _refresh() -> void:
 	audio_controls.ambience.value = _ambience_volume
 	audio_controls.ambience.value_changed.emit(_ambience_volume)
 	audio_controls.spoken.button_pressed = hud._game.gameplay.spoken_dialogue
-	_developer_toggle.button_pressed = _developer_enabled
+	if is_instance_valid(_developer_toggle):
+		_developer_toggle.button_pressed = _developer_enabled
+	var cam = _get_camera_pivot()
+	if cam != null:
+		if camera_controls.has("view_mode"):
+			camera_controls.view_mode.select(1 if cam.is_first_person() else 0)
+		if camera_controls.has("tpp_dist"):
+			camera_controls.tpp_dist.value = cam.camera_distance
+			camera_controls.tpp_dist.value_changed.emit(cam.camera_distance)
+		if camera_controls.has("tpp_fov"):
+			camera_controls.tpp_fov.value = cam._base_fov
+			camera_controls.tpp_fov.value_changed.emit(cam._base_fov)
+		if camera_controls.has("fpp_fov"):
+			camera_controls.fpp_fov.value = cam.first_person_fov
+			camera_controls.fpp_fov.value_changed.emit(cam.first_person_fov)
+		if camera_controls.has("shoulder"):
+			camera_controls.shoulder.value = cam.shoulder_offset
+			camera_controls.shoulder.value_changed.emit(cam.shoulder_offset)
+		if camera_controls.has("shake"):
+			camera_controls.shake.value = cam.camera_shake_scale
+			camera_controls.shake.value_changed.emit(cam.camera_shake_scale)
 	_syncing = false
 
 func _apply() -> void:
 	hud.touch_settings.sanitize()
 	hud.touch_settings.apply_to_camera(hud.player.camera_pivot)
+
+## Selects a tab by index (backwards compatibility).
+func _select_page(index: int) -> void:
+	if is_instance_valid(tabs) and index >= 0 and index < tabs.get_tab_count():
+		tabs.current_tab = index
 
 ## Opens over whatever is on screen, including the paused pause menu. Only a shop-style
 ## pop-up or the map refuses it: those own the screen until they close.
@@ -409,8 +600,16 @@ func _build_graphics(page: VBoxContainer) -> void:
 	graphics_preset.item_selected.connect(func(index: int) -> void:
 		if _graphics_sync: return
 		var controller = hud._game.performance_controller
-		controller.settings.select(GRAPHICS_PRESETS[index])
-		controller.apply_settings()
+		var dpm = hud._game.get("device_performance_manager")
+		var selected_name: String = GRAPHICS_PRESETS[index]
+		if selected_name == "Auto" and dpm != null:
+			dpm.call("override_tier", dpm.get("detected_tier"), hud._game)
+		else:
+			controller.settings.select(selected_name)
+			controller.apply_settings()
+			if dpm != null and selected_name != "Custom":
+				var tier_idx := 1 if selected_name == "Low" else (2 if selected_name == "Medium" else 3)
+				dpm.set("active_tier", tier_idx)
 		_refresh_graphics())
 	for item: Array in [["Resolution", "scale", 0.5, 1.0, 0.05], ["Draw distance (m)", "distance", 250.0, 1000.0, 50.0], ["Residents and traffic", "actors", 6.0, 70.0, 1.0], ["Simulation distance (m)", "simulation", 80.0, 450.0, 10.0], ["Weather effects", "effects", 0.0, 1.0, 0.05]]:
 		var parts := _range(page, item[0], item[2], item[3], item[4])
@@ -424,10 +623,17 @@ func _build_graphics(page: VBoxContainer) -> void:
 	var shadows := _toggle(page, "Shadows", func(value: bool) -> void:
 		if not _graphics_sync: _graphics_change("shadows", value))
 	graphics_controls.shadows = shadows
-	var fps := _options(page, "Frame rate", ["30 FPS", "60 FPS"])
+	var fps := _options(page, "Frame rate", ["30 FPS", "60 FPS", "90 FPS", "120 FPS", "Max / V-Sync"])
 	graphics_controls.fps = fps
 	fps.item_selected.connect(func(index: int) -> void:
-		if not _graphics_sync: _graphics_change("fps", 30 if index == 0 else 60))
+		var target := 60
+		match index:
+			0: target = 30
+			1: target = 60
+			2: target = 90
+			3: target = 120
+			4: target = 0
+		if not _graphics_sync: _graphics_change("fps", target))
 	_developer_toggle = _toggle(page, "Developer tools", func(value: bool) -> void:
 		if _syncing: return
 		_developer_enabled = value
@@ -452,5 +658,13 @@ func _refresh_graphics() -> void:
 			control.value = settings.values[key]
 			control.value_changed.emit(control.value)
 		elif control is CheckButton: control.button_pressed = settings.values[key]
-		elif control is OptionButton: control.select(0 if settings.values.fps == 30 else 1)
+		elif control is OptionButton:
+			var target_index := 1
+			match int(settings.values.fps):
+				30: target_index = 0
+				60: target_index = 1
+				90: target_index = 2
+				120: target_index = 3
+				0: target_index = 4
+			control.select(target_index)
 	_graphics_sync = false

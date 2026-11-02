@@ -80,6 +80,9 @@ func _ready() -> void:
 	for mesh: MeshInstance3D in [$LeftLegPivot/Leg, $RightLegPivot/Leg]:
 		_set_color(mesh, pants_color)
 	preload("res://scripts/gameplay/resident_details.gd").dress(self, int(absf(sway_offset) * 10) + int(get_index()))
+	var view_dist := 45.0 if OS.has_feature("mobile") else 80.0
+	for child in find_children("*", "MeshInstance3D"):
+		(child as MeshInstance3D).visibility_range_end = view_dist
 	if crossing_mode:
 		_crossing_start = position
 		_crossing_wait = crossing_wait_seconds * (0.45 + fmod(sway_offset, 0.7))

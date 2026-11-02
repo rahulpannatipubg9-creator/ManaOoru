@@ -14,7 +14,9 @@ func _init() -> void:
 	root.add_child(person)
 	await process_frame
 	var visual := person.get_node("TestCharacter")
-	assert(visual.male_model.visible, "Rahul must be the default character")
+	if visual.mixamo_model != null and visual.mixamo_model.visible:
+		visual.toggle_character()
+	assert(visual.male_model.visible, "Rahul must be selectable and active for male locomotion tests")
 	var skeleton: Skeleton3D = visual.male_skeleton
 	assert(skeleton != null, "Male walk/run rig missing")
 	person.set_touch_move_input(Vector2(0.0, -1.0))

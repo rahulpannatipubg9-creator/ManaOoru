@@ -1,0 +1,28 @@
+{
+  "name": "Mana Ooru - Cloud Workstation (Godot 4 & AI Agents)",
+  "image": "mcr.microsoft.com/devcontainers/universal:2",
+  "features": {
+    "ghcr.io/devcontainers/features/java:1": {
+      "version": "17",
+      "installJdk": true
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "geequlim.godot-tools",
+        "ms-python.python",
+        "github.copilot",
+        "github.copilot-chat"
+      ],
+      "settings": {
+        "godotTools.editorPath.godot4": "/usr/local/bin/godot",
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "workbench.colorTheme": "Default Dark Modern"
+      }
+    }
+  },
+  "postCreateCommand": "bash .devcontainer/setup.sh",
+  "remoteUser": "codespace"
+}
+

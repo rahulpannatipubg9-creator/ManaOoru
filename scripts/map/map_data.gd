@@ -51,6 +51,7 @@ const NAME_KEYWORDS := {
 	"masjid": "place_of_worship", "church": "place_of_worship", "statue": "monument",
 }
 
+const RamagundamFlyoverClass := preload("res://scripts/world/ramagundam_flyover_builder.gd")
 const LocationCatalogData := preload("res://scripts/map/location_catalog.gd")
 const SegmentGrid := preload("res://scripts/map/segment_grid.gd")
 var location_catalog: RefCounted
@@ -167,6 +168,7 @@ func _load(path: String) -> void:
 	_load_local_signals()
 	_load_topoexport_layers()
 	GodavariBridgeBuilder.add_to_map(self)
+	RamagundamFlyoverClass.add_to_map(self)
 	location_catalog = LocationCatalogData.new()
 	terrain = TerrainData.new()
 	building_heights = BuildingHeights.new()
@@ -468,6 +470,9 @@ func _add_road_pieces(way_id: int, tags: Dictionary, ids: Array, nodes: Dictiona
 func _commit_road_piece(way_id: int, tags: Dictionary, oneway: int, ids: PackedInt64Array, points: PackedVector2Array) -> void:
 	if points.size() < 2:
 		return
+	var structure := ""
+	if tags.get("bridge") == "yes" or tags.get("name") == "Flyover":
+		structure = "bridge"
 	roads.append({
 		"way_id": way_id,
 		"kind": str(tags.get("highway")),
@@ -477,6 +482,7 @@ func _commit_road_piece(way_id: int, tags: Dictionary, oneway: int, ids: PackedI
 		"lanes": int(str(tags.get("lanes", "0")).to_int()),
 		"node_ids": ids,
 		"points": points,
+		"structure": structure,
 	})
 
 ## Closed polygon ring inside the playable area, without the repeated closing point.

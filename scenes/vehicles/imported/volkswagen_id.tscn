@@ -1,0 +1,103 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/vehicle/imported_vehicle.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/camera/camera_controller.gd" id="2"]
+[ext_resource type="PackedScene" path="res://assets/models/vehicles/volkswagen_id/volkswagen_id_rig.glb" id="3"]
+[ext_resource type="Script" path="res://scripts/vehicle/electric_motor_audio.gd" id="4"]
+[ext_resource type="Script" path="res://scripts/player/drivetrain_profile.gd" id="5"]
+
+[sub_resource type="Resource" id="Drivetrain"]
+script = ExtResource("5")
+gear_ratios = Array[float]([1.0])
+reverse_ratio = 1.0
+final_drive = 9
+driveline_efficiency = 0.94
+automatic_available = true
+electric_motor = true
+shift_time = 0.0
+idle_rpm = 1.0
+redline_rpm = 14000.0
+torque_curve = Array[Vector2]([Vector2(0, 290), Vector2(4000, 290), Vector2(8000, 145.0), Vector2(14000, 58.0)])
+launch_rpm = 0.0
+launch_torque_ratio = 1.0
+cylinders = 0
+diesel_clatter = 0.0
+turbo_whine = 0.0
+
+[sub_resource type="BoxShape3D" id="BodyCollision"]
+size = Vector3(1.65796, 1.3029, 3.813)
+
+[node name="VolkswagenId" type="RigidBody3D" groups=["enterable_vehicle"]]
+script = ExtResource("1")
+vehicle_id = "volkswagen_id"
+road_speed_limit = 44.44444
+vehicle_mass = 1700.0
+wheel_radius = 0.36945
+suspension_rest_length = 0.53055
+suspension_bump_travel = 0.14
+suspension_droop_travel = 0.18
+suspension_frequency = 1.6
+suspension_damping_ratio = 0.52
+center_of_mass_height = 0.497
+center_of_mass_forward = 0.1
+braking_acceleration = 9.2
+drag_area = 0.917
+rolling_resistance = 0.012
+tyre_friction = 1.45
+max_steer_angle = 0.61
+high_speed_steer_share = 0.23
+rear_wheel_drive = true
+front_wheel_drive = false
+front_drive_share = 0.5
+seat_hip = Vector3(0.36208, 0.60563, 0.38272)
+pedal_point = Vector3(0.36208, 0.25563, 1.03272)
+entry_half_width = 0.953
+left_hand_grip = Vector3(0.53208, 1.00563, 0.80272)
+right_hand_grip = Vector3(0.19208, 1.00563, 0.80272)
+drivetrain = SubResource("Drivetrain")
+
+[node name="Chassis" type="Node3D" parent="."]
+
+[node name="FrontIndicator" type="Marker3D" parent="Chassis"]
+position = Vector3(0.0, 0.4, 2.05)
+
+[node name="FrontLeftWheel" type="Node3D" parent="."]
+position = Vector3(-0.82633, 0.36943, 1.38041)
+rotation = Vector3(0, 0, 1.5707963)
+
+[node name="FrontRightWheel" type="Node3D" parent="."]
+position = Vector3(0.82324, 0.36947, 1.38513)
+rotation = Vector3(0, 0, 1.5707963)
+
+[node name="RearLeftWheel" type="Node3D" parent="."]
+position = Vector3(-0.82633, 0.36943, -1.38259)
+rotation = Vector3(0, 0, 1.5707963)
+
+[node name="RearRightWheel" type="Node3D" parent="."]
+position = Vector3(0.82325, 0.36948, -1.38295)
+rotation = Vector3(0, 0, 1.5707963)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("BodyCollision")
+position = Vector3(0.0, 0.77145, 0.0)
+
+[node name="Model" parent="." instance=ExtResource("3")]
+
+[node name="CameraPivot" type="Node3D" parent="."]
+position = Vector3(0.0, 1.8029, 0.0)
+script = ExtResource("2")
+first_person_offset = Vector3(0.36208, 1.28563, 0.48272)
+first_person_follows_body = true
+first_person_min_pitch = -0.6
+first_person_max_pitch = 0.5
+
+[node name="SpringArm3D" type="SpringArm3D" parent="CameraPivot"]
+spring_length = 5.5
+collision_mask = 1
+margin = 0.2
+
+[node name="Camera3D" type="Camera3D" parent="CameraPivot/SpringArm3D"]
+fov = 68.0
+
+[node name="EngineAudio" type="AudioStreamPlayer3D" parent="."]
+script = ExtResource("4")

@@ -4,10 +4,11 @@ const Pursuer := preload("res://scripts/gameplay/pursuer.gd")
 const CityAssets := preload("res://scripts/gameplay/city_assets.gd")
 const Weapons := preload("res://scripts/gameplay/weapon_catalog.gd")
 const BOARD_WIDTH := 1120.0
-const BOARD_JOBS := [["story", "Story", ""], ["delivery", "Delivery", "+20"], ["taxi", "Taxi", "+20"], ["race", "Race", "+30"],
+const BOARD_JOBS := [["story", "Story", ""], ["tgsrtc_route", "TGSRTC Bus", "+50"], ["coal_delivery", "Coal Mine", "+35"],
+	["chai_delivery", "Chai Courier", "+25"], ["delivery", "Delivery", "+20"], ["taxi", "Taxi", "+20"], ["race", "Race", "+30"],
 	["ambulance", "Ambulance", "+20"], ["firefighter", "Fire", "+20"], ["vigilante", "Vigilante", "+20"], ["gang", "Gang", "+20"]]
 const BOARD_SUPPLIES := [["medkit", "Medkit", "5"], ["armour", "Armour", "8"], ["ammo", "Ammo", "4"], ["grenades", "Grenades x3", "6"]]
-const BOARD_VEHICLES := [["motorcycle", "Motorcycle"], ["scooter", "Scooter"], ["police", "Police"],
+const BOARD_VEHICLES := [["bullet", "Bullet 350"], ["bus", "TGSRTC Bus"], ["motorcycle", "Motorcycle"], ["scooter", "Scooter"], ["police", "Police"],
 	["ambulance", "Ambulance"], ["boat", "Boat"], ["plane", "Plane"]]
 const ShotEffects := preload("res://scripts/gameplay/shot_effects.gd")
 var passenger: Node3D
@@ -201,6 +202,7 @@ func _unhandled_input(event: InputEvent) -> void:
 						surrender()
 					else:
 						toggle_action()
+				KEY_V: attack()
 				KEY_U: try_vault()
 				KEY_L: try_loot_nearby()
 	if event is InputEventMouseButton and event.pressed and not get_tree().paused and not game.is_map_open():
@@ -379,7 +381,7 @@ func start_mission(kind: String) -> bool:
 	if not mission.is_empty():
 		life.toast("Finish your current job first")
 		return false
-	if kind not in ["story", "delivery", "taxi", "race", "ambulance", "firefighter", "vigilante", "gang"]:
+	if kind not in ["story", "delivery", "taxi", "race", "ambulance", "firefighter", "vigilante", "gang", "tgsrtc_route", "coal_delivery", "chai_delivery"]:
 		return false
 	if kind == "story" and story_step >= 3:
 		life.toast("All chapters complete")
@@ -387,12 +389,53 @@ func start_mission(kind: String) -> bool:
 	if kind in ["vigilante", "gang"] and not action_mode:
 		life.toast("Turn on Action mode first")
 		return false
+	var titles := {
+		"story": "Neighbourhood chapter %d" % (story_step + 1),
+		"delivery": "Local parcel delivery",
+		"taxi": "Taxi fare",
+		"race": "City checkpoint trial",
+		"ambulance": "Medical supply response",
+		"firefighter": "Fire response",
+		"vigilante": "Wanted suspect patrol",
+		"gang": "Gang hideout response",
+		"tgsrtc_route": "TGSRTC Bus Transit Line",
+		"coal_delivery": "Singareni Coal Mine Supply",
+		"chai_delivery": "Market Irani Chai Courier"
+	}
+	if kind == "tgsrtc_route":
+		var bus_points: Array[Vector3] = [
+			Vector3(-715.0, _ground_height(Vector2(-715.0, 245.0), 0.0), 245.0),
+			Vector3(0.0, _ground_height(Vector2(0.0, 0.0), 0.0), 0.0),
+			Vector3(335.0, _ground_height(Vector2(335.0, -360.0), 0.0), -360.0),
+			Vector3(1535.0, _ground_height(Vector2(1535.0, 1375.0), 0.0), 1375.0)
+		]
+		mission = {"kind": kind, "title": titles[kind], "points": bus_points, "index": 0, "stage": "Board passengers at TGSRTC Depot", "time": 420.0, "reward": 50, "hold": 0.0}
+		_set_mission_target()
+		life.toast("%s started • follow GPS to TGSRTC Depot" % mission.title)
+		return true
+	if kind == "coal_delivery":
+		var coal_points: Array[Vector3] = [
+			Vector3(0.0, _ground_height(Vector2(0.0, 0.0), 0.0), 0.0),
+			Vector3(1535.0, _ground_height(Vector2(1535.0, 1375.0), 0.0), 1375.0)
+		]
+		mission = {"kind": kind, "title": titles[kind], "points": coal_points, "index": 0, "stage": "Collect industrial parts at Chowrastha", "time": 300.0, "reward": 35, "hold": 0.0}
+		_set_mission_target()
+		life.toast("%s started • collect parts at Chowrastha" % mission.title)
+		return true
+	if kind == "chai_delivery":
+		var chai_points: Array[Vector3] = [
+			Vector3(-220.0, _ground_height(Vector2(-220.0, 175.0), 0.0), 175.0),
+			Vector3(335.0, _ground_height(Vector2(335.0, -360.0), 0.0), -360.0)
+		]
+		mission = {"kind": kind, "title": titles[kind], "points": chai_points, "index": 0, "stage": "Collect hot chai & biscuits at Market", "time": 180.0, "reward": 25, "hold": 0.0}
+		_set_mission_target()
+		life.toast("%s started • collect chai at Saturday Market" % mission.title)
+		return true
 	var points := _job_points()
 	if points.size() < 2:
 		life.toast("No job reachable, return to the roads")
 		return false
-	var titles := {"story": "Neighbourhood chapter %d" % (story_step + 1), "delivery": "Local parcel delivery", "taxi": "Taxi fare", "race": "City checkpoint trial", "ambulance": "Medical supply response", "firefighter": "Fire response", "vigilante": "Wanted suspect patrol", "gang": "Gang hideout response"}
-	mission = {"kind": kind, "title": titles[kind], "points": points, "index": 0, "stage": START_STAGES[kind], "time": 300.0 if kind != "race" else 240.0, "reward": 20 if kind != "race" else 30, "hold": 0.0}
+	mission = {"kind": kind, "title": titles[kind], "points": points, "index": 0, "stage": START_STAGES.get(kind, "Pickup"), "time": 300.0 if kind != "race" else 240.0, "reward": 20 if kind != "race" else 30, "hold": 0.0}
 	if kind != "race":
 		mission.points = [points[story_step % points.size()] if kind == "story" else points[0], points[(story_step + 1) % points.size()] if kind == "story" else points[1]]
 	if kind == "story":
@@ -427,7 +470,7 @@ func _update_mission(delta: float) -> void:
 	var stopped := not driving or absf(game.active_vehicle.current_speed) < 2.0
 	if not near:
 		return
-	if mission.kind in ["taxi", "race"] and not driving:
+	if mission.kind in ["taxi", "race", "tgsrtc_route", "coal_delivery"] and not driving:
 		return
 	if mission.kind != "race" and not stopped:
 		return
@@ -470,8 +513,22 @@ func _update_mission(delta: float) -> void:
 	if mission.index >= mission.points.size():
 		end_mission(true)
 	else:
-		mission.stage = "Checkpoint %d" % (mission.index + 1) if mission.kind == "race" else NEXT_STAGES.get(mission.kind, "Deliver the parcel")
+		if mission.kind == "tgsrtc_route":
+			var stages := [
+				"Board passengers at TGSRTC Depot",
+				"Stop 2: Chowrastha Commercial Junction",
+				"Stop 3: Vidyanagar Bus Shelter",
+				"Terminus: Singareni Coal Mine OCP 5"
+			]
+			mission.stage = stages[mini(mission.index, stages.size() - 1)]
+		elif mission.kind == "coal_delivery":
+			mission.stage = "Deliver industrial parts to Coal Mine Incline"
+		elif mission.kind == "chai_delivery":
+			mission.stage = "Deliver hot chai & biscuits to Vidyanagar Quarter"
+		else:
+			mission.stage = "Checkpoint %d" % (mission.index + 1) if mission.kind == "race" else NEXT_STAGES.get(mission.kind, "Deliver the parcel")
 		_set_mission_target()
+		life.toast("Destination reached • next stop marked on GPS")
 
 func end_mission(success: bool, reason := "") -> void:
 	if mission.is_empty():
@@ -610,8 +667,8 @@ func attack() -> bool:
 				col.hit.disconnect(_on_dummy_hit)
 		elif col.has_method("take_damage"):
 			col.take_damage(damage)
-			if armed and not col is VehicleBody3D:
-				if effects: effects.hit_click(false, origin.distance_to(endpoint))
+			if armed and not col is VehicleBody3D and effects != null:
+				effects.hit_click(false, origin.distance_to(endpoint))
 	# Ambient residents use lightweight Node3D actors: test their hit volumes only
 	# before the first world collision, preserving wall occlusion.
 	var closest: Node3D
@@ -627,13 +684,14 @@ func attack() -> bool:
 	if closest:
 		closest.take_damage(damage)
 		endpoint = origin + direction * closest_distance
-		if armed:
-			if effects: effects.hit_click(false, closest_distance)
+		if armed and effects != null:
+			effects.hit_click(false, closest_distance)
 	if armed:
 		ammo -= 1
 		if tdm_active:
 			tdm_local.on_shot_fired()
-		if gun_feel: gun_feel.on_shot(game.person.weapon_id, game.person.weapon_muzzle_position(), endpoint, hit, closest != null)
+		if gun_feel != null:
+			gun_feel.on_shot(game.person.weapon_id, game.person.weapon_muzzle_position(), endpoint, hit, closest != null)
 		_last_shot_distance = origin.distance_to(endpoint)
 		var since_shot := (Time.get_ticks_msec() - _last_shot_msec) / 1000.0
 		_burst_shot = 0 if since_shot > recoil_pattern_reset else _burst_shot + 1
@@ -646,7 +704,7 @@ func attack() -> bool:
 		if game.person.camera_pivot and game.person.camera_pivot.has_method("add_recoil"):
 			# Mostly the rifle's own learnable pattern, with a little chance on top.
 			var pattern: Array = gun.recoil_pattern
-			var kick: Vector2 = gun_feel.recoil_for(gun.recoil * stance_mult) if gun_feel else gun.recoil * stance_mult
+			var kick: Vector2 = gun_feel.recoil_for(gun.recoil * stance_mult) if gun_feel != null else (gun.recoil * stance_mult)
 			game.person.camera_pivot.add_recoil(kick.x, kick.y * 0.4, float(pattern[_burst_shot % pattern.size()]) * stance_mult)
 	else:
 		_audio.punch.play()
@@ -728,6 +786,9 @@ func throw_grenade() -> bool:
 	add_child(bomb)
 	bomb.global_position = game.person.global_position + Vector3.UP * 1.6
 	bomb.add_collision_exception_with(game.person)
+	var character: Node = game.person.get_node_or_null("TestCharacter")
+	if character and character.has_method("play_grenade"):
+		character.play_grenade()
 	bomb.linear_velocity = -get_viewport().get_camera_3d().global_basis.z * 16.0 + Vector3.UP * 5.0
 	get_tree().create_timer(2.0, false).timeout.connect(func() -> void:
 		if is_instance_valid(bomb):
@@ -1029,14 +1090,19 @@ func _ground_height(point: Vector2, fallback: float) -> float:
 func spawn_extra_vehicle(kind: String) -> Node3D:
 	if tdm_active:
 		return null
-	if kind not in ["motorcycle", "scooter", "police", "ambulance", "boat", "plane"] or game.control_state != game.ControlState.ON_FOOT:
+	if kind not in ["motorcycle", "scooter", "police", "ambulance", "boat", "plane", "bullet", "bus"] or game.control_state != game.ControlState.ON_FOOT:
 		return null
 	for existing in extra_vehicles:
-		if is_instance_valid(existing) and existing.kind == kind:
-			game.navigator.set_destination(Vector2(existing.global_position.x, existing.global_position.z), existing.name)
-			life.toast("Vehicle marked on map")
-			return existing
-	var at: Vector3 = game.person.global_position + game.person.global_basis.z * 5.0 + Vector3.UP
+		if is_instance_valid(existing):
+			var existing_kind: String = str(existing.get("kind")) if existing.get("kind") != null else str(existing.get_meta("kind", ""))
+			if existing_kind == kind:
+				game.navigator.set_destination(Vector2(existing.global_position.x, existing.global_position.z), existing.name)
+				life.toast("Vehicle marked on map")
+				return existing
+	var offset_dist := 5.0
+	if kind == "bus":
+		offset_dist = 9.0
+	var at: Vector3 = game.person.global_position + game.person.global_basis.z * offset_dist + Vector3.UP
 	if kind == "boat":
 		var point: Variant = water.boat_spawn()
 		if point == null:
@@ -1046,26 +1112,50 @@ func spawn_extra_vehicle(kind: String) -> Node3D:
 	else:
 		var query := PhysicsShapeQueryParameters3D.new()
 		var shape := BoxShape3D.new()
-		shape.size = Vector3(8.0 if kind == "plane" else 1.2, 3.0, 5.0)
+		var half_h := 1.5
+		var box_size := Vector3(8.0 if kind == "plane" else (3.0 if kind == "bus" else 1.2), half_h * 2.0, 10.0 if kind == "bus" else 4.0)
+		shape.size = box_size
 		query.shape = shape
-		query.transform.origin = at + Vector3.UP
+		query.transform.origin = at + Vector3.UP * (half_h + 0.3)
 		query.exclude = [game.person.get_rid()]
-		if not get_world_3d().direct_space_state.intersect_shape(query, 1).is_empty():
+		var hits := get_world_3d().direct_space_state.intersect_shape(query, 5)
+		var blocked := false
+		for hit in hits:
+			var col: Object = hit.get("collider")
+			if col is VehicleBody3D or col is CharacterBody3D or (col is Node and (col.is_in_group("enterable_vehicle") or col.name.begins_with("Building"))):
+				blocked = true
+				break
+		if blocked:
 			life.toast("Need more open space")
 			return null
-	var vehicle := preload("res://scripts/gameplay/arcade_vehicle.gd").new()
-	vehicle.kind = kind
-	vehicle.water = water
-	vehicle.name = "City " + kind.capitalize()
+	var vehicle: PhysicsBody3D = null
+	if kind == "bullet":
+		vehicle = preload("res://scenes/vehicles/royal_enfield_bullet.tscn").instantiate()
+		vehicle.name = "RoyalEnfieldBullet"
+		vehicle.set_meta("kind", "bullet")
+	elif kind == "bus":
+		vehicle = preload("res://scenes/vehicles/tgsrtc_bus.tscn").instantiate()
+		vehicle.name = "TGSRTCExpressBus"
+		vehicle.set_meta("kind", "bus")
+	else:
+		var arcade := preload("res://scripts/gameplay/arcade_vehicle.gd").new()
+		arcade.kind = kind
+		arcade.water = water
+		arcade.name = "City " + kind.capitalize()
+		arcade.set_meta("kind", kind)
+		vehicle = arcade
 	vehicle.position = at
 	vehicle.rotation.y = game.person.rotation.y
 	vehicle.add_to_group("enterable_vehicle")
 	game.add_child(vehicle)
 	vehicle.respawn_position = at
 	vehicle.fall_limit = game.person.fall_limit
-	vehicle.set_keyboard_input_enabled(false)
-	vehicle.set_driving_enabled(false)
-	vehicle.set_input_authority(false)
+	if vehicle.has_method("set_keyboard_input_enabled"):
+		vehicle.set_keyboard_input_enabled(false)
+	if vehicle.has_method("set_driving_enabled"):
+		vehicle.set_driving_enabled(false)
+	if vehicle.has_method("set_input_authority"):
+		vehicle.set_input_authority(false)
 	game.vehicles.append(vehicle)
 	game.parked_transforms[vehicle] = vehicle.global_transform
 	extra_vehicles.append(vehicle)

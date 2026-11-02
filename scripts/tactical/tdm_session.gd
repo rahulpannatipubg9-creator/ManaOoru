@@ -192,8 +192,9 @@ func leave() -> void:
 func _physics_process(delta: float) -> void:
 	if not active:
 		return
-	if not is_host:
-		_tick_reconnect(delta)
+	if not is_host or rules == null:
+		if not is_host:
+			_tick_reconnect(delta)
 		return
 	rules.tick(delta)
 	_check_fallen_players()

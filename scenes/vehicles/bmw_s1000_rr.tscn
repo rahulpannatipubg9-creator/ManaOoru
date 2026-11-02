@@ -1,0 +1,108 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/vehicles/rigid_thar.tscn" id="1_base"]
+[ext_resource type="PackedScene" path="res://assets/models/vehicles/bmw_s1000_rr/bmw_s1000_rr.scn" id="2_bmw"]
+[ext_resource type="Script" path="res://scripts/player/drivetrain_profile.gd" id="3_drivetrain"]
+[ext_resource type="Script" path="res://scripts/vehicle/motorcycle.gd" id="4_bike"]
+
+[sub_resource type="Resource" id="Drivetrain_bmw"]
+script = ExtResource("3_drivetrain")
+gear_ratios = Array[float]([2.647, 2.091, 1.727, 1.5, 1.36, 1.261])
+reverse_ratio = 3.0
+final_drive = 2.647
+driveline_efficiency = 0.90
+automatic_available = true
+shift_time = 0.15
+idle_rpm = 1300.0
+redline_rpm = 14500.0
+torque_curve = Array[Vector2]([Vector2(1300, 45), Vector2(6000, 85), Vector2(10500, 113), Vector2(13750, 105), Vector2(14500, 95)])
+launch_rpm = 4500.0
+launch_torque_ratio = 1.4
+cylinders = 4
+diesel_clatter = 0.0
+turbo_whine = 0.0
+
+[sub_resource type="BoxShape3D" id="BmwCollision"]
+size = Vector3(0.48, 0.92, 1.85)
+
+[node name="BmwS1000RR" instance=ExtResource("1_base")]
+script = ExtResource("4_bike")
+drivetrain = SubResource("Drivetrain_bmw")
+vehicle_mass = 197.0
+braking_acceleration = 12.0
+drag_area = 0.45
+rolling_resistance = 0.012
+suspension_rest_length = 0.52
+suspension_bump_travel = 0.10
+suspension_droop_travel = 0.10
+suspension_frequency = 2.6
+suspension_damping_ratio = 0.65
+center_of_mass_height = 0.38
+wheel_radius = 0.305
+tyre_friction = 2.1
+tyre_cornering_stiffness = 24.0
+max_steer_angle = 0.58
+high_speed_steer_share = 0.25
+steer_rate = 4.0
+rear_wheel_drive = true
+paint_color = Color(0.85, 0.1, 0.1, 1)
+seat_hip = Vector3(0, 0.824, -0.22)
+pedal_point = Vector3(0, 0.38, -0.15)
+left_hand_grip = Vector3(0.28, 0.92, 0.32)
+right_hand_grip = Vector3(-0.28, 0.92, 0.32)
+entry_half_width = 0.45
+handlebars_position = Vector3(0, 0.888, 0.466)
+
+[node name="Chassis" parent="." index="0"]
+position = Vector3(0, 0, 0)
+visible = true
+
+[node name="Thar" parent="Chassis" index="0"]
+visible = false
+
+[node name="FrontLeftWheel" parent="." index="1"]
+position = Vector3(-0.025, 0.305, 0.741)
+visible = true
+
+[node name="Tyre" parent="FrontLeftWheel" index="0"]
+visible = false
+
+[node name="FrontRightWheel" parent="." index="2"]
+position = Vector3(0.025, 0.305, 0.741)
+visible = false
+
+[node name="RearLeftWheel" parent="." index="3"]
+position = Vector3(-0.025, 0.305, -0.703)
+visible = true
+
+[node name="Tyre" parent="RearLeftWheel" index="0"]
+visible = false
+
+[node name="RearRightWheel" parent="." index="4"]
+position = Vector3(0.025, 0.305, -0.703)
+visible = false
+
+[node name="FrontLeftHub" parent="." index="5"]
+visible = false
+
+[node name="FrontRightHub" parent="." index="6"]
+visible = false
+
+[node name="RearLeftHub" parent="." index="7"]
+visible = false
+
+[node name="RearRightHub" parent="." index="8"]
+visible = false
+
+[node name="CollisionShape3D" parent="." index="9"]
+position = Vector3(0, 0.68, 0)
+shape = SubResource("BmwCollision")
+
+[node name="CameraPivot" parent="." index="10"]
+stabilized_vehicle_mount = true
+position = Vector3(0, 1.15, 0)
+first_person_offset = Vector3(0, 1.35, -0.15)
+
+[node name="BikeModel" parent="." index="11" instance=ExtResource("2_bmw")]
+position = Vector3(0, 0, 0)
+

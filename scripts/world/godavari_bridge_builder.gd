@@ -398,7 +398,10 @@ func _setup_collisions(node: Node) -> void:
 			static_body.collision_layer = 1 | (1 << (ROAD_LAYER - 1)) if is_road else 1
 			static_body.collision_mask = 0
 			var col_shape := CollisionShape3D.new()
-			col_shape.shape = child.mesh.create_trimesh_shape()
+			var shape = child.mesh.create_trimesh_shape()
+			if shape != null:
+				shape.backface_collision = true
+			col_shape.shape = shape
 			static_body.add_child(col_shape)
 			child.get_parent().add_child(static_body)
 			child.visible = false

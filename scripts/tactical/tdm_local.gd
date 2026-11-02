@@ -637,9 +637,10 @@ func _status_floor() -> float:
 	if not hud.touch_mode:
 		return -1.0
 	var top := -1.0
-	for button in [game.hud.btn_swap]:
-		if is_instance_valid(button) and button.is_visible_in_tree():
-			top = button.position.y if top < 0.0 else minf(top, button.position.y)
+	if game.hud != null:
+		for button in [game.hud.btn_swap]:
+			if is_instance_valid(button) and button.is_visible_in_tree():
+				top = button.position.y if top < 0.0 else minf(top, button.position.y)
 	return top - 8.0 if top >= 0.0 else -1.0
 
 func _touch_rects() -> Array:

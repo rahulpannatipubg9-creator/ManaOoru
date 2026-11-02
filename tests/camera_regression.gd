@@ -31,7 +31,8 @@ func _init() -> void:
 
 	# C: look behind on foot keeps walking controls pointing the same way.
 	Input.action_press("camera_look_behind")
-	await process_frame
+	for _frame in 3:
+		await process_frame
 	_check(_camera_faces(person_pivot, -person.global_basis.z), "C must look behind the person")
 	_check(absf(angle_difference(person_pivot.movement_yaw(), walk_yaw)) < EPSILON, "Looking behind must not flip WASD")
 	Input.action_release("camera_look_behind")

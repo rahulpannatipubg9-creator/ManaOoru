@@ -1,0 +1,104 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/vehicle/imported_vehicle.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/camera/camera_controller.gd" id="2"]
+[ext_resource type="PackedScene" path="res://assets/models/vehicles/hoonicorn_ken_block/hoonicorn_ken_block_rig.glb" id="3"]
+[ext_resource type="Script" path="res://scripts/player/engine_sound.gd" id="4"]
+[ext_resource type="Script" path="res://scripts/player/drivetrain_profile.gd" id="5"]
+
+[sub_resource type="Resource" id="Drivetrain"]
+script = ExtResource("5")
+gear_ratios = Array[float]([2.92, 1.95, 1.45, 1.15, 0.95, 0.80])
+reverse_ratio = 3.1
+final_drive = 3.45
+driveline_efficiency = 0.92
+automatic_available = true
+electric_motor = false
+shift_time = 0.18
+idle_rpm = 950.0
+redline_rpm = 8200.0
+torque_curve = Array[Vector2]([Vector2(950, 650.0), Vector2(2500, 1100.0), Vector2(4500, 1550.0), Vector2(6500, 1600.0), Vector2(8200, 1250.0)])
+launch_rpm = 3200.0
+launch_torque_ratio = 1.6
+cylinders = 8
+diesel_clatter = 0.0
+turbo_whine = 0.15
+
+[sub_resource type="BoxShape3D" id="BodyCollision"]
+size = Vector3(1.88, 1.15, 4.45)
+
+[node name="HoonicornKenBlock" type="RigidBody3D" groups=["enterable_vehicle"]]
+script = ExtResource("1")
+vehicle_id = "hoonicorn_ken_block"
+road_speed_limit = 95.0
+vehicle_mass = 1360.0
+wheel_radius = 0.338
+suspension_rest_length = 0.52
+suspension_bump_travel = 0.12
+suspension_droop_travel = 0.15
+suspension_frequency = 2.1
+suspension_damping_ratio = 0.58
+center_of_mass_height = 0.38
+center_of_mass_forward = 0.05
+braking_acceleration = 12.5
+drag_area = 0.82
+rolling_resistance = 0.012
+tyre_friction = 1.65
+max_steer_angle = 0.72
+high_speed_steer_share = 0.32
+rear_wheel_drive = true
+front_wheel_drive = true
+front_drive_share = 0.45
+seat_hip = Vector3(0.38, 0.38, 0.05)
+pedal_point = Vector3(0.38, 0.12, 0.75)
+entry_half_width = 0.96
+left_hand_grip = Vector3(0.55, 0.75, 0.52)
+right_hand_grip = Vector3(0.21, 0.75, 0.52)
+drivetrain = SubResource("Drivetrain")
+
+[node name="Chassis" type="Node3D" parent="."]
+
+[node name="FrontIndicator" type="Marker3D" parent="Chassis"]
+position = Vector3(0.0, 0.4, 2.27)
+
+[node name="FrontLeftWheel" type="Node3D" parent="."]
+position = Vector3(-0.801, 0.338, 1.316)
+rotation = Vector3(0, 0, 1.5707963)
+
+[node name="FrontRightWheel" type="Node3D" parent="."]
+position = Vector3(0.801, 0.338, 1.316)
+rotation = Vector3(0, 0, 1.5707963)
+
+[node name="RearLeftWheel" type="Node3D" parent="."]
+position = Vector3(-0.801, 0.338, -1.316)
+rotation = Vector3(0, 0, 1.5707963)
+
+[node name="RearRightWheel" type="Node3D" parent="."]
+position = Vector3(0.801, 0.338, -1.316)
+rotation = Vector3(0, 0, 1.5707963)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("BodyCollision")
+position = Vector3(0.0, 0.65, 0.0)
+
+[node name="Model" parent="." instance=ExtResource("3")]
+
+[node name="CameraPivot" type="Node3D" parent="."]
+position = Vector3(0.0, 1.45, 0.0)
+script = ExtResource("2")
+first_person_offset = Vector3(0.38, 0.95, 0.15)
+first_person_follows_body = true
+first_person_min_pitch = -0.6
+first_person_max_pitch = 0.5
+
+[node name="SpringArm3D" type="SpringArm3D" parent="CameraPivot"]
+spring_length = 6.2
+collision_mask = 1
+margin = 0.2
+
+[node name="Camera3D" type="Camera3D" parent="CameraPivot/SpringArm3D"]
+fov = 68.0
+
+[node name="EngineAudio" type="AudioStreamPlayer3D" parent="."]
+script = ExtResource("4")
+
