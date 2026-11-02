@@ -26,7 +26,7 @@ var active: bool = false
 var lane: Path3D
 var progress: float = 0.0
 var manager: Node3D
-var _bike_wheels: Array[MeshInstance3D] = []
+var _bike_wheels: Array[Node3D] = []
 var _front: RayCast3D
 var _shape: CollisionShape3D
 var _committed_stop: TrafficStopPoint
@@ -126,7 +126,8 @@ func _physics_process(delta: float) -> void:
 	progress = clampf(offset, progress, next_progress)
 	rotation.y = atan2(heading.x, heading.z)
 	for wheel in _bike_wheels:
-		wheel.rotate_x(-step / 0.335)
+		var radius: float = wheel.get_meta("radius", 0.335)
+		wheel.rotate_object_local(Vector3.UP, -step / radius)
 	if successors.is_empty() and remaining <= vehicle_length + 0.2 and current_speed < 0.1:
 		route_finished.emit(self)
 	elif remaining < 0.2:
@@ -163,18 +164,9 @@ func _build_visual() -> void:
 	if vehicle_kind in ["bullet", "bike"]:
 		var bullet := BULLET_SCENE.instantiate() as Node3D
 		bullet.name = "BulletModel"
-		var fw := bullet.get_node_or_null("FrontWheelMesh") as MeshInstance3D
-		var rw := bullet.get_node_or_null("RearWheelMesh") as MeshInstance3D
-		var hb := bullet.get_node_or_null("Handlebars") as MeshInstance3D
-		if fw:
-			fw.position = Vector3(0.0, 0.335, 0.695)
-			_bike_wheels.append(fw)
-		if rw:
-			rw.position = Vector3(0.0, 0.335, -0.695)
-			_bike_wheels.append(rw)
-		if hb:
-			hb.position = Vector3(0.0, 0.75, 0.35)
+		_mount_bullet_wheels(bullet)
 		add_child(bullet)
+		_build_bike_rider()
 		return
 	if vehicle_kind == "avenger":
 		var avenger := AVENGER_SCENE.instantiate() as Node3D
@@ -281,7 +273,9 @@ func _build_scooter() -> void:
 		wheel.position = Vector3(0,.27,z)
 		wheel.rotation.z = PI*.5
 		wheel.material_override = _material(Color("151515"))
+		wheel.set_meta("radius", 0.27)
 		add_child(wheel)
+		_bike_wheels.append(wheel)
 	for index in 2:
 		var rider := Node3D.new()
 		rider.name = "Driver" if index == 0 else "Passenger"
@@ -308,6 +302,7 @@ func _build_bike_rider() -> void:
 	add_child(rider)
 	_scooter_box("Torso", Vector3(0, 1.15, -0.05), Vector3(0.38, 0.52, 0.22), Color("#2e3d48"), rider)
 	var head := MeshInstance3D.new()
+	head.name = "Head"
 	var sphere := SphereMesh.new()
 	sphere.radius = 0.14
 	sphere.height = 0.28
@@ -316,6 +311,7 @@ func _build_bike_rider() -> void:
 	head.material_override = _material(Color("#d8b08c"))
 	rider.add_child(head)
 	var helmet := MeshInstance3D.new()
+	helmet.name = "Helmet"
 	var hmesh := SphereMesh.new()
 	hmesh.radius = 0.155
 	hmesh.height = 0.26
@@ -364,20 +360,43 @@ func _add_auto_occupants(tuk_tuk: Node3D) -> void:
 		p_head.material_override = _material(Color("#a0694a") if p_idx == 0 else Color("#824d32"))
 		pass_node.add_child(p_head)
 
-func _build_triple_rider_bike() -> void:
-	var bullet := BULLET_SCENE.instantiate() as Node3D
-	bullet.name = "TripleRiderBikeModel"
+func _mount_bullet_wheels(bullet: Node3D) -> void:
 	var fw := bullet.get_node_or_null("FrontWheelMesh") as MeshInstance3D
 	var rw := bullet.get_node_or_null("RearWheelMesh") as MeshInstance3D
 	var hb := bullet.get_node_or_null("Handlebars") as MeshInstance3D
 	if fw:
-		fw.position = Vector3(0.0, 0.335, 0.695)
-		_bike_wheels.append(fw)
+		var fw_pivot := Node3D.new()
+		fw_pivot.name = "FrontWheelPivot"
+		fw_pivot.position = Vector3(0.0, 0.335, 0.695)
+		fw_pivot.rotation = Vector3(0.0, 0.0, PI * 0.5)
+		fw_pivot.set_meta("radius", 0.335)
+		bullet.add_child(fw_pivot)
+		fw.owner = null
+		fw.get_parent().remove_child(fw)
+		fw_pivot.add_child(fw)
+		fw.position = Vector3(0.0, -0.021, 0.0)
+		fw.rotation = Vector3.ZERO
+		_bike_wheels.append(fw_pivot)
 	if rw:
-		rw.position = Vector3(0.0, 0.335, -0.695)
-		_bike_wheels.append(rw)
+		var rw_pivot := Node3D.new()
+		rw_pivot.name = "RearWheelPivot"
+		rw_pivot.position = Vector3(0.0, 0.335, -0.695)
+		rw_pivot.rotation = Vector3(0.0, 0.0, PI * 0.5)
+		rw_pivot.set_meta("radius", 0.335)
+		bullet.add_child(rw_pivot)
+		rw.owner = null
+		rw.get_parent().remove_child(rw)
+		rw_pivot.add_child(rw)
+		rw.position = Vector3(0.0, -0.021, 0.0)
+		rw.rotation = Vector3.ZERO
+		_bike_wheels.append(rw_pivot)
 	if hb:
 		hb.position = Vector3(0.0, 0.75, 0.35)
+
+func _build_triple_rider_bike() -> void:
+	var bullet := BULLET_SCENE.instantiate() as Node3D
+	bullet.name = "TripleRiderBikeModel"
+	_mount_bullet_wheels(bullet)
 	add_child(bullet)
 
 	# 1. Front Rider

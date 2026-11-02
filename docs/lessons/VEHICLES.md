@@ -17,6 +17,12 @@ Code: `scripts/vehicle/` (`vehicle_entry.gd` for getting in and out and the seat
 
 ## Entries
 
+### Ground road traffic flying near flyovers and ambient motorcycle wheels / riders (2026-11-03)
+- **Symptom:** Auto-rickshaws and ambient cars were floating 6.5m in mid-air alongside the Ramagundam ROB Flyover ramp. Ambient Royal Enfield Bullet motorcycles were driving empty without a rider, and their wheels were tumbling and wobbling erratically like spinning plates.
+- **Cause:** In `traffic_lane_builder.gd`, `world.flyover_height_at(point, height)` was applied indiscriminately to all roads within 9.5m of the flyover path without checking if the road was a bridge (`road.get("structure") == "bridge"`). In `traffic_vehicle.gd`, `_build_bike_rider()` was never called during motorcycle visual instantiation, and `FrontWheelMesh`/`RearWheelMesh` (which have their cylinder axis on local Y) were added with flat orientation and rotated along X (`wheel.rotate_x`) instead of being mounted to wheel pivots with `rot.z = PI * 0.5` and rotated along local UP (`wheel.rotate_object_local(Vector3.UP, -step / radius)`).
+- **Rule:** Never apply bridge/overpass deck height to road lanes unless the road is explicitly tagged with `road.get("structure") == "bridge"`. All vehicle wheel meshes whose cylinder axis is oriented on Y must be parented to pivots rotated by `PI * 0.5` around Z, and rolled along `Vector3.UP` in object-local space. All ambient two-wheelers must instantiate their designated rider (`_build_bike_rider()`).
+- **Check:** `tests/test_traffic_lane_heights.gd`, `tests/test_ramagundam_flyover.gd`, `tests/bullet_motorcycle_regression.gd`, and `tests/movement_regression.gd`.
+
 ### A helicopter parked in mid-air stayed in the sky (2026-10-30)
 - **Symptom:** dying in flight, or a match starting in flight, left the helicopter frozen in the air, out of reach.
 - **Cause:** `helicopter.gd set_driving_enabled(false)` always freezes the body where it is.
