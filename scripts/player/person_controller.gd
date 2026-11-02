@@ -77,6 +77,7 @@ var muzzle: Marker3D
 var weapon_id := Weapons.M416
 var weapon_kick := 0.0
 ## 0..1 blends of the rifle presentation: raised to the shoulder when aiming, lowered while sprinting.
+const STEP_AUDIO := preload("res://assets/audio/gameplay/step.wav")
 var _aim_blend := 0.0
 var _carry_blend := 0.0
 var weapon_draw_time := 0.0
@@ -84,6 +85,8 @@ var weapon_reload_time := 0.0
 var _crouch_toggle := false
 var _safe_walk_position := Vector3.ZERO
 var _safe_walk_timer := 0.0
+var _footstep_player: AudioStreamPlayer3D
+var _step_distance_accumulator := 0.0
 
 func recover_person() -> bool:
 	for target in [_safe_walk_position, respawn_position]:
@@ -120,6 +123,13 @@ func _ready() -> void:
 	floor_constant_speed = true
 	floor_stop_on_slope = true
 	safe_margin = 0.02
+	_footstep_player = AudioStreamPlayer3D.new()
+	_footstep_player.name = "FootstepAudio"
+	_footstep_player.stream = STEP_AUDIO
+	_footstep_player.unit_size = 3.5
+	_footstep_player.max_distance = 25.0
+	_footstep_player.bus = "Master"
+	add_child(_footstep_player)
 
 static func resolve_keyboard_input() -> Vector2:
 	return GameplayControls.movement()
@@ -304,6 +314,52 @@ func _physics_process(delta: float) -> void:
 		_safe_walk_position = global_position
 		_safe_walk_timer = 0.0
 	_animate(delta)
+	_update_footsteps(delta)
+
+func _update_footsteps(delta: float) -> void:
+	if not is_on_floor() or swimming:
+		_step_distance_accumulator = 0.0
+		return
+	var speed := Vector2(velocity.x, velocity.z).length()
+	if speed < 0.25:
+		_step_distance_accumulator = 0.0
+		return
+	_step_distance_accumulator += speed * delta
+	var step_interval := 0.72 if crouching else (1.18 if is_running else 0.88)
+	if _step_distance_accumulator >= step_interval:
+		_step_distance_accumulator = fmod(_step_distance_accumulator, step_interval)
+		_play_footstep(speed)
+
+func _play_footstep(speed: float) -> void:
+	if _footstep_player == null or not is_inside_tree():
+		return
+	var space := get_world_3d().direct_space_state
+	var from := global_position + Vector3.UP * 0.2
+	var to := global_position + Vector3.DOWN * 0.6
+	var ray := PhysicsRayQueryParameters3D.create(from, to, 1, [get_rid()])
+	var hit := space.intersect_ray(ray)
+	var pitch := 1.0
+	var db_volume := -6.0
+	if not hit.is_empty():
+		var col_name: String = str(hit.collider.name)
+		if col_name.contains("Terrain"):
+			pitch = randf_range(0.86, 0.94)
+			db_volume = -7.5
+		elif col_name.contains("Bridge") or col_name.contains("Road") or col_name.contains("Flyover") or col_name.contains("Street"):
+			pitch = randf_range(1.05, 1.15)
+			db_volume = -4.5
+		else:
+			pitch = randf_range(0.97, 1.06)
+			db_volume = -5.5
+	else:
+		pitch = randf_range(0.95, 1.05)
+	if crouching:
+		db_volume -= 7.0
+	elif is_running:
+		db_volume += 3.0
+	_footstep_player.pitch_scale = pitch
+	_footstep_player.volume_db = db_volume
+	_footstep_player.play()
 
 ## Climbs kerbs and stairs up to step_height: lift, move, then drop back onto the step.
 func _try_step_up(motion: Vector3) -> void:
