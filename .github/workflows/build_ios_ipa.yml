@@ -17,6 +17,17 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      - name: Select Xcode 16 (iOS 18 SDK for Godot 4.7.2)
+        run: |
+          echo "Available Xcode versions:"
+          ls -d /Applications/Xcode*.app
+          XCODE_16=$(ls -d /Applications/Xcode_16*.app 2>/dev/null | sort -V | tail -n 1)
+          if [ -n "$XCODE_16" ]; then
+            echo "Selecting $XCODE_16"
+            sudo xcode-select -s "$XCODE_16/Contents/Developer"
+          fi
+          xcodebuild -version
+
       - name: Install Godot 4.7.2 Engine (macOS)
         run: |
           mkdir -p .ci
