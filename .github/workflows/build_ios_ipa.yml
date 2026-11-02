@@ -58,18 +58,20 @@ jobs:
 
       - name: Patch iOS Metal-cpp Compatibility Stubs
         run: |
-          cat << 'EOF' >> builds/ios/ManaOoru/dummy.cpp
-
-#include <CoreFoundation/CoreFoundation.h>
-
-extern "C" {
-    const void *CADynamicRangeAutomatic = (const void *)CFSTR("CADynamicRangeAutomatic");
-    const void *CADynamicRangeConstrainedHigh = (const void *)CFSTR("CADynamicRangeConstrainedHigh");
-    const void *CADynamicRangeHigh = (const void *)CFSTR("CADynamicRangeHigh");
-    const void *CADynamicRangeStandard = (const void *)CFSTR("CADynamicRangeStandard");
-    const void *MTLTensorDomain = (const void *)CFSTR("MTLTensorDomain");
-}
-EOF
+          python3 -c '
+          code = """
+          #include <CoreFoundation/CoreFoundation.h>
+          extern \"C\" {
+              const void *CADynamicRangeAutomatic = (const void *)CFSTR("CADynamicRangeAutomatic");
+              const void *CADynamicRangeConstrainedHigh = (const void *)CFSTR("CADynamicRangeConstrainedHigh");
+              const void *CADynamicRangeHigh = (const void *)CFSTR("CADynamicRangeHigh");
+              const void *CADynamicRangeStandard = (const void *)CFSTR("CADynamicRangeStandard");
+              const void *MTLTensorDomain = (const void *)CFSTR("MTLTensorDomain");
+          }
+          """
+          with open("builds/ios/ManaOoru/dummy.cpp", "a") as f:
+              f.write(code)
+          '
           tail -n 20 builds/ios/ManaOoru/dummy.cpp
 
       - name: Compile Native iOS Project (Xcode)
