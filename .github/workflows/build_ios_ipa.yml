@@ -56,6 +56,22 @@ jobs:
           Godot --headless --export-debug "iOS" builds/ios/ManaOoru.ipa
           ls -la builds/ios
 
+      - name: Patch iOS Metal-cpp Compatibility Stubs
+        run: |
+          cat << 'EOF' >> builds/ios/ManaOoru/dummy.cpp
+
+#include <CoreFoundation/CoreFoundation.h>
+
+extern "C" {
+    const void *CADynamicRangeAutomatic = (const void *)CFSTR("CADynamicRangeAutomatic");
+    const void *CADynamicRangeConstrainedHigh = (const void *)CFSTR("CADynamicRangeConstrainedHigh");
+    const void *CADynamicRangeHigh = (const void *)CFSTR("CADynamicRangeHigh");
+    const void *CADynamicRangeStandard = (const void *)CFSTR("CADynamicRangeStandard");
+    const void *MTLTensorDomain = (const void *)CFSTR("MTLTensorDomain");
+}
+EOF
+          tail -n 20 builds/ios/ManaOoru/dummy.cpp
+
       - name: Compile Native iOS Project (Xcode)
         run: |
           cd builds/ios
@@ -68,7 +84,6 @@ jobs:
                      CODE_SIGNING_ALLOWED=NO \
                      CODE_SIGNING_REQUIRED=NO \
                      CODE_SIGN_IDENTITY="" \
-                     OTHER_LDFLAGS="-framework QuartzCore -framework Metal -framework MetalKit -framework AudioToolbox -framework AVFoundation -framework CoreAudio -framework CoreGraphics -framework CoreText -framework GameController -framework MediaPlayer -framework Security -framework UIKit -framework Foundation" \
                      build
           ls -la build_output/Build/Products/Debug-iphoneos/
 
