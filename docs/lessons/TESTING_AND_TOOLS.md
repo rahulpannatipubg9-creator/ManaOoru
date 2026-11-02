@@ -22,6 +22,12 @@ in `tools/captures/`.
 
 ## Entries
 
+### Xiaomi Pad 7 3.2K display GLES3 lag & SSAO fillrate stall (2026-11-02)
+- **Symptom:** game was super laggy (~15-20 FPS) on physical Xiaomi Pad 7 (3200x2136 screen).
+- **Cause:** SSAO, Bloom/Glow, Color Adjustments, and cubemap ReflectionProbe were enabled unconditionally in `main.gd`; at 6.8 million pixels on mobile OpenGL ES 3.0 Compatibility renderer, this stalls the GPU fillrate. In addition, `_park_all_vehicles()` and `_activate_only()` ran redundantly in `_process()` every single frame, and traffic was unconstrained at 25 vehicles.
+- **Rule:** Guard expensive screen-space passes (SSAO, Bloom, Color Adjustments, cubemap ReflectionProbes) behind `if not is_mobile:`. Vehicle state transitions must only run when `control_state != _applied_control_state`. Clamp mobile traffic vehicles to 12, enforce directional shadow size of 1024 on mobile, and apply 0.55 viewport scaling for 3K+ displays while keeping the 2D HUD at crisp native resolution.
+- **Check:** `tests/movement_regression.gd`, `tests/device_performance_manager_regression.gd`, `tests/performance_integration_regression.gd`.
+
 ### Line endings: `.gitattributes` added, repo not renormalised (2026-10-30)
 - **Symptom:** a Windows checkout with `core.autocrlf=true` turns about 890 text files to CRLF; Mac and Windows fight.
 - **Cause:** nothing in the repo set a line-ending rule.

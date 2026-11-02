@@ -46,6 +46,7 @@ var network_manager: Node
 ## Team Deathmatch (scripts/tactical): the networking session and the on-device gameplay around it.
 var tdm_session: Node
 var tdm_local: Node
+var _applied_control_state := -1
 
 func _ready() -> void:
 	# A staged world finishes after this runs; everything below needs it whole.
@@ -62,19 +63,25 @@ func _ready() -> void:
 	world_environment.tonemap_mode = Environment.TONE_MAPPER_ACES
 	world_environment.tonemap_exposure = 0.82
 	world_environment.tonemap_white = 1.2
-	# Subtle stylized bloom and filmic glow for sun glints and chrome highlights
-	world_environment.glow_enabled = true
-	world_environment.glow_intensity = 0.18
-	world_environment.glow_bloom = 0.10
-	world_environment.glow_blend_mode = Environment.GLOW_BLEND_MODE_SOFTLIGHT
-	# Screen-space ambient occlusion grounding vehicles, porch overhangs and curbs
-	world_environment.ssao_enabled = true
-	world_environment.ssao_radius = 1.4
-	world_environment.ssao_intensity = 1.6
-	# Vibrant Telangana regional color grading
-	world_environment.adjustment_enabled = true
-	world_environment.adjustment_saturation = 1.15
-	world_environment.adjustment_contrast = 1.05
+	var is_mobile := OS.has_feature("mobile") or OS.has_feature("android") or OS.has_feature("ios")
+	if not is_mobile:
+		# Subtle stylized bloom and filmic glow for sun glints and chrome highlights (Desktop only)
+		world_environment.glow_enabled = true
+		world_environment.glow_intensity = 0.18
+		world_environment.glow_bloom = 0.10
+		world_environment.glow_blend_mode = Environment.GLOW_BLEND_MODE_SOFTLIGHT
+		# Screen-space ambient occlusion grounding vehicles, porch overhangs and curbs (Desktop only)
+		world_environment.ssao_enabled = true
+		world_environment.ssao_radius = 1.4
+		world_environment.ssao_intensity = 1.6
+		# Vibrant Telangana regional color grading
+		world_environment.adjustment_enabled = true
+		world_environment.adjustment_saturation = 1.15
+		world_environment.adjustment_contrast = 1.05
+	else:
+		world_environment.glow_enabled = false
+		world_environment.ssao_enabled = false
+		world_environment.adjustment_enabled = false
 	# Low-density haze retains street/building contrast; the weather controller
 	# increases it for rain without bleaching the clear-day view.
 	world_environment.fog_enabled = true
@@ -84,14 +91,15 @@ func _ready() -> void:
 	environment.environment = world_environment
 	add_child(environment)
 
-	# Real-time parallax-corrected ReflectionProbe for metallic car bodies, chrome & roads
-	var reflection_probe := ReflectionProbe.new()
-	reflection_probe.name = "ChowrasthaReflectionProbe"
-	reflection_probe.size = Vector3(350.0, 60.0, 350.0)
-	reflection_probe.origin_offset = Vector3(0.0, 15.0, 0.0)
-	reflection_probe.update_mode = ReflectionProbe.UPDATE_ONCE
-	reflection_probe.max_distance = 400.0
-	add_child(reflection_probe)
+	if not is_mobile:
+		# Real-time parallax-corrected ReflectionProbe for metallic car bodies, chrome & roads (Desktop only)
+		var reflection_probe := ReflectionProbe.new()
+		reflection_probe.name = "ChowrasthaReflectionProbe"
+		reflection_probe.size = Vector3(350.0, 60.0, 350.0)
+		reflection_probe.origin_offset = Vector3(0.0, 15.0, 0.0)
+		reflection_probe.update_mode = ReflectionProbe.UPDATE_ONCE
+		reflection_probe.max_distance = 400.0
+		add_child(reflection_probe)
 
 	var sun := DirectionalLight3D.new()
 	sun.name = "Sun"
@@ -276,10 +284,12 @@ func _process(_delta: float) -> void:
 		return
 	if _input_suspended:
 		return
-	if control_state == ControlState.DRIVING:
-		_activate_only(active_vehicle)
-	elif control_state == ControlState.ON_FOOT:
-		_park_all_vehicles()
+	if control_state != _applied_control_state:
+		_applied_control_state = control_state
+		if control_state == ControlState.DRIVING:
+			_activate_only(active_vehicle)
+		elif control_state == ControlState.ON_FOOT:
+			_park_all_vehicles()
 	var in_match := _in_match()
 	var enter_pressed := Input.is_action_pressed("vehicle_enter") or Input.is_key_pressed(KEY_E)
 	var exit_pressed := Input.is_action_pressed("vehicle_exit") or Input.is_key_pressed(KEY_F)

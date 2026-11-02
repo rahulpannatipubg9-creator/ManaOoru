@@ -19,10 +19,12 @@ func select(name: String) -> void:
 	var profile := preset
 	if profile == "Auto": profile = resolve_auto(OS.has_feature("mobile"), int(OS.get_memory_info().get("physical", 0)))
 	values = PROFILES[profile].duplicate()
-	if OS.has_feature("mobile"):
+	if OS.has_feature("mobile") or OS.has_feature("android") or OS.has_feature("ios"):
 		var screen := DisplayServer.screen_get_size()
 		if max(screen.x, screen.y) >= 2400:
 			values.scale = minf(float(values.get("scale", 0.8)), 0.55)
+		values.distance = minf(float(values.get("distance", 550.0)), 450.0)
+		values.actors = mini(int(values.get("actors", 28)), 20)
 
 func sanitize() -> void:
 	var defaults: Dictionary = PROFILES.Medium

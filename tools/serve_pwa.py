@@ -11,7 +11,10 @@ import socket
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 
 PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 8080
-DIRECTORY = os.path.abspath(sys.argv[2]) if len(sys.argv) > 2 else os.path.abspath("builds/web")
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
+DEFAULT_DIR = os.path.join(PROJECT_ROOT, "builds", "web")
+DIRECTORY = os.path.abspath(sys.argv[2]) if len(sys.argv) > 2 else DEFAULT_DIR
 
 class GodotPWAHandler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
@@ -60,4 +63,3 @@ def run():
 
 if __name__ == "__main__":
     run()
-

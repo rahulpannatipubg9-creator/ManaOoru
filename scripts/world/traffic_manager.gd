@@ -39,6 +39,8 @@ func setup(world: Node3D, data: MapData) -> void:
 	name = "Traffic"
 	_world = world
 	_game = world.get_parent()
+	if OS.has_feature("mobile") or OS.has_feature("android") or OS.has_feature("ios"):
+		max_active_vehicles = 12
 	var config: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/vehicles/traffic_profiles.json"))
 	profiles = config.profiles
 	districts = config.districts
