@@ -176,6 +176,8 @@ func _place_on_real_roadsides() -> void:
 		person.rotation.y = world.player_spawn.yaw
 		person.reset_physics_interpolation()
 		person.respawn_position = world.player_spawn.position
+		if person.camera_pivot and person.camera_pivot.has_method("set_camera_yaw"):
+			person.camera_pivot.set_camera_yaw(world.player_spawn.yaw + PI)
 	for vehicle in vehicles:
 		if vehicle.get("keep_custom_spawn") == true and not world.helicopter_spawn.is_empty():
 			var helicopter_spot: Dictionary = world.helicopter_spawn
