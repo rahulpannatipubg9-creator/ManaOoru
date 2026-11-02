@@ -144,3 +144,9 @@ notes are in [characters/](characters/). Code: `scripts/player/test_character.gd
 - **Cause:** Imported StandardMaterial3D.vertex_color_use_as_albedo was false.
 - **Rule:** Duplicate Virat's material and explicitly enable vertex colours; verify the rendered face and clothing, not just the GLB attribute list.
 - **Check:** tests/capture_virat_portraits.gd and test_character_regression.gd.
+
+### Locomotion cadence calibration, crouch walk loop and athletic sprint pitch (2026-11-02)
+- **Symptom:** Walking looked frantic and fluttery (over 3x speed at 2.4 m/s), running at 6.8 m/s played Jogging at 4.2x fast-forward, crouch-walking froze after 1.16s, and transitions popped noticeably.
+- **Cause:** `Walk_Loop` and `Jogging` scaled animation speed linearly by `speed / native_speed` against very low Mixamo source speeds (0.77 m/s and 1.63 m/s), causing extreme overspeeding rather than natural human cadence. `Crouch_Walking` was missing from `LOOPS` in `mixamo_animation_library.gd`, defaulting its loop mode to `LOOP_NONE`.
+- **Rule:** Scale locomotion playback non-linearly within human biological cadence bounds: walk between 0.9x and 1.32x (1.6–2.2 steps/sec) and jog between 1.15x and 1.68x, adding a subtle forward spine pitch (0.07 rad) during high-speed forward sprints to convey forward momentum. Ensure all locomotion clips in active gameplay are registered in `LOOPS`.
+- **Check:** `tests/mixamo_gameplay_regression.gd`, `tests/character_physics_regression.gd`, `tests/movement_regression.gd`.

@@ -394,12 +394,12 @@ func _setup_mixamo_animations() -> void:
 	preload("res://scripts/player/mixamo_animation_library.gd").prepare(mixamo_anim_player, mixamo_skeleton)
 	mixamo_anim_player.mixer_applied.connect(_apply_mixamo_pose)
 
-func _play_mixamo_clip(clip_name: String, custom_speed: float = 1.0) -> void:
+func _play_mixamo_clip(clip_name: String, custom_speed: float = 1.0, blend_time: float = 0.22) -> void:
 	if mixamo_anim_player == null or not mixamo_anim_player.has_animation(clip_name):
 		return
 	if _mixamo_current_clip != clip_name:
 		_mixamo_current_clip = clip_name
-		mixamo_anim_player.play(clip_name, 0.15)
+		mixamo_anim_player.play(clip_name, blend_time)
 	mixamo_anim_player.speed_scale = custom_speed
 
 func _process_mixamo(delta: float, body: CharacterBody3D, speed: float, on_floor: bool) -> void:
@@ -1617,6 +1617,13 @@ func _apply_mixamo_pose() -> void:
 			_pose_mixamo_fingers(side, GRIP_CURL_RIGHT if side == "Right" else GRIP_CURL_LEFT)
 		left_grip_target = saved_left
 		right_grip_target = saved_right
+	# Dynamic forward athletic torso pitch during high-speed forward running
+	if not seated and _mixamo_action_lock <= 0.0 and _crouch <= 0.1 and _prone <= 0.1:
+		var parent_body := get_parent() as CharacterBody3D
+		if parent_body and parent_body.get("is_running") == true and parent_body.is_on_floor():
+			var run_factor := clampf((parent_body.velocity.length() - 3.5) / 3.3, 0.0, 1.0)
+			if run_factor > 0.01:
+				_rotate_mixamo_world("mixamorig_Spine1", -global_basis.x, 0.07 * run_factor)
 	rig.force_update_all_bone_transforms()
 
 func _solve_mixamo_limb(upper_name: String, lower_name: String, tip_name: String, target: Vector3, pole: Vector3) -> void:
@@ -1642,7 +1649,23 @@ func _solve_mixamo_limb(upper_name: String, lower_name: String, tip_name: String
 
 func _play_mixamo_locomotion(clip: String, speed: float) -> void:
 	var native := float(mixamo_anim_player.get_animation(clip).get_meta("native_speed", 1.0))
-	_play_mixamo_clip(clip, clampf(speed/maxf(native,0.1),0.2,5.0))
+	var playback_rate := 1.0
+	match clip:
+		"Walk_Loop":
+			# Walk speed range: 0.3 m/s to 2.4 m/s. Keep human walking cadence realistic (0.9x to 1.32x)
+			playback_rate = lerpf(0.9, 1.32, clampf((speed - 0.3) / 2.1, 0.0, 1.0))
+		"Jogging":
+			# Jogging to sprint range: 2.8 m/s to 6.8 m/s. Keep running cadence athletic and grounded (1.15x to 1.68x)
+			playback_rate = lerpf(1.15, 1.68, clampf((speed - 2.8) / 4.0, 0.0, 1.0))
+		"Crouch_Walking":
+			playback_rate = lerpf(0.9, 1.25, clampf(speed / 1.2, 0.0, 1.0))
+		"Sprint_Backward":
+			playback_rate = maxf(0.85, clampf(speed / maxf(native, 0.1), 0.5, 2.0))
+		"Strafe", "Walk_Left_with_gun", "Walk_Right_with_gun":
+			playback_rate = clampf(speed / maxf(native, 0.1), 0.85, 1.45)
+		_:
+			playback_rate = clampf(speed / maxf(native, 0.1), 0.5, 2.5)
+	_play_mixamo_clip(clip, playback_rate, 0.25)
 
 func _orient_mixamo_hand(side: String, finger_world: Vector3, palm_world: Vector3) -> void:
 	var rig := mixamo_skeleton

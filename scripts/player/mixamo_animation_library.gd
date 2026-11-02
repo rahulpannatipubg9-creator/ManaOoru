@@ -1,6 +1,6 @@
 extends RefCounted
 ## Runtime copies: source FBX/GLB clips stay untouched. Physics owns actor travel.
-const LOOPS := ["Air_Squat_Bent_Arms", "Arm_Stretching", "Boxing", "Dodging",
+const LOOPS := ["Air_Squat_Bent_Arms", "Arm_Stretching", "Boxing", "Crouch_Walking", "Dodging",
  "Firing_Rifle", "Firing_Rifle_while_walking", "Floating", "Idle_Crouching",
  "Jogging", "Moving_Backward_In_Prone_Position", "Pistol_Kneeling_Idle",
  "Prone_Firing_Rifle", "Prone_Forward", "Prone_Idle", "Rifle_Aiming_Idle",
