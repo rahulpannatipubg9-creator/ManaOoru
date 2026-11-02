@@ -4,7 +4,7 @@ const LOOPS := ["Air_Squat_Bent_Arms", "Arm_Stretching", "Boxing", "Crouch_Walki
  "Firing_Rifle", "Firing_Rifle_while_walking", "Floating", "Idle_Crouching",
  "Jogging", "Moving_Backward_In_Prone_Position", "Pistol_Kneeling_Idle",
  "Prone_Firing_Rifle", "Prone_Forward", "Prone_Idle", "Rifle_Aiming_Idle",
- "Sitting", "Sprint_Backward", "Strafe", "Swimming", "Walk_Crouching_Right",
+ "Sitting", "Sprint_Backward", "Strafe", "Swimming", "Walk_Backward", "Walk_Crouching_Right",
  "Walk_Left_with_gun", "Walk_Right_with_gun", "Walk_With_Rifle", "Wheelbarrow_Walk"]
 
 static func prepare(player: AnimationPlayer, rig: Skeleton3D, apply_grounding: bool = true) -> void:
@@ -42,6 +42,11 @@ static func prepare(player: AnimationPlayer, rig: Skeleton3D, apply_grounding: b
  close_loop(walk)
  walk.set_meta("native_speed",walk_speed)
  library.add_animation("Walk_Loop", walk)
+ var walk_back := reverse_clip(walk)
+ walk_back.loop_mode = Animation.LOOP_LINEAR
+ close_loop(walk_back)
+ walk_back.set_meta("native_speed",walk_speed)
+ library.add_animation("Walk_Backward", walk_back)
  var idle := hold_pose(library.get_animation("Start_Walking"),0.0)
  relax_idle_arms(idle,rig)
  library.add_animation("Idle_Natural",idle)
@@ -81,6 +86,22 @@ static func slice_clip(source: Animation, start: float, end: float) -> Animation
     clip.track_insert_key(track, time, source.rotation_track_interpolate(track, start+time))
    elif type == Animation.TYPE_SCALE_3D:
     clip.track_insert_key(track, time, source.scale_track_interpolate(track, start+time))
+ return clip
+
+static func reverse_clip(source: Animation) -> Animation:
+ var clip: Animation = source.duplicate(true)
+ var duration: float = source.length
+ for track in clip.get_track_count():
+  var keys: Array[Dictionary] = []
+  for k in source.track_get_key_count(track):
+   var old_t: float = source.track_get_key_time(track, k)
+   var val: Variant = source.track_get_key_value(track, k)
+   keys.append({"time": duration - old_t, "value": val})
+  keys.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return a["time"] < b["time"])
+  while clip.track_get_key_count(track) > 0:
+   clip.track_remove_key(track, 0)
+  for item in keys:
+   clip.track_insert_key(track, item["time"], item["value"])
  return clip
 
 static func close_loop(clip: Animation) -> void:

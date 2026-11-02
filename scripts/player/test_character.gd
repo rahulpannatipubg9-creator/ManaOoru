@@ -124,6 +124,9 @@ var _rifle_body := 0.0
 ## 0..1 aim (the holder's own shoulder blend) and seconds since the feet left the ground.
 var _aim := 0.0
 var _air_time := 0.0
+var _was_on_floor := false
+var _landing_time := 0.0
+var _landing_strength := 0.0
 var _rifle_time := 0.0
 
 ## Set by the vehicle entry sequence: sitting in a car seat, hands on the wheel.
@@ -473,13 +476,17 @@ func _process_mixamo(delta: float, body: CharacterBody3D, speed: float, on_floor
 		_play_mixamo_clip("Firing_Rifle_while_walking" if speed > 0.3 else "Firing_Rifle")
 		return
 
-	var lateral := (body.global_basis.inverse() * body.velocity).x
-	if speed > 0.3 and absf(lateral) > speed * 0.7:
+	var local_vel := body.global_basis.inverse() * body.velocity
+	var lateral := local_vel.x
+	if speed > 0.3 and absf(lateral) > speed * 0.82 and absf(local_vel.z) < speed * 0.45:
 		_play_mixamo_locomotion(("Walk_Left_with_gun" if lateral > 0.0 else "Walk_Right_with_gun") if armed else "Strafe", speed)
 		return
 	# Backward travel takes priority over the forward jog threshold.
 	if speed > 0.3 and _moving_backward:
-		_play_mixamo_locomotion("Sprint_Backward", speed)
+		if speed > 2.8:
+			_play_mixamo_locomotion("Sprint_Backward", speed)
+		else:
+			_play_mixamo_locomotion("Walk_Backward", speed)
 		return
 	# Standing locomotion
 	if speed > 2.8:
@@ -490,8 +497,6 @@ func _process_mixamo(delta: float, body: CharacterBody3D, speed: float, on_floor
 	elif speed > 0.3:
 		if armed:
 			_play_mixamo_locomotion("Walk_With_Rifle", speed)
-		elif _moving_backward:
-			_play_mixamo_locomotion("Sprint_Backward", speed)
 		else:
 			_play_mixamo_locomotion("Walk_Loop", speed)
 	else:
@@ -570,7 +575,12 @@ func _process(delta: float) -> void:
 	var armed: bool = body.has_method("is_weapon_equipped") and body.is_weapon_equipped()
 	_armed = lerpf(_armed, 1.0 if armed and not scripted else 0.0, blend)
 	_aim = clampf(float(body.get("_aim_blend")), 0.0, 1.0) if armed and body.get("_aim_blend") != null else 0.0
+	if not _was_on_floor and on_floor and _air_time > 0.08:
+		_landing_time = 0.20
+		_landing_strength = clampf(_air_time / 0.45, 0.35, 1.0)
+	_was_on_floor = on_floor
 	_air_time = 0.0 if on_floor else _air_time + delta
+	_landing_time = maxf(0.0, _landing_time - delta)
 	_rifle_time += delta
 	_seat = move_toward(_seat, 1.0 if seated else 0.0, delta / 0.45)
 	_wheel = lerpf(_wheel, clampf(steering, -1.0, 1.0) if seated else 0.0, blend)
@@ -1624,6 +1634,16 @@ func _apply_mixamo_pose() -> void:
 			var run_factor := clampf((parent_body.velocity.length() - 3.5) / 3.3, 0.0, 1.0)
 			if run_factor > 0.01:
 				_rotate_mixamo_world("mixamorig_Spine1", -global_basis.x, 0.07 * run_factor)
+	# Procedural knee-flexion landing compression to absorb impact
+	if not seated and _mixamo_action_lock <= 0.0 and _landing_time > 0.0 and _landing_strength > 0.01:
+		var norm_time := _landing_time / 0.20
+		var comp_weight := norm_time * norm_time * _landing_strength
+		var hip_pos := rig.get_bone_pose_position(hip)
+		hip_pos.z -= 0.07 * comp_weight
+		rig.set_bone_pose_position(hip, hip_pos)
+		_rotate_mixamo_world("mixamorig_LeftLeg", global_basis.x, 0.10 * comp_weight)
+		_rotate_mixamo_world("mixamorig_RightLeg", global_basis.x, 0.10 * comp_weight)
+		_rotate_mixamo_world("mixamorig_Spine1", -global_basis.x, 0.05 * comp_weight)
 	rig.force_update_all_bone_transforms()
 
 func _solve_mixamo_limb(upper_name: String, lower_name: String, tip_name: String, target: Vector3, pole: Vector3) -> void:
@@ -1654,13 +1674,15 @@ func _play_mixamo_locomotion(clip: String, speed: float) -> void:
 		"Walk_Loop":
 			# Walk speed range: 0.3 m/s to 2.4 m/s. Keep human walking cadence realistic (0.9x to 1.32x)
 			playback_rate = lerpf(0.9, 1.32, clampf((speed - 0.3) / 2.1, 0.0, 1.0))
+		"Walk_Backward":
+			playback_rate = lerpf(0.95, 1.30, clampf((speed - 0.3) / 2.1, 0.0, 1.0))
 		"Jogging":
 			# Jogging to sprint range: 2.8 m/s to 6.8 m/s. Keep running cadence athletic and grounded (1.15x to 1.68x)
 			playback_rate = lerpf(1.15, 1.68, clampf((speed - 2.8) / 4.0, 0.0, 1.0))
 		"Crouch_Walking":
 			playback_rate = lerpf(0.9, 1.25, clampf(speed / 1.2, 0.0, 1.0))
 		"Sprint_Backward":
-			playback_rate = maxf(0.85, clampf(speed / maxf(native, 0.1), 0.5, 2.0))
+			playback_rate = lerpf(1.10, 1.55, clampf((speed - 2.8) / 4.0, 0.0, 1.0))
 		"Strafe", "Walk_Left_with_gun", "Walk_Right_with_gun":
 			playback_rate = clampf(speed / maxf(native, 0.1), 0.85, 1.45)
 		_:

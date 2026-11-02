@@ -357,12 +357,16 @@ func _update_crouch(wants_crouch: bool) -> void:
 	_update_stance(wants_crouch, false)
 
 func _has_headroom(check_height: float = stand_height) -> bool:
+	var current_h := _capsule.height if _capsule else crouch_height
+	var diff := check_height - current_h
+	if diff <= 0.01:
+		return true
 	var query := PhysicsShapeQueryParameters3D.new()
-	var standing := _capsule.duplicate() as CapsuleShape3D
-	standing.radius = minf(_stand_radius, check_height * 0.45)
-	standing.height = check_height
-	query.shape = standing
-	query.transform = global_transform.translated(Vector3.UP * (check_height * 0.5 + 0.02))
+	var test_shape := CapsuleShape3D.new()
+	test_shape.radius = minf(_stand_radius, check_height * 0.45)
+	test_shape.height = maxf(diff, test_shape.radius * 2.0)
+	query.shape = test_shape
+	query.transform = global_transform.translated(Vector3.UP * (current_h + diff * 0.5))
 	query.exclude = [get_rid()]
 	query.collision_mask = collision_mask
 	return get_world_3d().direct_space_state.intersect_shape(query, 1).is_empty()

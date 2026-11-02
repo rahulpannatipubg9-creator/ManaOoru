@@ -196,6 +196,11 @@ func reset_view() -> void:
 		_pitch = -0.18
 	_apply_orbit_rotation()
 
+func set_camera_yaw(new_yaw: float) -> void:
+	_yaw = new_yaw
+	_free_yaw = 0.0
+	_apply_orbit_rotation()
+
 func toggle_shoulder() -> void:
 	_shoulder_sign *= -1.0
 	_third_person_position.x = _shoulder_sign * 0.65
