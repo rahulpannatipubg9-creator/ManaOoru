@@ -214,7 +214,7 @@ func _set_phase(next: Phase) -> void:
 	var character := _character()
 	if character:
 		character.set("scripted_speed", WALK_SPEED if next == Phase.WALK else -1.0)
-		character.set("seated", next in [Phase.CLIMB, Phase.CLOSE, Phase.SEATED, Phase.EXIT_OPEN, Phase.EXIT_CLIMB])
+		character.set("seated", next in [Phase.CLOSE, Phase.SEATED, Phase.EXIT_OPEN, Phase.EXIT_CLIMB])
 	if not _is_bike and next in [Phase.OPEN, Phase.EXIT_OPEN]:
 		_play_door(DOOR_OPEN)
 	elif not _is_bike and next in [Phase.CLOSE, Phase.EXIT_CLOSE]:
@@ -251,7 +251,9 @@ func _animate_transition() -> void:
 	var actor := _character()
 	if actor:
 		var crossing := phase in [Phase.CLIMB, Phase.EXIT_CLIMB]
-		if phase == Phase.EXIT_CLIMB and weight > 0.8:
+		if phase == Phase.CLIMB and weight >= 0.45:
+			actor.set("seated", true)
+		elif phase == Phase.EXIT_CLIMB and weight > 0.55:
 			actor.set("seated", false)
 		actor.set("vehicle_entry_bend", sin(weight * PI) * (0.35 if _is_bike else 0.85) if crossing else 0.0)
 		actor.set("vehicle_mount_swing", sin(weight * PI) if crossing and _is_bike else 0.0)

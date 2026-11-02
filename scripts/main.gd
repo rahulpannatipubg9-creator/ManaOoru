@@ -59,8 +59,22 @@ func _ready() -> void:
 	world_environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	world_environment.ambient_light_color = Color("#c0cbd2")
 	world_environment.ambient_light_energy = 0.30
-	world_environment.tonemap_mode = Environment.TONE_MAPPER_FILMIC
-	world_environment.tonemap_exposure = 0.78
+	world_environment.tonemap_mode = Environment.TONE_MAPPER_ACES
+	world_environment.tonemap_exposure = 0.82
+	world_environment.tonemap_white = 1.2
+	# Subtle stylized bloom and filmic glow for sun glints and chrome highlights
+	world_environment.glow_enabled = true
+	world_environment.glow_intensity = 0.18
+	world_environment.glow_bloom = 0.10
+	world_environment.glow_blend_mode = Environment.GLOW_BLEND_MODE_SOFTLIGHT
+	# Screen-space ambient occlusion grounding vehicles, porch overhangs and curbs
+	world_environment.ssao_enabled = true
+	world_environment.ssao_radius = 1.4
+	world_environment.ssao_intensity = 1.6
+	# Vibrant Telangana regional color grading
+	world_environment.adjustment_enabled = true
+	world_environment.adjustment_saturation = 1.15
+	world_environment.adjustment_contrast = 1.05
 	# Low-density haze retains street/building contrast; the weather controller
 	# increases it for rain without bleaching the clear-day view.
 	world_environment.fog_enabled = true
@@ -69,6 +83,15 @@ func _ready() -> void:
 	world_environment.fog_sky_affect = 0.0
 	environment.environment = world_environment
 	add_child(environment)
+
+	# Real-time parallax-corrected ReflectionProbe for metallic car bodies, chrome & roads
+	var reflection_probe := ReflectionProbe.new()
+	reflection_probe.name = "ChowrasthaReflectionProbe"
+	reflection_probe.size = Vector3(350.0, 60.0, 350.0)
+	reflection_probe.origin_offset = Vector3(0.0, 15.0, 0.0)
+	reflection_probe.update_mode = ReflectionProbe.UPDATE_ONCE
+	reflection_probe.max_distance = 400.0
+	add_child(reflection_probe)
 
 	var sun := DirectionalLight3D.new()
 	sun.name = "Sun"

@@ -420,7 +420,7 @@ func _process_mixamo(delta: float, body: CharacterBody3D, speed: float, on_floor
 		return
 
 	if seated:
-		_play_mixamo_clip("Drive_Seated")
+		_play_mixamo_clip("Drive_Seated", 1.0, 0.35)
 		return
 
 	if body.get("swimming") == true:
@@ -491,7 +491,11 @@ func _process_mixamo(delta: float, body: CharacterBody3D, speed: float, on_floor
 	# Standing locomotion
 	if speed > 2.8:
 		if armed:
-			_play_mixamo_locomotion("Walk_With_Rifle", speed)
+			var is_aiming_down_sights: bool = body.get("camera_pivot") != null and body.get("camera_pivot").get("is_aiming") == true
+			if speed > 4.5 and not is_aiming_down_sights:
+				_play_mixamo_locomotion("Jogging", speed)
+			else:
+				_play_mixamo_locomotion("Walk_With_Rifle", speed)
 		else:
 			_play_mixamo_locomotion("Jogging", speed)
 	elif speed > 0.3:
@@ -1676,6 +1680,8 @@ func _play_mixamo_locomotion(clip: String, speed: float) -> void:
 			playback_rate = lerpf(0.9, 1.32, clampf((speed - 0.3) / 2.1, 0.0, 1.0))
 		"Walk_Backward":
 			playback_rate = lerpf(0.95, 1.30, clampf((speed - 0.3) / 2.1, 0.0, 1.0))
+		"Walk_With_Rifle":
+			playback_rate = lerpf(0.95, 1.45, clampf((speed - 0.3) / 4.0, 0.0, 1.0))
 		"Jogging":
 			# Jogging to sprint range: 2.8 m/s to 6.8 m/s. Keep running cadence athletic and grounded (1.15x to 1.68x)
 			playback_rate = lerpf(1.15, 1.68, clampf((speed - 2.8) / 4.0, 0.0, 1.0))
