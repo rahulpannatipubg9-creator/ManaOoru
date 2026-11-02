@@ -49,7 +49,11 @@ var cctv: CctvBuilder
 var traffic: TrafficBuilder
 var local_activity: LocalActivityBuilder
 var godavari_bridge: GodavariBridgeBuilder
+const RamagundamFlyoverClass := preload("res://scripts/world/ramagundam_flyover_builder.gd")
+var ramagundam_flyover: Node3D
 var custom_placements: Node3D
+const CityScenariosBuilder := preload("res://scripts/world/city_scenarios.gd")
+var scenarios: Node3D
 const RoadsideDrainage := preload("res://scripts/world/roadside_drainage_builder.gd")
 var drainage: Node3D
 
@@ -58,7 +62,6 @@ func _ready() -> void:
 	if not map_data.is_valid:
 		return
 	_create_ground()
-	_create_distant_horizon()
 	roads = RoadBuilder.new()
 	add_child(roads)
 	roads.build(map_data)
@@ -87,6 +90,7 @@ func _ready() -> void:
 	_create_fountain()
 	_create_coal_gallery()
 	_create_godavari_bridge()
+	_create_ramagundam_flyover()
 	_choose_spawns()
 	street_life = StreetLifeBuilder.new()
 	add_child(street_life)
@@ -105,6 +109,7 @@ func _ready() -> void:
 	custom_placements = preload("res://scripts/world/custom_asset_placements.gd").new()
 	add_child(custom_placements)
 	custom_placements.call("build", self)
+	_create_scenarios()
 	# Representative scenery is planned after existing assets/spawns so it yields
 	# to gameplay and source-backed placement. No GIS drainage geometry is loaded.
 	if "--representative-drainage" in OS.get_cmdline_user_args() and "--no-drainage" not in OS.get_cmdline_user_args():
@@ -159,49 +164,12 @@ func _create_ground() -> void:
 			mesh.visibility_range_end = 2500.0
 			chunk.add_child(mesh)
 			var shape := ConcavePolygonShape3D.new()
+			shape.backface_collision = true
 			shape.set_faces(surface.collision)
 			var collision := CollisionShape3D.new()
 			collision.shape = shape
 			chunk.add_child(collision)
 			ground.add_child(chunk)
-
-## Distant Horizon Mesh: A low-poly single-mesh skyline of the town for the far distance (500m to 2km), taking only 1 draw call.
-func _create_distant_horizon() -> void:
-	var surface := MeshSurface.new()
-	var mat := StandardMaterial3D.new()
-	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	mat.albedo_color = Color(0.62, 0.68, 0.75, 1.0)
-	var terrain := map_data.terrain
-	var rng := RandomNumberGenerator.new()
-	rng.seed = 42
-
-	var num_silhouettes := 72
-	for i in range(num_silhouettes):
-		var angle := (float(i) / float(num_silhouettes)) * TAU
-		var dist := rng.randf_range(650.0, 1600.0)
-		var center_pt := Vector2(cos(angle), sin(angle)) * dist
-		var ground_y := terrain.height_at(center_pt) if terrain.is_valid else 0.0
-		var width := rng.randf_range(25.0, 50.0)
-		var height := rng.randf_range(12.0, 28.0)
-
-		var normal := Vector3(cos(angle), 0.0, sin(angle)).normalized()
-		var tangent := Vector2(-sin(angle), cos(angle)) * (width * 0.5)
-		var p0 := Vector3(center_pt.x - tangent.x, ground_y, center_pt.y - tangent.y)
-		var p1 := Vector3(center_pt.x + tangent.x, ground_y, center_pt.y + tangent.y)
-		var p2 := Vector3(center_pt.x + tangent.x, ground_y + height, center_pt.y + tangent.y)
-		var p3 := Vector3(center_pt.x - tangent.x, ground_y + height, center_pt.y - tangent.y)
-
-		surface.quad(p0, p1, p2, p3, normal, Color.WHITE,
-			Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, false)
-
-	var mesh_inst := MeshInstance3D.new()
-	mesh_inst.name = "DistantHorizonSkyline"
-	mesh_inst.mesh = surface.to_mesh()
-	mesh_inst.material_override = mat
-	mesh_inst.visibility_range_begin = 500.0
-	mesh_inst.visibility_range_end = 2000.0
-	mesh_inst.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	add_child(mesh_inst)
 
 ## Real ground cover: the land-cover raster goes to the shader as an 8-bit class texture.
 func _ground_material() -> Material:
@@ -386,6 +354,18 @@ func _create_godavari_bridge() -> void:
 	add_child(godavari_bridge)
 	godavari_bridge.build(self, map_data)
 
+func _create_ramagundam_flyover() -> void:
+	ramagundam_flyover = RamagundamFlyoverClass.new()
+	add_child(ramagundam_flyover)
+	ramagundam_flyover.build(self, map_data)
+
+func flyover_height_at(point: Vector2, fallback: float) -> float:
+	if ramagundam_flyover and ramagundam_flyover.has_method("deck_height_at"):
+		var dh: float = ramagundam_flyover.deck_height_at(point)
+		if dh != -INF:
+			return dh
+	return fallback
+
 ## Real trees from the canopy-height map, kept off spawns and the coal-gallery portal.
 func _create_trees() -> void:
 	trees = TreeBuilder.new()
@@ -475,6 +455,11 @@ func _create_local_activity() -> void:
 	local_activity = LocalActivityBuilder.new()
 	add_child(local_activity)
 	local_activity.build(self, map_data, bus_station)
+
+func _create_scenarios() -> void:
+	scenarios = CityScenariosBuilder.new()
+	add_child(scenarios)
+	scenarios.call("build", self, map_data)
 
 func _create_collectibles() -> void:
 	_coin_material = StandardMaterial3D.new()

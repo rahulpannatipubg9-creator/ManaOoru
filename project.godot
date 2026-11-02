@@ -1,178 +1,255 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
+config_version=5
+
+[animation]
+
+compatibility/default_parent_skeleton_in_mesh_instance_3d=true
+
 [application]
+
 config/name="MANA OORU"
 config/description="MANA OORU - 3D Exploration Prototype"
 run/main_scene="res://scenes/main.tscn"
+run/main_scene.android="res://scenes/performance/android_probe_boot.tscn"
+config/features=PackedStringArray("4.7", "GL Compatibility")
 config/icon="res://assets/mana_ooru_icon.svg"
-config/features=PackedStringArray("4.3", "GL Compatibility")
+
+[audio]
+
+general/text_to_speech=true
 
 [display]
+
 window/size/viewport_width=1280
 window/size/viewport_height=720
+window/size/mode=3
 window/size/window_width_override=1280
 window/size/window_height_override=720
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 window/handheld/orientation=4
-window/size/resizable=true
-window/size/mode=3
-
-[rendering]
-renderer/rendering_method="gl_compatibility"
-renderer/rendering_method.mobile="gl_compatibility"
-renderer/rendering_method.driver="opengl3"
-environment/defaults/default_clear_color=Color(0.38, 0.68, 0.88, 1)
-textures/default_filters/use_nearest_mipmap_filter=false
-textures/vram_compression/import_etc2_astc=true
 
 [input]
-prone={"deadzone":0.5,"events":[Object(InputEventKey,"physical_keycode":90)]}
-lean_left={"deadzone":0.5,"events":[Object(InputEventKey,"physical_keycode":81)]}
-lean_right={"deadzone":0.5,"events":[Object(InputEventKey,"physical_keycode":69)]}
-free_look={"deadzone":0.5,"events":[Object(InputEventKey,"physical_keycode":4194328)]}
-revive={"deadzone":0.5,"events":[Object(InputEventKey,"physical_keycode":72)]}
-loot={"deadzone":0.5,"events":[Object(InputEventKey,"physical_keycode":76)]}
+
+prone={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":16,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":90,"key_label":0,"unicode":0,"location":0,"echo":false,"script":null)
+]
+}
+lean_left={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":16,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":81,"key_label":0,"unicode":0,"location":0,"echo":false,"script":null)
+]
+}
+lean_right={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":16,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":69,"key_label":0,"unicode":0,"location":0,"echo":false,"script":null)
+]
+}
+free_look={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":16,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":4194328,"key_label":0,"unicode":0,"location":0,"echo":false,"script":null)
+]
+}
+revive={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":16,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":72,"key_label":0,"unicode":0,"location":0,"echo":false,"script":null)
+]
+}
+loot={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":16,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":76,"key_label":0,"unicode":0,"location":0,"echo":false,"script":null)
+]
+}
 service={
 "deadzone": 0.5,
-"events": [Object(InputEventKey,"physical_keycode":79,"unicode":111)]
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":16,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":79,"key_label":0,"unicode":111,"location":0,"echo":false,"script":null)
+]
 }
 aim={
 "deadzone": 0.5,
-"events": [Object(InputEventMouseButton,"button_index":2)]
+"events": [Object(InputEventMouseButton,"resource_local_to_scene":false,"resource_name":"","device":32,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"button_mask":0,"position":Vector2(0, 0),"global_position":Vector2(0, 0),"factor":1.0,"button_index":2,"canceled":false,"pressed":false,"double_click":false,"script":null)
+]
 }
 forward={
 "deadzone": 0.5,
-"events": [Object(InputEventKey,"physical_keycode":87,"unicode":119)]
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":16,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":87,"key_label":0,"unicode":119,"location":0,"echo":false,"script":null)
+]
 }
 backward={
 "deadzone": 0.5,
-"events": [Object(InputEventKey,"physical_keycode":83,"unicode":115)]
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":16,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":83,"key_label":0,"unicode":115,"location":0,"echo":false,"script":null)
+]
 }
 left={
 "deadzone": 0.5,
-"events": [Object(InputEventKey,"physical_keycode":65,"unicode":97)]
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":16,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":65,"key_label":0,"unicode":97,"location":0,"echo":false,"script":null)
+]
 }
 right={
 "deadzone": 0.5,
-"events": [Object(InputEventKey,"physical_keycode":68,"unicode":100)]
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":16,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":68,"key_label":0,"unicode":100,"location":0,"echo":false,"script":null)
+]
 }
 run={
 "deadzone": 0.5,
-"events": [Object(InputEventKey,"physical_keycode":4194325)]
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":16,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":4194325,"key_label":0,"unicode":0,"location":0,"echo":false,"script":null)
+]
 }
 jump={
 "deadzone": 0.5,
-"events": [Object(InputEventKey,"physical_keycode":32,"unicode":32)]
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":16,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":32,"key_label":0,"unicode":32,"location":0,"echo":false,"script":null)
+]
 }
 vehicle_throttle={
 "deadzone": 0.5,
-"events": [Object(InputEventKey,"physical_keycode":87,"unicode":119)]
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":16,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":87,"key_label":0,"unicode":119,"location":0,"echo":false,"script":null)
+]
 }
 vehicle_brake={
 "deadzone": 0.5,
-"events": [Object(InputEventKey,"physical_keycode":83,"unicode":115)]
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":16,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":83,"key_label":0,"unicode":115,"location":0,"echo":false,"script":null)
+]
 }
 vehicle_steer_left={
 "deadzone": 0.5,
-"events": [Object(InputEventKey,"physical_keycode":65,"unicode":97)]
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":16,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":65,"key_label":0,"unicode":97,"location":0,"echo":false,"script":null)
+]
 }
 vehicle_steer_right={
 "deadzone": 0.5,
-"events": [Object(InputEventKey,"physical_keycode":68,"unicode":100)]
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":16,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":68,"key_label":0,"unicode":100,"location":0,"echo":false,"script":null)
+]
 }
 vehicle_handbrake={
 "deadzone": 0.5,
-"events": [Object(InputEventKey,"physical_keycode":32,"unicode":32)]
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":16,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":32,"key_label":0,"unicode":32,"location":0,"echo":false,"script":null)
+]
 }
 vehicle_enter={
 "deadzone": 0.5,
-"events": [Object(InputEventKey,"physical_keycode":69,"unicode":101)]
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":16,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":69,"key_label":0,"unicode":101,"location":0,"echo":false,"script":null)
+]
 }
 vehicle_exit={
 "deadzone": 0.5,
-"events": [Object(InputEventKey,"physical_keycode":70,"unicode":102)]
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":16,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":70,"key_label":0,"unicode":102,"location":0,"echo":false,"script":null)
+]
 }
 vehicle_camera={
 "deadzone": 0.5,
-"events": [Object(InputEventKey,"physical_keycode":86,"unicode":118)]
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":16,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":86,"key_label":0,"unicode":118,"location":0,"echo":false,"script":null)
+]
 }
 camera_look_behind={
 "deadzone": 0.5,
-"events": [Object(InputEventKey,"physical_keycode":66,"unicode":98)]
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":16,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":66,"key_label":0,"unicode":98,"location":0,"echo":false,"script":null)
+]
 }
 vehicle_horn={
 "deadzone": 0.5,
-"events": [Object(InputEventKey,"physical_keycode":72,"unicode":104)]
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":16,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":72,"key_label":0,"unicode":104,"location":0,"echo":false,"script":null)
+]
 }
 vehicle_transmission={
 "deadzone": 0.5,
-"events": [Object(InputEventKey,"physical_keycode":84,"unicode":116)]
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":16,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":84,"key_label":0,"unicode":116,"location":0,"echo":false,"script":null)
+]
 }
 vehicle_gear_up={
 "deadzone": 0.5,
-"events": [Object(InputEventKey,"physical_keycode":88,"unicode":120)]
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":16,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":88,"key_label":0,"unicode":120,"location":0,"echo":false,"script":null)
+]
 }
 vehicle_gear_down={
 "deadzone": 0.5,
-"events": [Object(InputEventKey,"physical_keycode":90,"unicode":122)]
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":16,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":90,"key_label":0,"unicode":122,"location":0,"echo":false,"script":null)
+]
 }
 vehicle_lights={
 "deadzone": 0.5,
-"events": [Object(InputEventKey,"physical_keycode":76,"unicode":108)]
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":16,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":76,"key_label":0,"unicode":108,"location":0,"echo":false,"script":null)
+]
 }
 vehicle_indicator_left={
 "deadzone": 0.5,
-"events": [Object(InputEventKey,"physical_keycode":81,"unicode":113)]
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":16,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":81,"key_label":0,"unicode":113,"location":0,"echo":false,"script":null)
+]
 }
 vehicle_indicator_right={
 "deadzone": 0.5,
-"events": [Object(InputEventKey,"physical_keycode":190,"unicode":46)]
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":16,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":190,"key_label":0,"unicode":46,"location":0,"echo":false,"script":null)
+]
 }
 vehicle_recover={
 "deadzone": 0.5,
-"events": [Object(InputEventKey,"physical_keycode":82,"unicode":114)]
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":16,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":82,"key_label":0,"unicode":114,"location":0,"echo":false,"script":null)
+]
 }
 crouch={
 "deadzone": 0.5,
-"events": [Object(InputEventKey,"physical_keycode":67,"unicode":99)]
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":16,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":67,"key_label":0,"unicode":99,"location":0,"echo":false,"script":null)
+]
 }
 interact={
 "deadzone": 0.5,
-"events": [Object(InputEventKey,"physical_keycode":69,"unicode":101)]
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":16,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":69,"key_label":0,"unicode":101,"location":0,"echo":false,"script":null)
+]
 }
 weapon_toggle={
 "deadzone": 0.5,
-"events": [Object(InputEventKey,"physical_keycode":49,"unicode":49)]
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":16,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":49,"key_label":0,"unicode":49,"location":0,"echo":false,"script":null)
+]
 }
 map_toggle={
 "deadzone": 0.5,
-"events": [Object(InputEventKey,"physical_keycode":77,"unicode":109)]
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":16,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":77,"key_label":0,"unicode":109,"location":0,"echo":false,"script":null)
+]
 }
 minimap_zoom_in={
 "deadzone": 0.5,
-"events": [Object(InputEventKey,"physical_keycode":61,"unicode":61)]
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":16,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":61,"key_label":0,"unicode":61,"location":0,"echo":false,"script":null)
+]
 }
 minimap_zoom_out={
 "deadzone": 0.5,
-"events": [Object(InputEventKey,"physical_keycode":45,"unicode":45)]
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":16,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":45,"key_label":0,"unicode":45,"location":0,"echo":false,"script":null)
+]
 }
 minimap_orientation={
 "deadzone": 0.5,
-"events": [Object(InputEventKey,"physical_keycode":78,"unicode":110)]
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":16,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":78,"key_label":0,"unicode":110,"location":0,"echo":false,"script":null)
+]
 }
 pause={
 "deadzone": 0.5,
-"events": [Object(InputEventKey,"physical_keycode":4194305)]
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":16,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":4194305,"key_label":0,"unicode":0,"location":0,"echo":false,"script":null)
+]
 }
+
+[input_devices]
+
+sensors/enable_gyroscope=true
+pointing/emulate_mouse_from_touch=false
 
 [physics]
 
-common/physics_interpolation=true
 3d/default_gravity=18.0
+3d/solver/solver_iterations=10
+common/physics_interpolation=true
 
-[input_devices]
-sensors/enable_gyroscope=true
-pointing/emulate_touch_from_mouse=false
-pointing/emulate_mouse_from_touch=false
+[rendering]
 
-[audio]
-general/text_to_speech=true
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+textures/vram_compression/import_s3tc_bptc=true
+textures/vram_compression/import_etc2_astc=true
+environment/defaults/default_clear_color=Color(0.38, 0.68, 0.88, 1)
+renderer/rendering_method.driver="opengl3"

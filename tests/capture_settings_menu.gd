@@ -7,7 +7,7 @@ func run() -> void:
 	assert(game.hud.settings_menu != null)
 	game.hud.settings_menu.open_menu()
 	assert(paused and game.hud.settings_menu.panel.visible)
-	game.hud.settings_menu.graphics_preset.get_parent().get_parent().get_parent().current_tab = 3
+	game.hud.settings_menu._select_page(4)
 	for i in range(3): await process_frame
 	await RenderingServer.frame_post_draw
 	root.get_texture().get_image().save_png("/Users/rahulpannati/Documents/Codex/2026-10-27/wha/outputs/graphics-settings.png")

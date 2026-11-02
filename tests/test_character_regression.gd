@@ -10,7 +10,7 @@ func _init() -> void:
 		await physics_frame
 	var person := game.get_node("Player") as CharacterBody3D
 	var stand_in := person.get_node("TestCharacter")
-	if not ResourceLoader.exists(TestCharacter.MODEL_PATH):
+	if not stand_in.is_active():
 		_check(not stand_in.is_active() and (person.get_node("Body") as MeshInstance3D).mesh != null,
 			"Without the local test model the block figure must stay")
 		_finish("SKIP test character regression: no local test model; block figure kept")
@@ -18,11 +18,13 @@ func _init() -> void:
 	_check(stand_in.is_active(), "Local test model must load onto the person")
 	for mesh_name in ["Body", "Head", "Legs"]:
 		_check((person.get_node(mesh_name) as MeshInstance3D).mesh == null, "Block figure %s must be hidden" % mesh_name)
-	var model: Node3D = stand_in.model
-	var height := _height(model)
+	var mixamo: bool = stand_in.mixamo_model != null and stand_in.mixamo_model.visible
+	var male: bool = stand_in.male_model != null and stand_in.male_model.visible
+	var model: Node3D = stand_in.mixamo_model if mixamo else (stand_in.male_model if male else stand_in.model)
+	var height: float = (model.global_transform * stand_in._skinned_model_bounds(model)).size.y if mixamo else _height(model)
 	_check(absf(height - TestCharacter.TARGET_HEIGHT) < 0.15, "Test model must be person-sized (%.2f m)" % height)
-	var skeleton: Skeleton3D = stand_in.skeleton
-	var thigh := skeleton.find_bone("DEF-thigh.L")
+	var skeleton: Skeleton3D = stand_in.mixamo_skeleton if mixamo else (stand_in.male_skeleton if male else stand_in.skeleton)
+	var thigh := skeleton.find_bone("mixamorig_LeftUpLeg" if mixamo else ("CC_Base_L_Thigh" if male else "DEF-thigh.L"))
 	var idle_pose := skeleton.get_bone_pose_rotation(thigh)
 	person.set_touch_move_input(Vector2(0.0, -1.0))
 	var swing := 0.0

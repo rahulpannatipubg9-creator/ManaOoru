@@ -40,8 +40,31 @@ func setup(game: Node) -> void:
 	margin.add_child(column)
 	_status = Label.new()
 	column.add_child(_status)
-	_add_options(column, "Time of day", ["Automatic", "Morning", "Afternoon", "Night"], environment.set_time_mode)
-	_add_options(column, "Weather", ["Automatic", "Clear", "Rain", "Storm"], environment.set_weather_mode)
+	
+	var quick_row := HBoxContainer.new()
+	quick_row.add_theme_constant_override("separation", 10)
+	column.add_child(quick_row)
+	
+	var btn_clear := Button.new()
+	btn_clear.text = "☀️ Clear Morning (Default)"
+	btn_clear.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	btn_clear.custom_minimum_size.y = 44
+	btn_clear.pressed.connect(func() -> void:
+		environment.set_time_mode("Clear Morning")
+		_refresh_status())
+	quick_row.add_child(btn_clear)
+	
+	var btn_night := Button.new()
+	btn_night.text = "🌙 Night"
+	btn_night.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	btn_night.custom_minimum_size.y = 44
+	btn_night.pressed.connect(func() -> void:
+		environment.set_time_mode("Night")
+		_refresh_status())
+	quick_row.add_child(btn_night)
+	
+	_add_options(column, "Time of day", ["Morning", "Afternoon", "Night", "Automatic"], environment.set_time_mode)
+	_add_options(column, "Weather", ["Clear", "Rain", "Storm", "Automatic"], environment.set_weather_mode)
 	var hint := Label.new()
 	hint.text = "Selected times stay fixed. Automatic resumes the cycle.\nRain changes gradually after returning to the game."
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART

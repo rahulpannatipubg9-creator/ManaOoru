@@ -44,8 +44,11 @@ func _check_car(game: Node, entry: Node, person: CharacterBody3D, car: PhysicsBo
 	_check(person.visible, "%s: the driver must stay visible in third person" % label)
 	var character := person.get_node("TestCharacter")
 	if character.is_active():
-		var skeleton: Skeleton3D = character.skeleton
-		var foot := skeleton.global_transform * skeleton.get_bone_global_pose(skeleton.find_bone("DEF-foot.L")).origin
+		var mixamo: bool = character.mixamo_model != null and character.mixamo_model.visible
+		var male: bool = character.male_model != null and character.male_model.visible
+		var skeleton: Skeleton3D = character.mixamo_skeleton if mixamo else (character.male_skeleton if male else character.skeleton)
+		var foot_name := "mixamorig_LeftFoot" if mixamo else ("CC_Base_L_Foot" if male else "DEF-foot.L")
+		var foot := skeleton.global_transform * skeleton.get_bone_global_pose(skeleton.find_bone(foot_name)).origin
 		var pedal: Vector3 = car.global_transform * (entry.seat_points(car)[1] as Vector3)
 		var ankle_gap := Vector2(car.to_local(foot).z - car.to_local(pedal).z, car.to_local(foot).y - car.to_local(pedal).y).length()
 		_check(ankle_gap < 0.2, "%s: the driver's feet must reach the pedals (off by %.2f m)" % [label, ankle_gap])

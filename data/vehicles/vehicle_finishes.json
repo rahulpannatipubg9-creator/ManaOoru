@@ -1,0 +1,180 @@
+{
+  "lamborghini_aventador_svj": {
+    "paint_color": "#383b3e",
+    "paint_materials": [
+      "CarPaintTextured"
+    ]
+  },
+  "bmw_i8": {
+    "paint_color": "#f0efeb",
+    "paint_materials": [
+      "CarPaint"
+    ]
+  },
+  "bmw_x5": {
+    "paint_color": "#1c2e4a",
+    "paint_materials": [
+      "CarPaint"
+    ]
+  },
+  "mini_cooper_s": {
+    "paint_color": "#183d2c",
+    "paint_materials": [
+      "CarPaint"
+    ]
+  },
+  "porsche_boxster": {
+    "paint_color": "#c0c4c8",
+    "paint_materials": [
+      "Carpaint Pearl Orange"
+    ]
+  },
+  "ford_f150_lightning": {
+    "paint_color": "#1c2e4a",
+    "paint_materials": [
+      "Carpaint Simple Ruby"
+    ]
+  },
+  "ford_f150_raptor_2021": {
+    "paint_color": "#383b3e",
+    "paint_materials": [
+      "Carpaint Simple Onyx21"
+    ]
+  },
+  "lamborghini_diablo_sv": {
+    "paint_color": "#f0efeb",
+    "paint_materials": [
+      "diablp:Lamborghini_DiabloSV_1997Paint_Material1"
+    ]
+  },
+  "roush_mustang_96": {
+    "paint_color": "#5e1924",
+    "paint_materials": [
+      "Ford:Ford_RoushStage3Mustang_1996Paint_Material1"
+    ],
+    "glass_materials": [
+      "Ford:Ford_RoushStage3Mustang_1996WindowA_Material1",
+      "Black_Window",
+      "Light_glass"
+    ]
+  },
+  "shelby_patrol_13": {
+    "paint_color": "#f0efeb",
+    "paint_materials": [
+      "CarPaint"
+    ]
+  },
+  "ferrari_250_testa_rossa": {
+    "paint_color": "#631b26",
+    "paint_materials": [
+      "body"
+    ]
+  },
+  "audi_q8": {
+    "paint_color": "#1c2e4a",
+    "paint_materials": [
+      "wire_135006006"
+    ]
+  },
+  "audi_q8_custom": {
+    "paint_color": "#383b3e",
+    "paint_materials": [
+      "wire_000000000"
+    ]
+  },
+  "bmw_x6": {
+    "paint_color": "#383b3e",
+    "paint_materials": [
+      "wire_006135006"
+    ]
+  },
+  "mercedes_sedan": {
+    "paint_color": "#c0c4c8",
+    "paint_materials": [
+      "wire_135006006"
+    ]
+  },
+  "mazda_cx5": {
+    "paint_color": "#5e1924",
+    "paint_materials": [
+      "wire_008008136"
+    ]
+  },
+  "volvo_xc40": {
+    "paint_color": "#f0efeb",
+    "paint_materials": [
+      "Standard_16"
+    ]
+  },
+  "ford_mustang_mach_40": {
+    "paint_color": "#383b3e",
+    "paint_materials": [
+      "wire_216139066"
+    ],
+    "glass_materials": [
+      "wire_236160154",
+      "wire_159230118",
+      "wire_163092027",
+      "wire_066151096",
+      "wire_140023157",
+      "wire_046094162",
+      "wire_062250081"
+    ]
+  },
+  "ford_transit_camion": {
+    "paint_color": "#f0efeb",
+    "paint_materials": [
+      "wire_008008135",
+      "wire_228214153"
+    ]
+  },
+  "volkswagen_id": {
+    "paint_color": "#f0efeb",
+    "paint_materials": [
+      "Paint_base"
+    ]
+  },
+  "alfa_romeo_155_v6": {
+    "paint_color": "#5e1924",
+    "paint_materials": [
+      "Carpaint"
+    ]
+  },
+  "range_rover_classic": {
+    "paint_color": "#183d2c",
+    "paint_materials": [
+      "wire_088177027"
+    ]
+  },
+  "toyota_supra_gr": {
+    "paint_color": "#c0c4c8",
+    "paint_materials": [
+      "wire_177088027"
+    ],
+    "glass_materials": [
+      "wire_255255255",
+      "wire_028149177",
+      "wire_154215229",
+      "wire_153228153",
+      "wire_228153184",
+      "wire_008110135",
+      "wire_115115115",
+      "wire_027177088",
+      "wire_224198087"
+    ]
+  },
+  "shelby_cobra_68": {
+    "paint_color": "#183d2c",
+    "paint_materials": [],
+    "glass_materials": [
+      "Mat02"
+    ]
+  },
+  "can_am_maverick": {
+    "paint_color": "#e0a52e",
+    "paint_materials": [],
+    "glass_materials": [
+      "01 - Coro678"
+    ]
+  }
+}

@@ -12,26 +12,34 @@ var billboard_count := 0
 
 func build(world: Node, data: MapData) -> void:
 	name = "ChowrasthaBillboards"
-	var road: Dictionary = world.signage._nearest_road(Vector2.ZERO, 420.0)
-	if road.is_empty():
-		return
-	var point: Vector2 = road.point
-	var normal: Vector2 = road.normal
-	var position: Vector2 = Vector2.ZERO
-	for side in [1.0, -1.0]:
-		var candidate: Vector2 = point + normal * side * (road.half_width + 5.0)
-		if world.buildings.is_clear(candidate, 4.5):
-			position = candidate
-			break
-	if position == Vector2.ZERO:
-		return
-	var yaw := atan2(-normal.x, -normal.y)
-	_add_billboard(world, position, yaw)
+	var targets := [
+		{"name": "CHOWRASTHA • GODAVARIKHANI", "pos": Vector2.ZERO, "radius": 420.0},
+		{"name": "LAXMINAGAR • MAIN ROAD", "pos": Vector2(-592.0, 288.0), "radius": 150.0},
+		{"name": "SHANIWAR SANTHA • SATURDAY MARKET", "pos": Vector2(299.0, -586.0), "radius": 150.0},
+		{"name": "KALYAN NAGAR • GODAVARIKHANI", "pos": Vector2(-167.0, 443.0), "radius": 150.0},
+		{"name": "5 INCLINE • SINGARENI MINES (SCCL)", "pos": Vector2(881.0, 1058.0), "radius": 180.0}
+	]
+	for target in targets:
+		var road: Dictionary = world.signage._nearest_road(target.pos, target.radius)
+		if road.is_empty():
+			continue
+		var point: Vector2 = road.point
+		var normal: Vector2 = road.normal
+		var position: Vector2 = Vector2.ZERO
+		for side in [1.0, -1.0]:
+			var candidate: Vector2 = point + normal * side * (road.half_width + 5.0)
+			if world.buildings.is_clear(candidate, 4.5):
+				position = candidate
+				break
+		if position == Vector2.ZERO:
+			continue
+		var yaw := atan2(-normal.x, -normal.y)
+		_add_billboard(world, position, yaw, target.name)
 
-func _add_billboard(world: Node, point: Vector2, yaw: float) -> void:
+func _add_billboard(world: Node, point: Vector2, yaw: float, title := "CHOWRASTHA • GODAVARIKHANI") -> void:
 	var ground: float = world.ground_height(point)
 	var root := Node3D.new()
-	root.name = "ChowrasthaAdvertisement"
+	root.name = "ChowrasthaAdvertisement_%02d" % (billboard_count + 1)
 	add_child(root)
 	# Two steel posts and a frame keep the downloaded ads in a believable
 	# Indian roadside format rather than leaving them as floating flat planes.
@@ -43,7 +51,7 @@ func _add_billboard(world: Node, point: Vector2, yaw: float) -> void:
 			var region := Rect2(Vector2(column * 0.5, row * 0.5), Vector2(0.5, 0.5))
 			_add_ad_panel(root, Vector3(point.x, ground + 4.6, point.y), yaw, Vector2((column - 0.5) * PANEL_SIZE.x, (0.5 - row) * PANEL_SIZE.y), region)
 	var label := Label3D.new()
-	label.text = "CHOWRASTHA • GODAVARIKHANI"
+	label.text = title
 	label.font_size = 25
 	label.pixel_size = 0.006
 	label.outline_size = 3

@@ -19,7 +19,9 @@ func _init() -> void:
 	for _frame in 5:
 		await physics_frame
 	var visual: Node3D = person.get_node("TestCharacter")
-	_check(visual.male_model != null and visual.male_model.visible, "Rahul is the default character")
+	if visual.mixamo_model != null and visual.mixamo_model.visible:
+		visual.toggle_character() # Switch to Rahul for CC_Base clip tests
+	_check(visual.male_model != null and visual.male_model.visible, "Rahul is available and active for CC_Base clip tests")
 	# Rahul's own set (tools/rahul_character, 17_game_clips.py): stepped clips carry one frame past the cycle.
 	_check(visual._walk_clip != null and absf(visual._walk_clip.length - 31.0 / 30.0) < 0.02, "Walking uses WALK_Realistic (1.03 s)")
 	_check(visual._run_clip != null, "A run clip is present for the walk/run fallback")

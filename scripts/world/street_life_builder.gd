@@ -58,6 +58,7 @@ var _street_lamp_surfaces: Dictionary = {}
 var _collecting_street_lamp := false
 var _body: RID
 var _keep_clear: Array[Vector3] = []
+var _utility_pole_transforms: Array[Transform3D] = []
 
 func build(world: Node, data: MapData) -> void:
 	name = "StreetLife"
@@ -333,11 +334,9 @@ func _add_pole(spot: Vector2, toward_road: Vector2) -> void:
 func _add_utility_pole(spot: Vector2, direction: Vector2) -> bool:
 	if not GeoProjection.is_playable(spot) or not _world.buildings.is_clear(spot, 1.2) or _on_other_road(spot, 0.8):
 		return false
-	var pole := UTILITY_POLE_SCENE.instantiate() as Node3D
-	pole.name = "GdkUtilityPole"
-	pole.position = Vector3(spot.x, _ground(spot), spot.y)
-	pole.rotation.y = atan2(direction.x, direction.y)
-	add_child(pole)
+	var pos := Vector3(spot.x, _ground(spot), spot.y)
+	var yaw := atan2(direction.x, direction.y)
+	_utility_pole_transforms.append(Transform3D(Basis(Vector3.UP, yaw), pos))
 	_keep_clear.append(Vector3(spot.x, spot.y, 1.8))
 	road_obstacle_positions.append(spot)
 	utility_pole_count += 1
@@ -550,7 +549,7 @@ func _label(spot: Vector2, yaw: float, text: String, width: float, height: float
 	label.double_sided = false
 	label.position = Vector3(spot.x, height, spot.y)
 	label.rotation.y = yaw
-	label.visibility_range_end = 160.0
+	label.visibility_range_end = 45.0 if OS.has_feature("mobile") else 160.0
 	add_child(label)
 
 func _collide_box(spot: Vector2, bottom: float, size: Vector3, yaw: float) -> void:
@@ -625,3 +624,22 @@ func _commit() -> void:
 		instance.visibility_range_end = VIEW_DISTANCE
 		add_child(instance)
 	_street_lamp_surfaces.clear()
+
+	if not _utility_pole_transforms.is_empty():
+		var temp_pole := UTILITY_POLE_SCENE.instantiate()
+		var pole_mesh_inst: MeshInstance3D = temp_pole.get_node_or_null("Cylinder_009") as MeshInstance3D
+		if pole_mesh_inst and pole_mesh_inst.mesh:
+			var multimesh := MultiMesh.new()
+			multimesh.transform_format = MultiMesh.TRANSFORM_3D
+			multimesh.mesh = pole_mesh_inst.mesh
+			multimesh.instance_count = _utility_pole_transforms.size()
+			for i in _utility_pole_transforms.size():
+				multimesh.set_instance_transform(i, _utility_pole_transforms[i])
+			var pole_instance := MultiMeshInstance3D.new()
+			pole_instance.name = "UtilityPolesMultiMesh"
+			pole_instance.multimesh = multimesh
+			if pole_mesh_inst.get_active_material(0):
+				pole_instance.material_override = pole_mesh_inst.get_active_material(0)
+			pole_instance.visibility_range_end = 180.0 if OS.has_feature("mobile") else VIEW_DISTANCE
+			add_child(pole_instance)
+		temp_pole.queue_free()

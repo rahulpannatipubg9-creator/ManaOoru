@@ -1,0 +1,9 @@
+[gd_scene load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/world/traffic_vehicle.gd" id="1"]
+[node name="TrafficVehicle" type="CharacterBody3D"]
+script = ExtResource("1")
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+[node name="VisualRoot" type="Node3D" parent="."]
+[node name="FrontRayCast3D" type="RayCast3D" parent="."]
+enabled = true
+collision_mask = 9

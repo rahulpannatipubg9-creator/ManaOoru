@@ -116,13 +116,15 @@ func _ready() -> void:
 		# Velocity-Aware Lookahead Streaming (e.g. driving at 130 km/h = 36 m/s):
 		# Pre-lead streaming focus ahead along the velocity vector so upcoming chunks build before arrival.
 		if speed > 3.0:
-			var lead_sec := clampf(1.0 + (speed / 36.1) * 1.5, 1.0, 2.5)
+			var lead_sec := clampf(1.0 + (speed / 36.1) * 2.5, 1.0, 4.0)
 			var lead_vec := Vector2(vel.x, vel.z) * lead_sec
-			if lead_vec.length() > 100.0:
-				lead_vec = lead_vec.normalized() * 100.0
+			if lead_vec.length() > 250.0:
+				lead_vec = lead_vec.normalized() * 250.0
 			return pos + lead_vec
 		return pos
 	world.buildings.focus = player_focus
+	if world.trees:
+		world.trees.focus = player_focus
 	if world.roads:
 		world.roads.focus = player_focus
 	hud.configure_map(world.map_data, world.rendered_building_footprints, world.map_data.landmarks, navigator)
@@ -183,14 +185,21 @@ func _place_on_real_roadsides() -> void:
 			if vehicle.has_method("settle_on_ground"):
 				vehicle.settle_on_ground()
 			vehicle.reset_physics_interpolation()
-	for index in mini(vehicles.size(), world.vehicle_spawns.size()):
-		if vehicles[index].get("keep_custom_spawn") == true or vehicles[index].name.contains("Bridge"):
+	# Custom vehicles retain their named districts without consuming the slots
+	# reserved for the original Thar/911/Compass roadside roster.
+	var roadside_vehicles: Array[PhysicsBody3D] = []
+	for vehicle in vehicles:
+		if not vehicle.has_meta("placement_spawn"):
+			roadside_vehicles.append(vehicle)
+	for index in mini(roadside_vehicles.size(), world.vehicle_spawns.size()):
+		var vehicle := roadside_vehicles[index]
+		if vehicle.get("keep_custom_spawn") == true or vehicle.name.contains("Bridge"):
 			continue
 		var spot: Dictionary = world.vehicle_spawns[index]
-		vehicles[index].global_position = spot.position
-		vehicles[index].rotation.y = spot.yaw
-		vehicles[index].respawn_position = spot.position
-		vehicles[index].settle_on_ground()
+		vehicle.global_position = spot.position
+		vehicle.rotation.y = spot.yaw
+		vehicle.respawn_position = spot.position
+		vehicle.settle_on_ground()
 	for vehicle in vehicles:
 		if vehicle.name.contains("Bridge"):
 			var bridge_spot := Vector3(751.15, -24.8, -3275.0)
@@ -317,6 +326,15 @@ func _input(event: InputEvent) -> void:
 	elif key_event.keycode == KEY_TAB and control_state == ControlState.ON_FOOT:
 		_switch_character()
 		get_viewport().set_input_as_handled()
+	elif key_event.keycode == KEY_M and control_state == ControlState.ON_FOOT:
+		_switch_to_mixamo()
+		get_viewport().set_input_as_handled()
+
+func _switch_to_mixamo() -> void:
+	var character := person.get_node_or_null("TestCharacter")
+	if character and character.has_method("select_mixamo"):
+		var selected: String = character.select_mixamo()
+		_show_control_hint("CHARACTER: %s  •  M / Tab to switch" % selected)
 
 func _switch_character() -> void:
 	var character := person.get_node_or_null("TestCharacter")
@@ -417,14 +435,15 @@ func _clear_control_inputs() -> void:
 
 func _sync_input_context() -> void:
 	var text := GameplayControls.text_focused(get_viewport())
-	var suspended := _window_unfocused or text or get_tree().paused
+	var settings_open: bool = hud != null and hud.get("settings_menu") != null and hud.settings_menu.panel != null and hud.settings_menu.panel.visible
+	var suspended := _window_unfocused or text or get_tree().paused or settings_open
 	if suspended and not _input_suspended:
 		_clear_control_inputs()
 	_input_suspended = suspended
 	GameplayControls.blocked = suspended
 	if get_tree().paused:
 		GameplayControls.mode = GameplayControls.Mode.PAUSED
-	elif text or _window_unfocused:
+	elif text or _window_unfocused or settings_open:
 		GameplayControls.mode = GameplayControls.Mode.UI_FOCUSED
 	elif control_state == ControlState.ON_FOOT:
 		GameplayControls.mode = GameplayControls.Mode.ON_FOOT
@@ -460,17 +479,23 @@ func _is_key(event: InputEventKey, keycode: Key, unicode: int) -> bool:
 
 func _park_all_vehicles() -> void:
 	for candidate in vehicles:
-		candidate.set_input_authority(false)
-		candidate.set_driving_enabled(false)
-		candidate.set_keyboard_input_enabled(false)
+		if candidate.has_method("set_input_authority"):
+			candidate.set_input_authority(false)
+		if candidate.has_method("set_driving_enabled"):
+			candidate.set_driving_enabled(false)
+		if candidate.has_method("set_keyboard_input_enabled"):
+			candidate.set_keyboard_input_enabled(false)
 
 func _activate_only(selected: PhysicsBody3D) -> void:
 	GameplayControls.owner_id = selected.get_instance_id()
 	for candidate in vehicles:
 		var is_selected := candidate == selected
-		candidate.set_input_authority(is_selected)
-		candidate.set_driving_enabled(is_selected)
-		candidate.set_keyboard_input_enabled(is_selected)
+		if candidate.has_method("set_input_authority"):
+			candidate.set_input_authority(is_selected)
+		if candidate.has_method("set_driving_enabled"):
+			candidate.set_driving_enabled(is_selected)
+		if candidate.has_method("set_keyboard_input_enabled"):
+			candidate.set_keyboard_input_enabled(is_selected)
 
 func _interact() -> void:
 	if control_state != ControlState.ON_FOOT:
@@ -539,50 +564,53 @@ func _show_control_hint(message: String) -> void:
 		hud.set_interaction_prompt(message)
 
 func _teleport_to_godavari_bridge() -> void:
-	var bridge_target := Vector3(751.15, -24.8, -3275.0)
-	var bridge_yaw := deg_to_rad(-4.57)
+	var godavari_target := Vector3(751.15, -24.8, -3275.0)
+	var godavari_yaw := deg_to_rad(-4.57)
+	var flyover_target := Vector3(-178.0, -11.8, -2125.0)
+	var flyover_yaw := deg_to_rad(-25.0)
+	var chowrastha_target: Vector3 = $World.player_spawn.get("position", Vector3(120, 1.2, -105))
+	var chowrastha_yaw: float = float($World.player_spawn.get("yaw", 0.0))
+
 	var current_pos: Vector3 = active_vehicle.global_position if (control_state == ControlState.DRIVING and active_vehicle) else person.global_position
 
-	# If already near the bridge (within 1,500m), teleport back to Chowrastha
-	if current_pos.distance_to(bridge_target) < 1500.0:
-		var chowrastha_target: Vector3 = $World.player_spawn.get("position", Vector3(120, 1.2, -105))
-		var chowrastha_yaw: float = float($World.player_spawn.get("yaw", 0.0))
-		if control_state == ControlState.DRIVING and active_vehicle:
-			active_vehicle.global_position = chowrastha_target
-			active_vehicle.rotation = Vector3(0.0, chowrastha_yaw, 0.0)
-			active_vehicle.linear_velocity = Vector3.ZERO
-			active_vehicle.angular_velocity = Vector3.ZERO
-			active_vehicle.respawn_position = chowrastha_target
-			if active_vehicle.has_method("settle_on_ground"):
-				active_vehicle.settle_on_ground()
-			_show_control_hint("Teleported back to Chowrastha Junction")
-		elif control_state == ControlState.ON_FOOT and person:
-			person.global_position = chowrastha_target
-			person.rotation.y = chowrastha_yaw
-			_show_control_hint("Teleported back to Chowrastha Junction")
+	var target_pos: Vector3
+	var target_yaw: float
+	var hint_text: String
+
+	if current_pos.distance_to(godavari_target) < 1000.0:
+		target_pos = chowrastha_target
+		target_yaw = chowrastha_yaw
+		hint_text = "Teleported back to Chowrastha Junction"
+	elif current_pos.distance_to(flyover_target) < 600.0:
+		target_pos = godavari_target
+		target_yaw = godavari_yaw
+		hint_text = "Teleported to Godavari River Bridge (1,100 m)"
 	else:
-		if control_state == ControlState.DRIVING and active_vehicle:
-			active_vehicle.global_position = bridge_target
-			active_vehicle.rotation = Vector3(0.0, bridge_yaw, 0.0)
+		target_pos = flyover_target
+		target_yaw = flyover_yaw
+		hint_text = "Teleported to Ramagundam ROB Flyover (846 m)"
+
+	if control_state == ControlState.DRIVING and active_vehicle:
+		active_vehicle.global_position = target_pos
+		active_vehicle.rotation = Vector3(0.0, target_yaw, 0.0)
+		active_vehicle.linear_velocity = Vector3.ZERO
+		active_vehicle.angular_velocity = Vector3.ZERO
+		active_vehicle.respawn_position = target_pos
+		if active_vehicle.has_method("settle_on_ground"):
+			active_vehicle.settle_on_ground()
+		_show_control_hint(hint_text)
+	elif control_state == ControlState.ON_FOOT and person:
+		if active_vehicle:
+			active_vehicle.global_position = target_pos
+			active_vehicle.rotation = Vector3(0.0, target_yaw, 0.0)
 			active_vehicle.linear_velocity = Vector3.ZERO
 			active_vehicle.angular_velocity = Vector3.ZERO
-			active_vehicle.respawn_position = bridge_target
+			active_vehicle.respawn_position = target_pos
 			if active_vehicle.has_method("settle_on_ground"):
 				active_vehicle.settle_on_ground()
-			_show_control_hint("Teleported to Godavari River Bridge (1,100 m)")
-		elif control_state == ControlState.ON_FOOT and person:
-			# Also bring the active vehicle to the bridge approach so the player can drive immediately!
-			if active_vehicle:
-				active_vehicle.global_position = bridge_target
-				active_vehicle.rotation = Vector3(0.0, bridge_yaw, 0.0)
-				active_vehicle.linear_velocity = Vector3.ZERO
-				active_vehicle.angular_velocity = Vector3.ZERO
-				active_vehicle.respawn_position = bridge_target
-				if active_vehicle.has_method("settle_on_ground"):
-					active_vehicle.settle_on_ground()
-			person.global_position = bridge_target + Vector3(2.5, 0.2, 0.0)
-			person.rotation.y = bridge_yaw
-			_show_control_hint("Teleported to Godavari River Bridge (1,100 m)  •  [E] Drive across")
+		person.global_position = target_pos + Vector3(2.5, 0.2, 0.0)
+		person.rotation.y = target_yaw
+		_show_control_hint(hint_text + "  •  [E] Drive across")
 
 func _set_prompt(message: String) -> void:
 	if Time.get_ticks_msec() >= _hint_until_msec:

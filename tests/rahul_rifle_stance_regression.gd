@@ -31,6 +31,8 @@ func run() -> void:
 	root.add_child(person)
 	await frames(5)
 	visual = person.get_node("TestCharacter")
+	if visual.mixamo_model != null and visual.mixamo_model.visible:
+		visual.toggle_character()
 	# Combat mode: the body turns to the camera's aim, so the camera sits behind it as in a match.
 	person.combat_mode = true
 	_check(visual._rifle_clips.size() == visual.RIFLE_CLIPS.size(), "The AK-47 stance clips are loaded")
@@ -99,6 +101,8 @@ func run() -> void:
 	root.add_child(puppet)
 	await frames(2)
 	var remote: Node3D = puppet.get_node_or_null("TestCharacter")
+	if remote != null and remote.mixamo_model != null and remote.mixamo_model.visible:
+		remote.toggle_character()
 	_check(remote != null and not remote._rifle_clips.is_empty(), "A remote player is Rahul with the rifle clips")
 	if remote != null:
 		for _i in 40:

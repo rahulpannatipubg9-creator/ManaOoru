@@ -119,3 +119,8 @@ Rifle_* clips set the body and the game still solves the arms onto its own rifle
 ### Swapped in while another session was working on the game (2026-10-29)
 - The v2 swap landed in `test_character.gd` while the AK-47 work was editing the same file. Edits were merged by
   hand. Rule: check a file's state just before writing to it; see [../TESTING_AND_TOOLS.md](../TESTING_AND_TOOLS.md).
+
+### Visible vehicle mounting and doorway bend (2026-10-31)
+- **Symptom:** Driver glided through a closed panel; bike rider appeared without a leg-over transition.
+- **Rule:** Gate entry bend and bike leg swing on the transition phase; reset both at IDLE/SEATED. Solve feet and hands to vehicle controls. Keep the visible actor throughout the transition and restore standing after exit. The new offsets default to zero outside vehicle transitions.
+- **Check:** visible_vehicle_entry_regression, character_stance_reactions_regression, test_character_regression, character_arm_hang_regression, plus rendered entry/exit frames.

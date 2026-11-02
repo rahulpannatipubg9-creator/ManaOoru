@@ -7,9 +7,15 @@ var preset: OptionButton
 var controls: Dictionary = {}
 var hint: Label
 var graphics_controls: Dictionary = {}
+var camera_controls: Dictionary = {}
 var graphics_preset: OptionButton
 var _graphics_sync := false
 var _syncing := false
+var _tabs: TabContainer
+var _nav: VBoxContainer
+var _footer: Label
+var _page_title: Label
+var _nav_buttons: Array[Button] = []
 var _mouse_before := Input.MOUSE_MODE_VISIBLE
 
 func setup(owner_hud: Node) -> void:
@@ -20,18 +26,23 @@ func setup(owner_hud: Node) -> void:
 	entry.text = "SETTINGS"
 	entry.position = Vector2(570, 16)
 	entry.custom_minimum_size = Vector2(180, 52)
+	# The entry button (SETTINGS label) gives keyboard/desktop users a top-bar shortcut.
+	# On touch devices it is hidden because the HUD tactical grid already has the slot.
+	# During vehicle mode the button is hidden programmatically via set_driving(true/false).
 	entry.visible = not hud._touch_overlay_enabled
 	add_child(entry)
 	entry.pressed.connect(open_menu)
 	panel = PanelContainer.new()
 	add_child(panel)
+	panel.hide()  # Hide immediately — avoids a one-frame flash of the default grey background.
 	panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	panel.offset_left = 24
 	panel.offset_top = 24
 	panel.offset_right = -24
 	panel.offset_bottom = -24
+	_install_theme()
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.025, 0.04, 0.065, 0.99)
+	style.bg_color = Color("101e29")
 	style.content_margin_left = 24
 	style.content_margin_right = 24
 	style.content_margin_top = 16
@@ -43,18 +54,38 @@ func setup(owner_hud: Node) -> void:
 	var header := HBoxContainer.new()
 	column.add_child(header)
 	var title := Label.new()
-	title.text = "SETTINGS"
+	title.text = "MANA OORU  /  Settings"
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	title.add_theme_font_size_override("font_size", 26)
+	title.add_theme_font_size_override("font_size", 24)
 	header.add_child(title)
 	_button(header, "Save & Return", close_menu)
+	var body := HBoxContainer.new()
+	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	body.add_theme_constant_override("separation", 24)
+	column.add_child(body)
+	_nav = VBoxContainer.new()
+	_nav.custom_minimum_size.x = 205
+	_nav.add_theme_constant_override("separation", 8)
+	body.add_child(_nav)
+	var content := VBoxContainer.new()
+	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	body.add_child(content)
+	_page_title = Label.new()
+	_page_title.add_theme_font_size_override("font_size", 28)
+	content.add_child(_page_title)
 	var tabs := TabContainer.new()
+	_tabs = tabs
+	tabs.tabs_visible = false
 	tabs.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	tabs.add_theme_font_size_override("font_size", 22)
-	column.add_child(tabs)
+	content.add_child(tabs)
+	_footer = Label.new()
+	_footer.text = "Changes apply immediately. Save & Return keeps your preferences."
+	_footer.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_footer.add_theme_color_override("font_color", Color("abc4ce"))
+	column.add_child(_footer)
 	var sensitivity := _page(tabs, "Controls & Sensitivity")
 	var description := Label.new()
-	description.text = "Game-specific presets. 100% = 1x sensitivity. Changes apply immediately and save on return."
+	description.text = "Tune your aim. Choose a preset, then adjust individual sensitivities."
 	description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	sensitivity.add_child(description)
 	# BGMI-style layout editor: separate NORMAL, FIRING and VEHICLE arrangements.
@@ -95,18 +126,40 @@ func setup(owner_hud: Node) -> void:
 		_apply())
 	hint = Label.new()
 	sensitivity.add_child(hint)
+	_build_animations_guide(tabs)
+	_build_camera(tabs)
 	var weather := _page(tabs, "Time & Weather")
-	var time := _options(weather, "Time of day", ["Automatic", "Morning", "Afternoon", "Night"])
+	var quick_env := HBoxContainer.new()
+	quick_env.add_theme_constant_override("separation", 10)
+	weather.add_child(quick_env)
+	var btn_clear := Button.new()
+	btn_clear.text = "☀️ Clear Morning (Default)"
+	btn_clear.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	btn_clear.custom_minimum_size.y = 44
+	btn_clear.pressed.connect(func() -> void:
+		hud._game.environment_controls.environment.set_time_mode("Clear Morning")
+		close_menu())
+	quick_env.add_child(btn_clear)
+	var btn_night := Button.new()
+	btn_night.text = "🌙 Night"
+	btn_night.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	btn_night.custom_minimum_size.y = 44
+	btn_night.pressed.connect(func() -> void:
+		hud._game.environment_controls.environment.set_time_mode("Night")
+		close_menu())
+	quick_env.add_child(btn_night)
+	var time := _options(weather, "Time of day", ["Morning", "Afternoon", "Night", "Automatic"])
 	controls["time"] = time
 	time.item_selected.connect(func(index: int) -> void:
-		if not _syncing: hud._game.environment_controls.environment.set_time_mode(["Automatic", "Morning", "Afternoon", "Night"][index]))
-	var sky := _options(weather, "Weather", ["Automatic", "Clear", "Rain", "Storm"])
+		if not _syncing: hud._game.environment_controls.environment.set_time_mode(["Morning", "Afternoon", "Night", "Automatic"][index]))
+	var sky := _options(weather, "Weather", ["Clear", "Rain", "Storm", "Automatic"])
 	controls["weather"] = sky
 	sky.item_selected.connect(func(index: int) -> void:
-		if not _syncing: hud._game.environment_controls.environment.set_weather_mode(["Automatic", "Clear", "Rain", "Storm"][index]))
+		if not _syncing: hud._game.environment_controls.environment.set_weather_mode(["Clear", "Rain", "Storm", "Automatic"][index]))
 	var activities := _page(tabs, "Activities")
 	_button(activities, "Open missions & activities", func() -> void:
 		close_menu()
+		if panel.visible: return
 		hud._game.gameplay.open_board())
 	var cities := _page(tabs, "Maps & Cities")
 	var city_desc := Label.new()
@@ -115,14 +168,20 @@ func setup(owner_hud: Node) -> void:
 	cities.add_child(city_desc)
 	_button(cities, "Load Chowrasta City (Sketch Reference)", func() -> void:
 		close_menu()
+		if panel.visible: return
 		get_tree().change_scene_to_file("res://scenes/world/chowrasta_city.tscn"))
 	_button(cities, "Load Godavarikhani (Full District)", func() -> void:
 		close_menu()
+		if panel.visible: return
 		get_tree().change_scene_to_file("res://scenes/main.tscn"))
 	_button(activities, "Open city journal", func() -> void:
 		close_menu()
+		if panel.visible: return
 		hud._game.city_life.open_journal())
 	_build_graphics(tabs)
+	_build_navigation()
+	get_viewport().size_changed.connect(_fit_layout)
+	_fit_layout()
 	panel.hide()
 
 func _page(tabs: TabContainer, title: String) -> VBoxContainer:
@@ -147,13 +206,20 @@ func _button(parent: Node, text: String, callback: Callable) -> void:
 	button.pressed.connect(callback)
 
 func _options(parent: Node, title: String, choices: Array) -> OptionButton:
+	var row := HBoxContainer.new()
+	row.custom_minimum_size.y = 64
+	row.add_theme_constant_override("separation", 20)
+	parent.add_child(row)
 	var label := Label.new()
 	label.text = title
-	parent.add_child(label)
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(label)
 	var option := OptionButton.new()
-	option.custom_minimum_size.y = 52
+	option.custom_minimum_size = Vector2(245, 56)
+	option.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	for choice: String in choices: option.add_item(choice)
-	parent.add_child(option)
+	row.add_child(option)
 	return option
 
 func _slider(parent: Node, title: String, key: String, lower: float, upper: float) -> void:
@@ -170,7 +236,16 @@ func _slider(parent: Node, title: String, key: String, lower: float, upper: floa
 	slider.max_value = upper
 	slider.step = 0.05
 	slider.custom_minimum_size.y = 48
-	parent.add_child(slider)
+	row.add_child(slider)
+	row.move_child(slider, 1)
+	slider.custom_minimum_size.x = 180
+	slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	label.custom_minimum_size.x = 210
+	label.size_flags_horizontal = Control.SIZE_FILL
+	value.custom_minimum_size.x = 65
+	value.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	row.custom_minimum_size.y = 64
+	row.add_theme_constant_override("separation", 20)
 	controls[key] = slider
 	slider.value_changed.connect(func(amount: float) -> void:
 		value.text = "%d%%" % roundi(amount * 100.0)
@@ -185,12 +260,33 @@ func _refresh() -> void:
 	preset.select(maxi(0, PRESETS.find(hud.touch_settings.sensitivity_preset)))
 	for key in controls:
 		var control: Control = controls[key]
-		if control is HSlider: control.value = hud.touch_settings.get(key)
+		if control is HSlider:
+			control.value = hud.touch_settings.get(key)
+			control.value_changed.emit(control.value)
 		elif control is CheckButton: control.button_pressed = hud.touch_settings.get(key)
 		elif key == "gyro_mode": control.select(hud.touch_settings.gyro_mode)
 	var environment = hud._game.environment_controls.environment
 	controls.time.select(maxi(0, ["Automatic", "Morning", "Afternoon", "Night"].find(environment.time_mode)))
 	controls.weather.select(0 if environment.auto_weather else (3 if environment.storm else (2 if environment.rain_target > 0.5 else 1)))
+	var cam = _get_camera_pivot()
+	if cam != null:
+		if camera_controls.has("view_mode"):
+			camera_controls.view_mode.select(1 if cam.is_first_person() else 0)
+		if camera_controls.has("tpp_dist"):
+			camera_controls.tpp_dist.value = cam.camera_distance
+			camera_controls.tpp_dist.value_changed.emit(cam.camera_distance)
+		if camera_controls.has("tpp_fov"):
+			camera_controls.tpp_fov.value = cam._base_fov
+			camera_controls.tpp_fov.value_changed.emit(cam._base_fov)
+		if camera_controls.has("fpp_fov"):
+			camera_controls.fpp_fov.value = cam.first_person_fov
+			camera_controls.fpp_fov.value_changed.emit(cam.first_person_fov)
+		if camera_controls.has("shoulder"):
+			camera_controls.shoulder.value = cam.shoulder_offset
+			camera_controls.shoulder.value_changed.emit(cam.shoulder_offset)
+		if camera_controls.has("shake"):
+			camera_controls.shake.value = cam.camera_shake_scale
+			camera_controls.shake.value_changed.emit(cam.camera_shake_scale)
 	_syncing = false
 
 func _apply() -> void:
@@ -205,8 +301,10 @@ func open_menu() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	_refresh()
 	_refresh_graphics()
+	_footer.text = "Changes apply immediately. Save & Return keeps your preferences."
 	hint.text = "Gyro affects aim only on devices with a gyroscope. Off ignores gyro sensitivity."
 	panel.show()
+	hud._game._sync_input_context()
 
 func close_menu() -> void:
 	if not panel.visible: return
@@ -214,9 +312,11 @@ func close_menu() -> void:
 	var result: Error = hud.touch_settings.save_to()
 	if result != OK:
 		hint.text = "Settings could not be saved. Try again."
+		_footer.text = hint.text
 		return
 	if hud._game.performance_controller.settings.save_to() != OK:
 		hint.text = "Graphics preferences could not be saved."
+		_footer.text = hint.text
 		return
 	var dpm_node: Variant = hud._game.get("device_performance_manager")
 	if dpm_node != null:
@@ -249,6 +349,89 @@ func _input(event: InputEvent) -> void:
 	if panel and panel.visible and event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
 		close_menu()
 		get_viewport().set_input_as_handled()
+
+## Called by the HUD when the player enters or exits a vehicle so the desktop
+## SETTINGS shortcut button is hidden during driving (it overlaps the compass bar).
+func set_driving(driving: bool) -> void:
+	for child in get_children():
+		if child is Button and child.text == "SETTINGS" and child != panel:
+			child.visible = (not driving) and (not hud._touch_overlay_enabled)
+			return
+
+func _get_camera_pivot() -> Node:
+	if hud and hud.player and "camera_pivot" in hud.player:
+		return hud.player.camera_pivot
+	elif hud and hud._game and hud._game.person and "camera_pivot" in hud._game.person:
+		return hud._game.person.camera_pivot
+	return null
+
+func _build_camera(tabs: TabContainer) -> void:
+	var page := _page(tabs, "Camera & Perspective")
+	var desc := Label.new()
+	desc.text = "Switch between TPP and FPP, scale view distances, adjust field of view (FOV), and tune shoulder offset."
+	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	page.add_child(desc)
+
+	var mode_opt := _options(page, "Perspective mode", ["Third Person (TPP)", "First Person (FPP)"])
+	camera_controls["view_mode"] = mode_opt
+	mode_opt.item_selected.connect(func(index: int) -> void:
+		if _syncing: return
+		var cam = _get_camera_pivot()
+		if cam != null:
+			cam.set_view_mode(index)
+	)
+
+	_add_camera_slider(page, "TPP Camera Distance", "tpp_dist", 3.0, 9.0, 0.25, "m", func(val: float) -> void:
+		var cam = _get_camera_pivot()
+		if cam != null:
+			cam.set_tpp_distance(val)
+	)
+	_add_camera_slider(page, "TPP Field of View (FOV)", "tpp_fov", 55.0, 95.0, 1.0, "°", func(val: float) -> void:
+		var cam = _get_camera_pivot()
+		if cam != null:
+			cam.set_tpp_fov(val)
+	)
+	_add_camera_slider(page, "FPP Field of View (FOV)", "fpp_fov", 65.0, 110.0, 1.0, "°", func(val: float) -> void:
+		var cam = _get_camera_pivot()
+		if cam != null:
+			cam.set_fpp_fov(val)
+	)
+	_add_camera_slider(page, "Shoulder View Offset", "shoulder", 0.35, 0.95, 0.05, "m", func(val: float) -> void:
+		var cam = _get_camera_pivot()
+		if cam != null:
+			cam.set_shoulder_offset(val)
+	)
+	_add_camera_slider(page, "Camera Shake & Bobbing", "shake", 0.0, 2.0, 0.1, "x", func(val: float) -> void:
+		var cam = _get_camera_pivot()
+		if cam != null:
+			cam.camera_shake_scale = val
+	)
+
+func _add_camera_slider(parent: Control, title: String, key: String, min_val: float, max_val: float, step: float, unit: String, callback: Callable) -> void:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 20)
+	parent.add_child(row)
+	var label := Label.new()
+	label.text = title
+	label.custom_minimum_size.x = 210
+	row.add_child(label)
+	var slider := HSlider.new()
+	slider.min_value = min_val
+	slider.max_value = max_val
+	slider.step = step
+	slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	slider.custom_minimum_size.y = 48
+	row.add_child(slider)
+	camera_controls[key] = slider
+	var val_label := Label.new()
+	val_label.custom_minimum_size.x = 65
+	val_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	row.add_child(val_label)
+	slider.value_changed.connect(func(v: float) -> void:
+		val_label.text = ("%.2f " if step < 1.0 else "%.0f ") % v + unit
+		if not _syncing:
+			callback.call(v)
+	)
 
 func _build_graphics(tabs: TabContainer) -> void:
 	var page := _page(tabs, "Graphics & Performance")
@@ -333,3 +516,216 @@ func _refresh_graphics() -> void:
 				0: target_index = 4
 			control.select(target_index)
 	_graphics_sync = false
+
+func _install_theme() -> void:
+	var theme := Theme.new()
+	theme.default_font_size = 18
+	var normal := _surface(Color("1c3341"))
+	var hover := _surface(Color("294957"))
+	var selected := _surface(Color("d3ae62"))
+	var focus := normal.duplicate() as StyleBoxFlat
+	focus.border_color = Color("f3cf86")
+	focus.set_border_width_all(2)
+	for kind in ["Button", "OptionButton", "CheckButton"]:
+		theme.set_stylebox("normal", kind, normal)
+		theme.set_stylebox("hover", kind, hover)
+		theme.set_stylebox("pressed", kind, selected)
+		theme.set_stylebox("focus", kind, focus)
+		theme.set_color("font_color", kind, Color("edf3ef"))
+		theme.set_color("font_hover_color", kind, Color.WHITE)
+		theme.set_color("font_pressed_color", kind, Color("101e29"))
+		theme.set_color("font_disabled_color", kind, Color("809aa5"))
+	theme.set_color("font_color", "Label", Color("e1eceb"))
+	theme.set_stylebox("panel", "TabContainer", _surface(Color("101e29"), 0))
+	theme.set_stylebox("panel", "PopupMenu", _surface(Color("1c3341")))
+	theme.set_constant("v_separation", "PopupMenu", 32)
+	theme.set_color("font_color", "PopupMenu", Color("edf3ef"))
+	theme.set_stylebox("hover", "PopupMenu", selected)
+	theme.set_color("font_hover_color", "PopupMenu", Color("101e29"))
+	var track := _surface(Color("395363"), 3)
+	track.content_margin_top = 3
+	track.content_margin_bottom = 3
+	theme.set_stylebox("slider", "HSlider", track)
+	var fill := track.duplicate() as StyleBoxFlat
+	fill.bg_color = Color("d3ae62")
+	theme.set_stylebox("grabber_area", "HSlider", fill)
+	theme.set_stylebox("grabber_area_highlight", "HSlider", fill)
+	var image := Image.create(26, 26, false, Image.FORMAT_RGBA8)
+	for y in 26:
+		for x in 26:
+			var alpha := clampf(12.0 - Vector2(x - 12.5, y - 12.5).length(), 0.0, 1.0)
+			image.set_pixel(x, y, Color(0.96, 0.84, 0.59, alpha))
+	var handle := ImageTexture.create_from_image(image)
+	theme.set_icon("grabber", "HSlider", handle)
+	theme.set_icon("grabber_highlight", "HSlider", handle)
+	panel.theme = theme
+
+func _surface(color: Color, radius: int = 6) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = color
+	style.set_corner_radius_all(radius)
+	style.content_margin_left = 16
+	style.content_margin_right = 16
+	style.content_margin_top = 12
+	style.content_margin_bottom = 12
+	return style
+
+func _build_animations_guide(tabs: TabContainer) -> void:
+	var page := _page(tabs, "Animations & Moves")
+	var desc := Label.new()
+	desc.text = "Comprehensive reference for character animations and input combinations. Every action maps to authentic Mixamo cycles with procedural IK and foot-grounding."
+	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	desc.add_theme_color_override("font_color", Color("#b8d0db"))
+	page.add_child(desc)
+
+	var move_speed_opt := _options(page, "Default movement mode (W Key)", ["Walk by Default (Shift to Jog/Run)", "Jog/Run by Default"])
+	var current_player: Node = hud._game.get("person") if hud._game != null else null
+	if current_player and current_player.get("walk_speed") != null:
+		move_speed_opt.select(0 if float(current_player.get("walk_speed")) < 3.0 else 1)
+	move_speed_opt.item_selected.connect(func(idx: int) -> void:
+		if current_player:
+			if idx == 0:
+				current_player.set("walk_speed", 2.2)
+			else:
+				current_player.set("walk_speed", 4.2))
+
+	var categories := [
+		{
+			"category": "🚶 LOCOMOTION & MOVEMENT",
+			"items": [
+				{"action": "Forward Walk", "keys": "W (Tap / Hold)", "clip": "Walk_Loop (Sliced Cycle)", "detail": "Human pace (~2.2 m/s). Feet planted to world speed."},
+				{"action": "Jog / Sprint Forward", "keys": "Shift + W  or  Double-Tap", "clip": "Jogging (4.2 - 6.8 m/s)", "detail": "Full speed running with athletic arm swing."},
+				{"action": "Sprint Backward", "keys": "S (Hold)", "clip": "Sprint_Backward", "detail": "Tactical backward retreat while keeping eyes ahead."},
+				{"action": "Lateral Strafe", "keys": "A (Left)  /  D (Right)", "clip": "Strafe  /  Walk_Left/Right_with_gun", "detail": "Sideways evasive stepping; legs blade into movement."},
+				{"action": "Jump & Vault", "keys": "Spacebar", "clip": "Jump (Standing)  /  Running_Jump", "detail": "Calculated ballistic arc; tucks legs over obstacles."}
+			]
+		},
+		{
+			"category": "🥋 STANCES & TACTICAL COVER",
+			"items": [
+				{"action": "Crouch Stance", "keys": "C  or  Left Ctrl", "clip": "Crouch_Walking  /  Idle_Crouching", "detail": "Shrinks collision to 1.15m; fits under low obstacles."},
+				{"action": "Prone Stance", "keys": "Z Key", "clip": "Prone_Forward  /  Prone_Idle", "detail": "Drops body to 0.55m; military belly crawl."},
+				{"action": "Tactical Lean / Peek", "keys": "Q (Left)  /  E (Right)", "clip": "Procedural Spine Roll (-0.28 rad)", "detail": "Camera shifts 0.45m around corners with wall clearance."}
+			]
+		},
+		{
+			"category": "🎯 COMBAT & WEAPON HANDLING",
+			"items": [
+				{"action": "Equip / Holster Rifle", "keys": "1  /  P Key", "clip": "Weapon Draw & Low-Ready Stance", "detail": "Shoulders rifle; arms solve via two-bone IK to handguard."},
+				{"action": "Aim Down Sights (ADS)", "keys": "Right Mouse Button (Hold)", "clip": "Rifle_Aiming_Idle", "detail": "Aligns sights to camera center with recoil recovery."},
+				{"action": "Fire Weapon", "keys": "Left Mouse Button (Armed)", "clip": "Firing_Rifle  /  _while_walking", "detail": "Simulates barrel kick and procedural muzzle impulse."},
+				{"action": "Tactical Reload", "keys": "R Key", "clip": "Reload", "detail": "Timed magazine swap locked to weapon reload duration."},
+				{"action": "Throw Frag Grenade", "keys": "G Key", "clip": "Throw_Grenade  /  Grenade_Throw", "detail": "Windup and throw trajectory from standing or prone."},
+				{"action": "Melee Martial Combo", "keys": "Left Mouse Button (Unarmed)", "clip": "9-Hit Chain: Boxing → Hook → Knee → MMA Kick", "detail": "Seamless unarmed fighting moves."}
+			]
+		},
+		{
+			"category": "🚗 VEHICLES & ENVIRONMENT",
+			"items": [
+				{"action": "Enter / Exit Vehicle", "keys": "F Key", "clip": "Drive_Seated", "detail": "Opens door, steps into cabin, takes driver wheel."},
+				{"action": "First Person (Cockpit)", "keys": "V Key (While Driving)", "clip": "Driver Eye-Level View", "detail": "Road-aligned perspective with transparent windshield."},
+				{"action": "Swimming & Floating", "keys": "Enter River (>0.85m Depth)", "clip": "Swimming (Moving)  /  Floating (Idle)", "detail": "Buoyant surface swimming with head clearance."}
+			]
+		}
+	]
+
+	for cat in categories:
+		var cat_header := PanelContainer.new()
+		var cat_style := StyleBoxFlat.new()
+		cat_style.bg_color = Color("#182937")
+		cat_style.content_margin_left = 14
+		cat_style.content_margin_right = 14
+		cat_style.content_margin_top = 8
+		cat_style.content_margin_bottom = 8
+		cat_header.add_theme_stylebox_override("panel", cat_style)
+		var cat_title := Label.new()
+		cat_title.text = cat.category
+		cat_title.add_theme_font_size_override("font_size", 17)
+		cat_title.add_theme_color_override("font_color", Color("#f5c042"))
+		cat_header.add_child(cat_title)
+		page.add_child(cat_header)
+
+		for item in cat.items:
+			var card := PanelContainer.new()
+			var c_style := StyleBoxFlat.new()
+			c_style.bg_color = Color("#13222e")
+			c_style.content_margin_left = 12
+			c_style.content_margin_right = 12
+			c_style.content_margin_top = 8
+			c_style.content_margin_bottom = 8
+			card.add_theme_stylebox_override("panel", c_style)
+
+			var c_box := HBoxContainer.new()
+			c_box.add_theme_constant_override("separation", 16)
+			card.add_child(c_box)
+
+			var left_box := VBoxContainer.new()
+			left_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			var act_lbl := Label.new()
+			act_lbl.text = item.action
+			act_lbl.add_theme_font_size_override("font_size", 16)
+			left_box.add_child(act_lbl)
+
+			var det_lbl := Label.new()
+			det_lbl.text = "%s  •  %s" % [item.clip, item.detail]
+			det_lbl.add_theme_font_size_override("font_size", 13)
+			det_lbl.add_theme_color_override("font_color", Color("#8ea3b0"))
+			left_box.add_child(det_lbl)
+			c_box.add_child(left_box)
+
+			var key_panel := PanelContainer.new()
+			var k_style := StyleBoxFlat.new()
+			k_style.bg_color = Color("#223c52")
+			k_style.corner_radius_top_left = 4
+			k_style.corner_radius_top_right = 4
+			k_style.corner_radius_bottom_left = 4
+			k_style.corner_radius_bottom_right = 4
+			k_style.content_margin_left = 12
+			k_style.content_margin_right = 12
+			k_style.content_margin_top = 6
+			k_style.content_margin_bottom = 6
+			key_panel.add_theme_stylebox_override("panel", k_style)
+			var key_lbl := Label.new()
+			key_lbl.text = item.keys
+			key_lbl.add_theme_font_size_override("font_size", 14)
+			key_lbl.add_theme_color_override("font_color", Color("#ffffff"))
+			key_panel.add_child(key_lbl)
+			c_box.add_child(key_panel)
+
+			page.add_child(card)
+
+func _build_navigation() -> void:
+	var nav_labels := ["Aim & controls", "Animations & moves", "Camera & view", "Time & weather", "Activities", "Maps & cities", "Graphics"]
+	for index in _tabs.get_tab_count():
+		var button := Button.new()
+		button.text = nav_labels[index] if index < nav_labels.size() else "Option %d" % index
+		button.toggle_mode = true
+		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		button.custom_minimum_size.y = 64
+		_nav.add_child(button)
+		_nav_buttons.append(button)
+		button.pressed.connect(func() -> void: _select_page(index))
+	_tabs.tab_changed.connect(_select_page)
+	_select_page(0)
+
+func _select_page(index: int) -> void:
+	_tabs.current_tab = index
+	var page_titles := ["Aim & controls", "Character Animations & Control Mapping", "Camera & perspective", "Time & weather", "Activities", "Maps & cities", "Graphics & performance"]
+	_page_title.text = page_titles[index] if index < page_titles.size() else "Settings"
+	for i in _nav_buttons.size(): _nav_buttons[i].set_pressed_no_signal(i == index)
+
+func _fit_layout() -> void:
+	var compact := get_viewport().get_visible_rect().size.x < 1050.0
+	_nav.custom_minimum_size.x = 168.0 if compact else 205.0
+	panel.theme.default_font_size = 16 if compact else 18
+	for button in _nav_buttons:
+		button.custom_minimum_size.y = 54.0 if compact else 64.0
+	for slider in controls.values():
+		if slider is HSlider:
+			slider.custom_minimum_size.x = 100.0 if compact else 180.0
+			var row: HBoxContainer = slider.get_parent()
+			row.get_child(0).custom_minimum_size.x = 160.0 if compact else 210.0
+			row.get_child(2).custom_minimum_size.x = 56.0 if compact else 65.0
+			row.add_theme_constant_override("separation", 12 if compact else 20)
+	for option in panel.find_children("*", "OptionButton", true, false):
+		option.custom_minimum_size.x = 200.0 if compact else 245.0

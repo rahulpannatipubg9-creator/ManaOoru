@@ -15,6 +15,36 @@ notes are in [characters/](characters/). Code: `scripts/player/test_character.gd
 
 ## Entries
 
+### Camera look-behind and input processing blocked during active camera transitions (2026-10-31)
+- **Symptom:** `camera_regression` failed with `C must look behind the person`. In first-person or third-person on-foot mode, pressing C or look inputs failed to respond immediately upon entering the scene or changing perspectives.
+- **Cause:** `camera_controller.gd` `_process()` aborted early when `not _camera.current`. During `main.gd`'s smooth perspective transitions (0.4s duration), `_transition_camera.current` was true, causing the active player's camera controller to ignore `Input.is_action_pressed("camera_look_behind")`.
+- **Rule:** In `camera_controller.gd`, treat the camera as active if `_camera.current` is true OR if its parent node possesses `input_authority == true`.
+- **Check:** `tests/camera_regression.gd`.
+
+### Character physics slope duration calibrated for realistic walk speed (2026-10-31)
+- **Symptom:** `character_physics_regression` failed with `Character must walk up a 15% ramp (reached 1.9 m)`.
+- **Cause:** When `walk_speed` was calibrated down from 4.2 m/s to 2.4 m/s for authentic Mixamo walking animation timing, the slope traversal test was still running for only 420 frames (7.0s = 16.8m travel), leaving the player short of the 24m mark needed to reach 3.0m elevation.
+- **Rule:** Synchronize test frame counts with calibrated gait speeds. At 2.4 m/s, climbing 24m up the 15% ramp requires 650 frames (~10.8s).
+- **Check:** `tests/character_physics_regression.gd`.
+
+### Default walk speed must stay below the jog threshold to trigger Walk_Loop on W (2026-10-31)
+- **Symptom:** Pressing W alone immediately played the Jogging animation rather than the walking loop, making normal on-foot traversal appear hurried.
+- **Cause:** `person_controller.gd` exported `walk_speed: float = 4.2`, which exceeded `test_character.gd`'s standing jog threshold of $2.8$ m/s (`if speed > 2.8: Jogging else: Walk_Loop`).
+- **Rule:** Keep `walk_speed` at $2.4$ m/s ($8.6$ km/h brisk walk) and `run_speed` at $6.8$ m/s ($24.5$ km/h sprint/jog). Walking on `W` cleanly stays below $2.8$ m/s to play `Walk_Loop`, while `Shift + W` accelerates to $6.8$ m/s to trigger `Jogging`.
+- **Check:** `tests/movement_regression.gd`, `tests/character_stance_reactions_regression.gd`.
+
+### Mixamo weapon holding without finger curl left open-palm grip (2026-10-31)
+- **Symptom:** When holding rifles on Mixamo rigs, character hands reached the grip targets but fingers stayed extended, looking unattached to the trigger and handguard.
+- **Cause:** `_orient_mixamo_hand()` oriented the wrist bone but had no procedural finger pose logic for `mixamorig_*HandIndex/Middle/Ring/Pinky/Thumb` joints.
+- **Rule:** When equipping firearms on Mixamo rigs, apply local rotation curls to finger joints (trigger finger index slightly relaxed at 0.45, grip fingers at 0.75-0.95, and thumb wrapped).
+- **Check:** `tests/mixamo_contacts_regression.gd`, `tests/test_godavarikhani_living_district.gd`.
+
+### Mixamo action-blending non-hip bone translation tracks explode skeleton bounds (2026-10-31)
+- **Symptom:** `mixamo_gameplay_regression` failed with `reload preserves low stance instead of standing up (bounds.size.y = 1.541m >= 1.5m)`. Character meshes exploded into dozens of meters when playing action clips (e.g. Reload, Melee) during crouch or prone stances.
+- **Cause:** Mixamo FBX animations store non-zero translation tracks on non-hip bones in source centimeters (~48 cm). When `set_bone_pose_position` was applied to limb and spine bones during action blending in `test_character.gd`, the centimeter translation offsets were written into meter-scaled bones, throwing vertices outward.
+- **Rule:** In Mixamo skeletons, translation tracks must be applied strictly and exclusively to `mixamorig_Hips`. All other bones (`Spine`, `Spine1`, `Spine2`, `UpLeg`, `Leg`, `Foot`, `Arm`, `Hand`) must only receive rotation tracks.
+- **Check:** `tests/mixamo_gameplay_regression.gd`, `tests/mixamo_contacts_regression.gd`.
+
 ### Crouch refused under a low ceiling: the headroom query hit the floor (2026-10-29)
 - **Symptom:** `character_physics_regression` failed "Crouch must shrink the collider". A player squeezed
   under a low roof could not crouch out of it.
@@ -85,3 +115,32 @@ notes are in [characters/](characters/). Code: `scripts/player/test_character.gd
 - **Symptom:** High bone counts and full 60 FPS blend tree updates on multiple pedestrians, dummies and puppets caused vertex skinning bottlenecks on mobile GPUs (Vulkan/OpenGL ES 3.0).
 - **Rule:** Keep mobile character rigs under 45–50 bones for seamless compatibility with mobile OpenGL/Vulkan skinning limits (preventing uniform buffer overflow). Update character skeletons at full 60 FPS up close (0–15m), but throttle distant pedestrians, bots and puppets to 15–30 FPS animation ticks (30 FPS at 15–35m, 15 FPS beyond 35m).
 - **Check:** `movement_regression.gd`, verify animation fidelity up close and tick throttling in distant views.
+
+### Default Mixamo height must be measured after axis correction (2026-10-31)
+- **Symptom:** The new default looked too tall beside vehicles and the world.
+- **Cause:** The Mixamo visual used a hard-coded 100x import multiplier instead of a measured game height.
+- **Rule:** Fit the rotated upright bounds to DEFAULT_MIXAMO_HEIGHT (1.73m), retain a ground offset through reset, and match standing collision height. Preserve the other selectable models and animation clips.
+- **Check:** character_scale_regression verifies measured height, soles at the player origin, and matching standing collision height.
+
+### Mixamo skin bounds caused a giant sideways avatar (2026-10-31)
+- **Cause:** Static mesh AABBs inherited the armature's 0.01 scale but omitted skin bind matrices that restore metre-sized vertices. Fitting those bounds multiplied the character by about 100; an extra axis correction also tipped it sideways.
+- **Rule:** Keep the imported Y-up root rotation at zero. Fit skinned vertices using bone poses and inverse binds, once at startup. Never infer skin size from static mesh AABBs alone.
+- **Check:** character_scale_regression measures actual skinned geometry at 1.73m and samples idle, walking, jogging and seated animation frames for size explosions.
+
+### Audit the active Mixamo library, not the hidden legacy skeleton (2026-10-31)
+- **Symptoms:** walk-start and cover-entry transitions looped; large source root travel escaped the collider; the standing grenade selected a prone throw; long actions were cut at 1.2s; deaths restarted; reload/fire had no selection. Seated poses lost wheel/peg contacts, and rifle sights sat above the eyes.
+- **Fix:** build private runtime clip copies in `mixamo_animation_library.gd`, keep physics responsible for horizontal travel, close genuine loop seams, derive steady idle/walk/driver clips, preserve low stances during actions, time actions from clip/gameplay duration, and solve the active Mixamo rig after `mixer_applied`. Use its own shoulder height and prone reach in local and remote rifle presentation; test crawling and directional weapon clips as well as rifle idle. Source FBXs and GLB remain unchanged.
+- **Rule:** check every source clip, every state selection and crossfade, then inspect rendered poses with props. Static bounds and hidden-rig tests cannot validate the visible skinned player. Grounding corrections belong to the source model/height and must be rebuilt when those change.
+- **Check:** `mixamo_animation_audit`, `mixamo_gameplay_regression`, `mixamo_contacts_regression`, `character_scale_regression`, and the corrected visible-rig vehicle/character tests. Render all clips with `capture_mixamo_animations` and prop poses with `capture_mixamo_gameplay`. Full findings: `docs/MIXAMO_ANIMATION_AUDIT.md`.
+
+### Virat uses the gameplay skeleton (2026-11-01)
+- **Symptom:** Downloaded Virat uses unprefixed bone names and UUID animation names, incompatible with named gameplay clips.
+- **Cause:** Imported skin and animation naming differ from the established Mixamo rig.
+- **Rule:** Fit the skin through weighted bind-space transforms to the gameplay rig and preserve its named animation library; never substitute a GLB path without checking crouch, prone, weapon and vehicle poses. See characters/VIRAT.md.
+- **Check:** Character regressions and Virat gameplay captures.
+
+### Virat vertex colours require the albedo switch (2026-11-01)
+- **Symptom:** The coloured GLB had a valid COLOR_0 stream but rendered white in Godot.
+- **Cause:** Imported StandardMaterial3D.vertex_color_use_as_albedo was false.
+- **Rule:** Duplicate Virat's material and explicitly enable vertex colours; verify the rendered face and clothing, not just the GLB attribute list.
+- **Check:** tests/capture_virat_portraits.gd and test_character_regression.gd.

@@ -52,7 +52,9 @@ func tdm_dummy_hit(hit_position: Vector3, weapon := Weapons.M416) -> void:
 		return
 	var headshot := hit_position.y >= global_position.y + HEIGHT - HEAD_ZONE
 	var stats := Weapons.stats(weapon)
-	health = maxf(0.0, health - float(stats.head_damage if headshot else stats.body_damage))
+	var raw_damage: float = float(stats.head_damage if headshot else stats.body_damage)
+	var effective_damage: float = raw_damage * 0.60
+	health = maxf(0.0, health - effective_damage)
 	var killed := health <= 0.0
 	hit.emit(headshot, killed)
 	if killed:

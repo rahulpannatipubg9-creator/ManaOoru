@@ -1143,6 +1143,9 @@ func _finish_enter_vehicle() -> void:
 	active_vehicle.set_driving_enabled(true)
 	active_vehicle.set_keyboard_input_enabled(true)
 	active_vehicle.set_input_authority(true)
+	# Hide the on-foot character model while inside a vehicle so it doesn't
+	# appear as a tiny floating figure standing on the road behind the car.
+	person.visible = false
 	hud.set_vehicle_mode(true)
 	hud.show_vehicle_controls_hint()
 

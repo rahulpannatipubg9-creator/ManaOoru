@@ -100,6 +100,9 @@ var stream_enabled := true
 var _stream_nodes: Dictionary = {}
 var _chunk_cache: Dictionary = {}
 const MAX_CACHED_CHUNKS := 50
+const MAX_CONCURRENT_BUILD_TASKS := 2
+var _thread_tasks: Dictionary = {} # cell -> task_id
+var _thread_data: Dictionary = {} # cell -> Dictionary (surface, tanks, houses)
 var focus: Callable
 ## Number of buildings whose height came from measured data.
 var measured_height_count := 0
@@ -128,9 +131,17 @@ var building_metadata: Array[Dictionary] = []
 var _sign_road_grid: Dictionary = {}
 
 func setup(data: MapData, is_excluded: Callable) -> void:
+	for task_id: int in _thread_tasks.values():
+		WorkerThreadPool.wait_for_task_completion(task_id)
+	_thread_tasks.clear()
+	_thread_data.clear()
 	# Rebuilding the same generator must replace its generated state.
 	for child in get_children():
 		child.free()
+	for cached in _chunk_cache.values():
+		if is_instance_valid(cached):
+			cached.free()
+	_chunk_cache.clear()
 	footprints.clear()
 	building_metadata.clear()
 	_styles.clear()
@@ -352,7 +363,7 @@ func build_all() -> void:
 	_pending.clear()
 
 func pending_chunk_count() -> int:
-	return _pending.size()
+	return _pending.size() + _thread_tasks.size()
 
 ## True when a circle of the given radius touches no building footprint.
 func is_clear(point: Vector2, radius: float) -> bool:
@@ -378,34 +389,70 @@ func _process(delta: float) -> void:
 		if stream_enabled: _refresh_stream(center)
 		_pending.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
 			return _cell_center(a).distance_squared_to(center) < _cell_center(b).distance_squared_to(center))
-	var started := Time.get_ticks_usec()
-	var chunks_built := 0
-	while not _pending.is_empty() and Time.get_ticks_usec() - started < stream_budget_usec:
-		_build_chunk(_pending.pop_front())
-		chunks_built += 1
-		# Stagger chunk creation: never build more than 1 chunk in a single frame if elapsed time exceeds 1.2ms
-		if chunks_built >= 1 and (Time.get_ticks_usec() - started) >= 1200:
-			break
+
+	# 1. Harvest finished worker tasks and commit chunk meshes in <0.2ms
+	var finished_cells: Array[Vector2i] = []
+	for cell: Vector2i in _thread_tasks.keys():
+		var task_id: int = _thread_tasks[cell]
+		if WorkerThreadPool.is_task_completed(task_id):
+			WorkerThreadPool.wait_for_task_completion(task_id)
+			finished_cells.append(cell)
+	for cell in finished_cells:
+		var data: Dictionary = _thread_data[cell]
+		_thread_tasks.erase(cell)
+		_thread_data.erase(cell)
+		_commit_chunk(cell, data.surface, data.tanks, data.houses)
+
+	# 2. Dispatch background worker tasks from _pending without blocking main thread
+	while not _pending.is_empty() and _thread_tasks.size() < MAX_CONCURRENT_BUILD_TASKS:
+		var cell: Vector2i = _pending.pop_front()
+		if _built.has(cell) or _thread_tasks.has(cell):
+			continue
+		if _chunk_cache.has(cell):
+			var cached: Node = _chunk_cache[cell]
+			_chunk_cache.erase(cell)
+			if is_instance_valid(cached):
+				add_child(cached)
+				_stream_nodes[cell] = cached
+				_built[cell] = true
+				continue
+		_start_worker_chunk(cell)
 
 func _refresh_stream(center: Vector2) -> void:
 	var load_distance := stream_radius + CHUNK_SIZE
 	var unload_distance := load_distance + CHUNK_SIZE * 2.0
 	_pending = _pending.filter(func(cell: Vector2i) -> bool:
-		return not _built.has(cell) and _cell_center(cell).distance_to(center) <= load_distance)
+		return not _built.has(cell) and not _thread_tasks.has(cell) and _cell_center(cell).distance_to(center) <= load_distance)
 	var origin := _cell(center)
 	var count := ceili(load_distance / CHUNK_SIZE) + 1
 	for x in range(origin.x - count, origin.x + count + 1):
 		for y in range(origin.y - count, origin.y + count + 1):
 			var cell := Vector2i(x, y)
-			if _chunks.has(cell) and not _built.has(cell) and not _pending.has(cell) and _cell_center(cell).distance_to(center) <= load_distance:
+			if _chunks.has(cell) and not _built.has(cell) and not _pending.has(cell) and not _thread_tasks.has(cell) and _cell_center(cell).distance_to(center) <= load_distance:
 				_pending.append(cell)
 	for cell: Vector2i in _stream_nodes.keys():
 		if _cell_center(cell).distance_to(center) > unload_distance:
 			var chunk: Node = _stream_nodes[cell]
 			remove_child(chunk)
-			chunk.queue_free()
 			_stream_nodes.erase(cell)
 			_built.erase(cell)
+			_chunk_cache[cell] = chunk
+			if _chunk_cache.size() > MAX_CACHED_CHUNKS:
+				var oldest: Vector2i = _chunk_cache.keys()[0]
+				var evicted: Node = _chunk_cache[oldest]
+				_chunk_cache.erase(oldest)
+				if is_instance_valid(evicted):
+					evicted.queue_free()
+
+func _exit_tree() -> void:
+	for task_id: int in _thread_tasks.values():
+		WorkerThreadPool.wait_for_task_completion(task_id)
+	_thread_tasks.clear()
+	_thread_data.clear()
+	for cached in _chunk_cache.values():
+		if is_instance_valid(cached):
+			cached.queue_free()
+	_chunk_cache.clear()
 
 func apply_view_distance(distance: float) -> void:
 	stream_radius = distance
@@ -414,25 +461,61 @@ func apply_view_distance(distance: float) -> void:
 			mesh.visibility_range_end = distance
 	_resort_timer = 0.0
 
-func _build_chunk(cell: Vector2i) -> void:
-	if _built.has(cell):
-		return
-	_built[cell] = true
-	var surface := MeshSurface.new()
-	var tanks: Array[Transform3D] = []
-	var houses: Array[Array] = []
+func _start_worker_chunk(cell: Vector2i) -> void:
+	var data := {
+		"surface": MeshSurface.new(),
+		"tanks": [] as Array[Transform3D],
+		"houses": [] as Array[Array]
+	}
 	for model in HOUSE_MODELS:
-		houses.append([])
+		data.houses.append([])
+	_thread_data[cell] = data
+	var task_id := WorkerThreadPool.add_task(func() -> void:
+		_worker_mesh_chunk(cell, data)
+	)
+	_thread_tasks[cell] = task_id
+
+func _worker_mesh_chunk(cell: Vector2i, data: Dictionary) -> void:
+	if not _chunks.has(cell):
+		return
+	var surface: MeshSurface = data.surface
+	var tanks: Array[Transform3D] = data.tanks
+	var houses: Array[Array] = data.houses
 	for index in _chunks[cell]:
 		var style: Dictionary = _styles[index]
 		if style.has("house"):
-			# The model is drawn instead; keep the footprint's collision so it stays solid.
 			var hidden := MeshSurface.new()
 			_append_building(hidden, footprints[index], style, tanks)
 			surface.collision.append_array(hidden.collision)
 			houses[style.house.type].append(style.house.transform)
 		else:
 			_append_building(surface, footprints[index], style, tanks)
+
+func _build_chunk(cell: Vector2i) -> void:
+	if _built.has(cell):
+		return
+	if _chunk_cache.has(cell):
+		var cached: Node = _chunk_cache[cell]
+		_chunk_cache.erase(cell)
+		if is_instance_valid(cached):
+			add_child(cached)
+			_stream_nodes[cell] = cached
+			_built[cell] = true
+			return
+	var data := {
+		"surface": MeshSurface.new(),
+		"tanks": [] as Array[Transform3D],
+		"houses": [] as Array[Array]
+	}
+	for model in HOUSE_MODELS:
+		data.houses.append([])
+	_worker_mesh_chunk(cell, data)
+	_commit_chunk(cell, data.surface, data.tanks, data.houses)
+
+func _commit_chunk(cell: Vector2i, surface: MeshSurface, tanks: Array[Transform3D], houses: Array[Array]) -> void:
+	if _built.has(cell):
+		return
+	_built[cell] = true
 	var chunk := Node3D.new()
 	chunk.name = "BuildingChunk_%d_%d" % [cell.x, cell.y]
 	add_child(chunk)

@@ -153,14 +153,32 @@ void fragment() {
 				float shop_height = 2.35;
 				float front = box(vec2(cell.x, height), vec2(0.035, 0.32), vec2(0.965, shop_height));
 				if (front > 0.5) {
-					if (pick < 0.32) {
+					if (pick < 0.26) {
 						// Closed rolling shutter, painted grey, green or blue.
 						vec3 suv = vec3(UV.x / shutter_scale, height / shutter_scale, LAYER_SHUTTER);
-						vec3 tint = pick < 0.12 ? vec3(0.9) : (pick < 0.22 ? vec3(0.55, 0.75, 0.6) : vec3(0.55, 0.65, 0.85));
+						vec3 tint = pick < 0.10 ? vec3(0.9) : (pick < 0.18 ? vec3(0.55, 0.75, 0.6) : vec3(0.55, 0.65, 0.85));
 						albedo = texture(albedo_array, suv).rgb * tint;
 						normal_map = texture(normal_array, suv).rgb;
 						arm = texture(arm_array, suv).rgb;
 						metallic = 0.35;
+					} else if (pick < 0.52) {
+						// Storefront window glass with subtle reflection and dark backing
+						float fresnel = pow(1.0 - clamp(dot(NORMAL, VIEW), 0.0, 1.0), 3.0);
+						vec3 glass_reflect = vec3(0.30, 0.40, 0.48);
+						vec3 dark_interior = vec3(0.035, 0.042, 0.048);
+						albedo = mix(dark_interior, glass_reflect, 0.20 + 0.80 * fresnel);
+						roughness_scale = 0.12;
+						metallic = 0.20;
+						normal_map = vec3(0.5, 0.5, 1.0);
+						// Glass frame borders
+						float frame = step(0.03, cell.x) * step(cell.x, 0.97) * step(0.40, height) * step(height, shop_height - 0.08);
+						if (frame < 0.5) {
+							albedo = vec3(0.12, 0.12, 0.14);
+							roughness_scale = 0.6;
+							metallic = 0.4;
+						} else if (city_night > 0.05) {
+							emission = vec3(0.35, 0.28, 0.16) * city_night * 0.45;
+						}
 					} else {
 						// Open shop: a counter in front, shelves of goods behind in a dim interior
 						// under warm tube lights, shutter rolled up at the top.

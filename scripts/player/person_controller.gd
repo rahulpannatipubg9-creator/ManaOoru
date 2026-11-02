@@ -14,8 +14,8 @@ const Weapons := preload("res://scripts/gameplay/weapon_catalog.gd")
 var respawn_position := DEFAULT_SPAWN
 ## Below this height the body is treated as fallen out of the world; lowered for deep terrain.
 var fall_limit := -10.0
-@export var walk_speed: float = 4.2
-@export var run_speed: float = 7.0
+@export var walk_speed: float = 2.4
+@export var run_speed: float = 6.8
 @export var acceleration: float = 16.0
 @export var stopping_acceleration: float = 24.0
 ## With a rifle out the body faces the aim, so moving sideways and backwards is slower than forwards, as in
@@ -113,6 +113,8 @@ func _ready() -> void:
 	_capsule = (collision_shape.shape as CapsuleShape3D).duplicate()
 	_stand_radius = _capsule.radius
 	collision_shape.shape = _capsule
+	_capsule.height = stand_height
+	collision_shape.position.y = stand_height * 0.5
 	floor_snap_length = step_height
 	floor_max_angle = deg_to_rad(46.0)
 	floor_constant_speed = true
@@ -216,7 +218,17 @@ func _physics_process(delta: float) -> void:
 		velocity = Vector3.ZERO
 	stagger_time = maxf(stagger_time - delta, 0.0)
 	var water_height: float = water_system.surface_at(global_position) if water_system else -INF
-	swimming = is_finite(water_height) and global_position.y < water_height - 0.25
+	var water_depth := 0.0
+	if is_finite(water_height):
+		var ground_y := global_position.y
+		if not is_on_floor() and is_inside_tree():
+			var ground_ray := PhysicsRayQueryParameters3D.create(global_position + Vector3.UP * 0.5, global_position + Vector3.DOWN * 4.0, 1, [get_rid()])
+			var ground_hit := get_world_3d().direct_space_state.intersect_ray(ground_ray)
+			if not ground_hit.is_empty():
+				ground_y = (ground_hit.position as Vector3).y
+		water_depth = water_height - ground_y
+	# Shallow water (< 0.85m waist depth) is waded on foot; deeper water transitions to swimming
+	swimming = is_finite(water_height) and water_depth >= 0.85 and global_position.y < water_height - 0.25
 	if swimming:
 		_swim(delta, allowed, water_height)
 		return
@@ -377,15 +389,19 @@ func _swim(delta: float, allowed: bool, surface: float) -> void:
 	if not allowed:
 		input = Vector2.ZERO
 	var direction := Vector3(input.x, 0, input.y).rotated(Vector3.UP, camera_pivot.movement_yaw())
-	velocity.x = move_toward(velocity.x, direction.x * 3.0, delta * 5.0)
-	velocity.z = move_toward(velocity.z, direction.z * 3.0, delta * 5.0)
-	velocity.y = clampf((surface - 0.65 - global_position.y) * 4.0, -2.0, 3.0)
+	var moving := direction.length_squared() > 0.01
+	var target_speed := 3.2 if moving else 0.0
+	velocity.x = move_toward(velocity.x, direction.x * target_speed, delta * 5.0)
+	velocity.z = move_toward(velocity.z, direction.z * target_speed, delta * 5.0)
+	var move_factor := clampf(Vector2(velocity.x, velocity.z).length() / 2.0, 0.0, 1.0)
+	var target_y := surface - lerpf(1.25, 0.60, move_factor)
+	velocity.y = clampf((target_y - global_position.y) * 4.0, -2.5, 3.0)
 	if allowed and Input.is_action_pressed("jump"):
-		velocity.y = 4.0
+		velocity.y = 3.5
 	is_running = false
 	_fall_speed = 0.0
 	move_and_slide()
-	if direction.length_squared() > 0.01:
+	if moving:
 		rotation.y = lerp_angle(rotation.y, atan2(direction.x, direction.z), delta * 5.0)
 	_animate(delta)
 
@@ -423,10 +439,12 @@ func _update_weapon_presentation(delta: float) -> void:
 		if chest == Vector3.INF:
 			chest = global_position + Vector3.UP * (_stance_height() * 0.66 + 0.08)
 		var ready := chest - Vector3.UP * 0.08 + body_right * 0.16 + body_forward * 0.22
-		var shouldered := chest + Vector3.UP * 0.26 + body_right * 0.17 + body_forward * 0.30
+		var shoulder_lift: float = character.weapon_shoulder_lift() if character != null and character.has_method("weapon_shoulder_lift") else 0.26
+		var shouldered := chest + Vector3.UP * shoulder_lift + body_right * 0.17 + body_forward * 0.30
 		var lowered := chest - Vector3.UP * 0.16 + body_right * 0.18 + body_forward * 0.18
 		if prone:
-			ready = chest + body_forward * 0.5 + body_right * 0.12
+			var prone_reach: float = character.weapon_prone_reach() if character != null and character.has_method("weapon_prone_reach") else 0.5
+			ready = chest + body_forward * prone_reach + body_right * 0.12
 			shouldered = ready
 			lowered = ready
 		base = ready.lerp(shouldered, _aim_blend).lerp(lowered, _carry_blend)

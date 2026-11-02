@@ -34,6 +34,7 @@ func run() -> void:
 	session = Session.new()
 	root.add_child(session)
 	var config := Config.new()
+	config.tdm_armor_reduction = 0.0
 	config.countdown_seconds = 1.0
 	config.spawn_protection_seconds = 0.3
 	config.respawn_seconds = 1.0

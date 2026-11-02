@@ -1,0 +1,103 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/vehicle/imported_vehicle.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/camera/camera_controller.gd" id="2"]
+[ext_resource type="PackedScene" path="res://assets/models/vehicles/porsche_boxster/porsche_boxster_rig.glb" id="3"]
+[ext_resource type="Script" path="res://scripts/player/engine_sound.gd" id="4"]
+[ext_resource type="Script" path="res://scripts/player/drivetrain_profile.gd" id="5"]
+
+[sub_resource type="Resource" id="Drivetrain"]
+script = ExtResource("5")
+gear_ratios = Array[float]([3.4, 2.19, 1.63, 1.29, 1.03, 0.84, 0.69])
+reverse_ratio = 3.2
+final_drive = 3.25
+driveline_efficiency = 0.88
+automatic_available = true
+electric_motor = false
+shift_time = 0.12
+idle_rpm = 750.0
+redline_rpm = 7800.0
+torque_curve = Array[Vector2]([Vector2(750, 129.6), Vector2(2475.0, 280.8), Vector2(4500, 360), Vector2(6084.0, 342.0), Vector2(7800, 208.8)])
+launch_rpm = 2600.0
+launch_torque_ratio = 1.0
+cylinders = 6
+diesel_clatter = 0.0
+turbo_whine = 0.04
+
+[sub_resource type="BoxShape3D" id="BodyCollision"]
+size = Vector3(1.74409, 1.037, 4.06782)
+
+[node name="PorscheBoxster" type="RigidBody3D" groups=["enterable_vehicle"]]
+script = ExtResource("1")
+vehicle_id = "porsche_boxster"
+road_speed_limit = 77.5
+vehicle_mass = 1350.0
+wheel_radius = 0.34784
+suspension_rest_length = 0.55217
+suspension_bump_travel = 0.1
+suspension_droop_travel = 0.12
+suspension_frequency = 2.1
+suspension_damping_ratio = 0.52
+center_of_mass_height = 0.412
+center_of_mass_forward = -0.12
+braking_acceleration = 10.5
+drag_area = 0.8
+rolling_resistance = 0.012
+tyre_friction = 1.65
+max_steer_angle = 0.61
+high_speed_steer_share = 0.23
+rear_wheel_drive = true
+front_wheel_drive = false
+front_drive_share = 0.5
+seat_hip = Vector3(0.38089, 0.38, 0.12)
+pedal_point = Vector3(0.38089, 0.12, 0.77)
+entry_half_width = 1.002
+left_hand_grip = Vector3(0.55089, 0.78, 0.54)
+right_hand_grip = Vector3(0.21089, 0.78, 0.54)
+drivetrain = SubResource("Drivetrain")
+
+[node name="Chassis" type="Node3D" parent="."]
+
+[node name="FrontIndicator" type="Marker3D" parent="Chassis"]
+position = Vector3(0.0, 0.4, 2.187)
+
+[node name="FrontLeftWheel" type="Node3D" parent="."]
+position = Vector3(-0.68154, 0.35021, 1.23456)
+rotation = Vector3(0, 0, 1.5707963)
+
+[node name="FrontRightWheel" type="Node3D" parent="."]
+position = Vector3(0.79846, 0.35021, 1.23456)
+rotation = Vector3(0, 0, 1.5707963)
+
+[node name="RearLeftWheel" type="Node3D" parent="."]
+position = Vector3(-0.81153, 0.34546, -1.23456)
+rotation = Vector3(0, 0, 1.5707963)
+
+[node name="RearRightWheel" type="Node3D" parent="."]
+position = Vector3(0.71116, 0.34546, -1.23456)
+rotation = Vector3(0, 0, 1.5707963)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("BodyCollision")
+position = Vector3(0.0, 0.6385, 0.0)
+
+[node name="Model" parent="." instance=ExtResource("3")]
+
+[node name="CameraPivot" type="Node3D" parent="."]
+position = Vector3(0.0, 1.537, 0.0)
+script = ExtResource("2")
+first_person_offset = Vector3(0.38089, 1.06, 0.22)
+first_person_follows_body = true
+first_person_min_pitch = -0.6
+first_person_max_pitch = 0.5
+
+[node name="SpringArm3D" type="SpringArm3D" parent="CameraPivot"]
+spring_length = 5.5
+collision_mask = 1
+margin = 0.2
+
+[node name="Camera3D" type="Camera3D" parent="CameraPivot/SpringArm3D"]
+fov = 68.0
+
+[node name="EngineAudio" type="AudioStreamPlayer3D" parent="."]
+script = ExtResource("4")

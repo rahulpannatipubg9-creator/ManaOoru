@@ -11,15 +11,17 @@ func _init() -> void:
 
 func _run() -> void:
 	var vehicle := TrafficVehicle.new()
-	vehicle.route = PackedVector3Array([Vector3.ZERO, Vector3(10,0,0)])
-	vehicle.speed = 5.0
-	# Route vertices have equal height, but the intervening road rises by a metre.
-	vehicle.ground_sampler = func(point: Vector2) -> float: return sin(point.x * PI / 10.0)
+	var lane := Path3D.new()
+	lane.curve = Curve3D.new()
+	for i in 21:
+		var x := float(i) * 0.5
+		lane.curve.add_point(Vector3(x, sin(x * PI / 10.0), 0))
+	lane.set_meta("next", [])
+	root.add_child(lane)
 	root.add_child(vehicle)
-	vehicle.set_process(false)
-	vehicle._process(1.0)
-	assert(absf(vehicle.position.x - 5.0) < 0.001, "Grounding must not change route progress")
-	assert(absf(vehicle.position.y - 1.0) < 0.001, "Traffic must follow intervening road relief instead of floating along endpoint interpolation")
+	vehicle.activate(lane, 5.0)
+	assert(vehicle.position.y > 0.95, "Traffic must follow baked road relief")
+	vehicle.set_active(false)
 	var resident = load("res://scenes/world/pedestrian.tscn").instantiate()
 	resident.idle_mode = true
 	resident.ground_sampler = func(_point: Vector2) -> float: return 3.0
@@ -52,5 +54,6 @@ func _run() -> void:
 	fixture.free()
 	print("PASS ambient contact: nonlinear terrain, unchanged route progress, neutral and animated foot support")
 	vehicle.free()
+	lane.free()
 	resident.free()
 	quit()

@@ -28,6 +28,9 @@ extends Resource
 
 @export_group("Combat")
 @export var max_health := 100.0
+## BGMI Level 2 Armor damage reduction in TDM (0.40 = 40% reduction, multiplier 0.60)
+## Sets TTK to 0.52s-0.55s (5-6 shots) rather than 0.26s (3 shots)
+@export var tdm_armor_reduction := 0.40
 @export var regen_delay_seconds := 5.0
 @export var regen_per_second := 10.0
 ## The host rejects a hit claiming more than this in one shot.
