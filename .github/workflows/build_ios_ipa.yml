@@ -22,14 +22,12 @@ jobs:
           mkdir -p .ci
           curl -fsSL -o .ci/godot.zip https://github.com/godotengine/godot/releases/download/4.7.2-stable/Godot_v4.7.2-stable_macos.universal.zip
           unzip -q .ci/godot.zip -d .ci
-          GODOT_BIN=$(find .ci -name "Godot" -type f -perm +111 | head -n 1)
-          if [ -z "$GODOT_BIN" ]; then
-            GODOT_BIN=$(find .ci -name "godot" -type f | head -n 1)
-          fi
-          echo "Found Godot binary at: $GODOT_BIN"
-          sudo cp "$GODOT_BIN" /usr/local/bin/godot
-          sudo ln -sf /usr/local/bin/godot /usr/local/bin/Godot
-          godot --version
+          GODOT_BIN_DIR="$(pwd)/.ci/Godot.app/Contents/MacOS"
+          echo "$GODOT_BIN_DIR" >> $GITHUB_PATH
+          echo "/usr/local/bin" >> $GITHUB_PATH
+          sudo ln -sf "$GODOT_BIN_DIR/Godot" /usr/local/bin/godot || true
+          sudo ln -sf "$GODOT_BIN_DIR/Godot" /usr/local/bin/Godot || true
+          "$GODOT_BIN_DIR/Godot" --version
 
       - name: Install Godot Export Templates
         run: |
@@ -44,7 +42,7 @@ jobs:
       - name: Export iOS Xcode Project from Godot
         run: |
           mkdir -p builds/ios
-          godot --headless --export-debug "iOS" builds/ios/ManaOoru.ipa
+          Godot --headless --export-debug "iOS" builds/ios/ManaOoru.ipa
           ls -la builds/ios
 
       - name: Compile Native iOS Project (Xcode)
