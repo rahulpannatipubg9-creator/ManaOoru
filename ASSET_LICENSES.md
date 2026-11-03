@@ -620,3 +620,9 @@ Includes `electrical_pylon.glb`, `metal_crash_barrier.glb`, `sign_slippery_road.
 - Source: user supplied `~/Downloads/Virat.glb`, 2026-11-01.
 - Author/licence: not supplied; redistribution permission unverified. Local testing only pending licence confirmation.
 - Adapted skin: `assets/models/characters/virat/virat.glb`; gameplay rig and clips retained from existing project.
+
+### Roadside Irani Chai Tea Stall (`irani_chai_stall`)
+- **Source:** Created in-house via live Blender MCP modeling for Mana Ooru.
+- **License / Terms:** CC0 / MIT (In-house project asset).
+- **Specs:** 1,088 triangles, 72.05 KB GLB, 1 draw call, box collision, 50m mobile visibility culling.
+- **Location:** Market Street Pedestrian Verges (`[105.0, 0.0, -35.0]`) in Saturday Market & Commercial Strip.

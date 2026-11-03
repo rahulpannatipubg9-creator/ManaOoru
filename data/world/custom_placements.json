@@ -1395,6 +1395,40 @@
         },
         "placement_reasoning": "1400hp twin-turbo AWD drift beast stationed on Godavari River Bridge Highway approach for high-speed bridge sprints."
       }
+    },
+    {
+      "id": "irani_chai_stall",
+      "name": "Roadside Irani Chai Tea Stall",
+      "model_path": "res://assets/models/props/irani_chai_stall.glb",
+      "category": "props",
+      "location_key": "market_street",
+      "location_name": "Market Street Pedestrian Verges",
+      "district": "Saturday Market & Commercial Strip",
+      "position": [
+        105.0,
+        0.0,
+        -35.0
+      ],
+      "use_ground_height": true,
+      "ground_offset_y": 0.0,
+      "rotation_y_deg": 180.0,
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "collision_type": "box",
+      "visibility_range_end": 50.0,
+      "metadata": {
+        "triangles": 1088,
+        "file_size_kb": 72.05,
+        "dimensions": {
+          "width_x": 1.9,
+          "depth_y": 1.73,
+          "height_z": 2.25
+        },
+        "placement_reasoning": "Asset irani_chai_stall is an authentic roadside Irani Chai stall with tea samovar, biscuit jars, cutting glasses, customer bench and corrugated tin awning. Placed at Market Street Pedestrian Verges in Godavarikhani with 50m visibility culling to protect 144 FPS mobile frame budget."
+      }
     }
   ]
 }

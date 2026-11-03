@@ -263,3 +263,6 @@ textures/vram_compression/import_etc2_astc=true
 environment/defaults/default_clear_color=Color(0.38, 0.68, 0.88, 1)
 renderer/rendering_method.driver="opengl3"
 lights_and_shadows/directional_shadow/size.mobile=1024
+scaling_3d/mode=1
+scaling_3d/scale.mobile=0.65
+scaling_3d/fsr_sharpness=0.2

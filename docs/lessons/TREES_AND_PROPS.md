@@ -12,6 +12,13 @@ Anything placed on the ground: trees, stalls, carts, pickups, poles, drains, cov
 
 ## Entries
 
+### 144 FPS asset budget: Roadside Irani Chai Stall (2026-11-04)
+- **Symptom:** Previous imported vendor carts (e.g. panipuri cart at 63 MB, 15,000+ tris) bloated build sizes toward 1.7 GB and risked mobile thermal throttling at high refresh rates (144 FPS).
+- **Cause:** Raw multi-texture assets with high vertex density and unculled draw calls.
+- **Rule:** Author props using low-poly hard-surface modeling (<=1,200 tris), single-palette PBR materials (1 draw call), <100 KB GLB files, primitive box collision, and strict mobile distance culling (`visibility_range_end = 50.0`).
+- **Check:** `assets/models/props/irani_chai_stall.glb` weighs 72.05 KB with 1,088 triangles; passes `tests/movement_regression.gd` with 40 custom assets spawned.
+
+
 ### Main thread tree scattering and unbatched street props caused draw call and frame spikes (2026-11-02)
 - **Symptom:** Peak draw calls reached 2,160+ and frame times stuttered when entering tree-heavy arterial corridors at 120+ km/h on Xiaomi Pad 7.
 - **Cause:**

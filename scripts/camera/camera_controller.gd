@@ -23,7 +23,7 @@ enum ViewMode { THIRD_PERSON, FIRST_PERSON }
 @export var chase_stiffness: float = 3.0
 @export var chase_pitch: float = -0.2
 ## Extra field of view at speed, for a sense of pace.
-@export var speed_fov_boost: float = 10.0
+@export var speed_fov_boost: float = 14.0
 const SPEED_FOV_FULL := 30.0
 @export_group("On-foot feel")
 ## Extra field of view while sprinting, eased in and out (BGMI-style run widening).
@@ -123,6 +123,8 @@ var _mount_x := 0.0
 var _dip := 0.0
 var _shake := 0.0
 var _dip_velocity := 0.0
+var _vehicle_roll := 0.0
+var _vehicle_vibe := 0.0
 var _bob_offset := Vector2.ZERO
 
 func _process(delta: float) -> void:
@@ -351,12 +353,30 @@ func _max_pitch() -> float:
 func _update_chase(delta: float) -> void:
 	var body := get_parent() as Node3D
 	if body == null or not body.has_method("recover_vehicle"):
+		_vehicle_roll = lerpf(_vehicle_roll, 0.0, 1.0 - exp(-10.0 * delta))
+		_vehicle_vibe = lerpf(_vehicle_vibe, 0.0, 1.0 - exp(-10.0 * delta))
 		return
 	var velocity := _body_velocity(body)
 	var speed := Vector2(velocity.x, velocity.z).length()
+
+	# Dynamic speed road rumble (subtle road vibration above 45 km/h / 12 m/s)
+	var target_vibe := clampf((speed - 12.0) / 25.0, 0.0, 1.0) * 0.016
+	_vehicle_vibe = lerpf(_vehicle_vibe, target_vibe, 1.0 - exp(-6.0 * delta))
+
+	# Dynamic cornering roll tilt (camera leans into turns with centrifugal force)
+	var target_roll := 0.0
+	if body is RigidBody3D:
+		var yaw_rate: float = (body as RigidBody3D).angular_velocity.y
+		target_roll = clampf(-yaw_rate * 0.035, -0.065, 0.065)
+	_vehicle_roll = lerpf(_vehicle_roll, target_roll, 1.0 - exp(-8.0 * delta))
+
 	if _camera:
 		var target_fov := _base_fov + speed_fov_boost * clampf(speed / SPEED_FOV_FULL, 0.0, 1.0)
-		_camera.fov = lerpf(_camera.fov, target_fov, 1.0 - exp(-2.0 * delta))
+		_camera.fov = lerpf(_camera.fov, target_fov, 1.0 - exp(-3.0 * delta))
+	var spring_arm := get_node_or_null("SpringArm3D") as SpringArm3D
+	if spring_arm and view_mode == ViewMode.THIRD_PERSON:
+		var target_spring := camera_distance + 0.65 * clampf(speed / 30.0, 0.0, 1.0)
+		spring_arm.spring_length = lerpf(spring_arm.spring_length, target_spring, 1.0 - exp(-3.0 * delta))
 	if view_mode != ViewMode.THIRD_PERSON or _since_look < chase_delay or speed < 1.5:
 		return
 	var forward: Vector3 = body.forward_direction() if body.has_method("forward_direction") else body.global_basis.z
@@ -425,12 +445,15 @@ func _apply_orbit_rotation() -> void:
 			body_yaw += PI
 		var world_yaw := body_yaw if looking_behind else _yaw + _free_yaw
 		var pitch := -0.12 if looking_behind else _pitch
-		var roll := -_peek_roll
+		var roll := -_peek_roll + _vehicle_roll
 		var level := Basis.from_euler(Vector3(pitch, world_yaw, roll))
 		# Peek -1 is left (Q, "< PEEK"): the camera slides to the character's left (+x), the same way as the
 		# roll above and the body's lean (docs/lessons/CHARACTERS.md).
 		var peek_lateral := Vector3(-_current_peek * 0.45, 0.0, 0.0)
-		var mount := _third_person_position
+		var vibe_offset := Vector3.ZERO
+		if _vehicle_vibe > 0.0005:
+			vibe_offset = Vector3((randf() - 0.5) * _vehicle_vibe, (randf() - 0.5) * _vehicle_vibe * 0.5, 0.0)
+		var mount := _third_person_position + vibe_offset
 		var mount_yaw := body_yaw
 		if _on_foot():
 			mount.x = _mount_x
@@ -662,5 +685,8 @@ func _apply_stabilized_vehicle_mount(body: Node3D) -> void:
 	if looking_behind:
 		world_yaw = yaw
 	var pitch := (-0.12 if not first else 0.0) if looking_behind else _pitch
-	var origin := pose * first_person_offset if first else pose.origin + Basis(Vector3.UP,yaw)*_third_person_position
-	global_transform = Transform3D(Basis.from_euler(Vector3(pitch,world_yaw,-_peek_roll)),origin)
+	var vibe_offset := Vector3.ZERO
+	if _vehicle_vibe > 0.0005:
+		vibe_offset = Vector3((randf() - 0.5) * _vehicle_vibe, (randf() - 0.5) * _vehicle_vibe * 0.5, 0.0)
+	var origin := pose * first_person_offset if first else pose.origin + Basis(Vector3.UP, yaw) * (_third_person_position + vibe_offset)
+	global_transform = Transform3D(Basis.from_euler(Vector3(pitch, world_yaw, -_peek_roll + _vehicle_roll)), origin)

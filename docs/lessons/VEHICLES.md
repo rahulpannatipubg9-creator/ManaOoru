@@ -17,6 +17,20 @@ Code: `scripts/vehicle/` (`vehicle_entry.gd` for getting in and out and the seat
 
 ## Entries
 
+### Benglooru Driving Feel, Camera Dynamics, Tire Visual Feedback & APK Diet (2026-11-04)
+- **Symptom:** Driving felt sluggish, floaty, and detached compared to Benglooru (`benglooru.com`). Severe understeer at speed, bounciness, horizon-locked sterile camera, zero tire smoke or traction feedback, and APK size was over 1 GB with heavy VRAM pressure on mobile.
+- **Cause:** 
+  1. `camera_controller.gd` deliberately eliminated all chassis roll and bump vibrations (`_apply_orbit_rotation`), disconnecting the player from road speed and asphalt texture.
+  2. `rigid_vehicle.gd` locked out 75% of steering lock at speed (`high_speed_steer_share = 0.25`), steer rate was slow (`2.5 rad/s`), and suspension was underdamped (`damping_ratio = 0.45`), causing cars to bounce and float like boats on waves.
+  3. `vehicle_effects.gd` had no tire smoke or traction feedback during normal driving (only damage fire below 35% HP).
+  4. Hundreds of unreferenced loose duplicate vehicle textures, raw 4K debris textures, and prototype character folders (`player_character*`, `player_v2*`, `references/`) were packed into the export, bloating APK to 1.04 GB.
+- **Rule:** 
+  1. In `camera_controller.gd`, add dynamic high-frequency road rumble micro-vibration above 45 km/h, cornering roll tilt leaning the camera into turns based on yaw rate, and acceleration FOV widening with spring-arm extension.
+  2. In `rigid_vehicle.gd`, maintain responsive high-speed steering authority (`high_speed_steer_share = 0.42`), sharp turn-in (`steer_rate = 3.8 rad/s`), immediate wheel return (`steer_return_rate = 6.0 rad/s`), planted suspension damping (`damping_ratio = 0.68`), and crisp tire bite (`tyre_cornering_stiffness = 18.0`). Apply matching responsive tiers across bus, tuk-tuk, and motorcycles.
+  3. In `vehicle_effects.gd`, emit dynamic unshaded billboarded tire smoke puffs whenever `tyre_slip > 0.16`.
+  4. Exclude unreferenced loose vehicle textures (GLBs embed their own assets) and legacy prototype character assets, reducing APK down to ~477 MB. Enable FSR/Bilinear 3D viewport scaling (`scaling_3d_scale = 0.65`) for 120 FPS / 144 FPS stability.
+- **Check:** `tests/test_vehicle_button_controls.gd`, `tests/hud_states_regression.gd`, `tests/movement_regression.gd`, and headless Godot export verification.
+
 ### PUBG/BGMI Vehicle Button Driving Controls & Mobile Texture Pipeline (2026-11-04)
 - **Symptom:** Driving ground vehicles on mobile touchscreens relied on the on-foot floating joystick, which lacked discrete tactile steering and forward/reverse response. Players requested the familiar two-cluster "Button Controls" setup (vertical Forward/Back and horizontal Steer Left/Right) with a swap toggle. Furthermore, the APK had grown to 1.3 GB, exceeding mobile bandwidth targets, and default refresh was capped at 60 FPS despite 120Hz/144Hz displays.
 - **Cause:** 
