@@ -30,6 +30,7 @@ var _bike_wheels: Array[Node3D] = []
 var _front: RayCast3D
 var _shape: CollisionShape3D
 var _committed_stop: TrafficStopPoint
+var _stuck_timer: float = 0.0
 
 func _ready() -> void:
 	collision_layer = 8
@@ -63,6 +64,7 @@ func set_active(value: bool) -> void:
 	current_speed = 0.0
 	velocity = Vector3.ZERO
 	_committed_stop = null
+	_stuck_timer = 0.0
 
 func activate(path: Path3D, offset: float) -> void:
 	lane = path
@@ -128,6 +130,14 @@ func _physics_process(delta: float) -> void:
 	for wheel in _bike_wheels:
 		var radius: float = wheel.get_meta("radius", 0.335)
 		wheel.rotate_object_local(Vector3.UP, -step / radius)
+	var waiting_at_signal: bool = stop != null and stop.must_stop()
+	if not waiting_at_signal and current_speed < 0.2:
+		_stuck_timer += delta
+		if _stuck_timer > 8.0:
+			set_active(false)
+			return
+	else:
+		_stuck_timer = 0.0
 	if successors.is_empty() and remaining <= vehicle_length + 0.2 and current_speed < 0.1:
 		route_finished.emit(self)
 	elif remaining < 0.2:

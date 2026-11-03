@@ -100,9 +100,28 @@ func _ready() -> void:
 	var lane_clearance := preload("res://scripts/world/vidya_lane_clearance.gd").new()
 	lane_clearance.prepare(map_data)
 	await _stage(0.3)
-	buildings.setup(map_data, func(points: PackedVector2Array) -> bool: return imported_city_buildings.excludes(points) or lane_clearance.excludes(points))
+	var road_grid: RefCounted = map_data.road_grid()
+	var road_clearance_stats := {"conflicts": 0}
+	var exclusion_filter := func(points: PackedVector2Array) -> bool:
+		if imported_city_buildings.excludes(points) or lane_clearance.excludes(points):
+			return true
+		if points.size() < 3:
+			return true
+		for pt in points:
+			if road_grid.any_within(pt, -0.2):
+				road_clearance_stats["conflicts"] += 1
+				return true
+		var centroid := Vector2.ZERO
+		for pt in points:
+			centroid += pt
+		centroid /= float(points.size())
+		if road_grid.any_within(centroid, 0.0):
+			road_clearance_stats["conflicts"] += 1
+			return true
+		return false
+	buildings.setup(map_data, exclusion_filter)
 	preload("res://scripts/performance/startup_profile.gd").mark("world: buildings.setup(map_data, func(points: PackedVector2Array) -")
-	print("Vidyanagar 2 road clearance: %d conflicting building footprints omitted from rendering/collision" % lane_clearance.excluded_count)
+	print("Building road clearance: %d road-conflicting building footprints omitted from rendering/collision" % road_clearance_stats.conflicts)
 	rendered_building_footprints = buildings.footprints
 	preload("res://scripts/performance/startup_profile.gd").mark("world: rendered_building_footprints = buildings.footprints")
 	var graphics = preload("res://scripts/performance/graphics_settings.gd").new()
