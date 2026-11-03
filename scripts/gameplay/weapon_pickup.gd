@@ -45,14 +45,6 @@ func _ready() -> void:
 	ring.material_override = glow
 	ring.position.y = 0.04
 	add_child(ring)
-	var label := Label3D.new()
-	label.text = Weapons.display_name(weapon_id)
-	label.position.y = 1.15
-	label.font_size = 40
-	label.outline_size = 8
-	label.modulate = Color("ffd45a")
-	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	add_child(label)
 	body_entered.connect(_collect)
 
 func _process(delta: float) -> void:
@@ -63,7 +55,7 @@ func is_available() -> bool:
 	return not _used
 
 func _collect(body: Node) -> void:
-	if _used or gameplay == null or body != gameplay.game.person:
+	if _used or gameplay == null or body != gameplay.game.person or gameplay.tdm_active:
 		return
 	var first: bool = not gameplay.has_rifle
 	var new_rifle: bool = not gameplay.rifles().has(weapon_id)
@@ -73,18 +65,19 @@ func _collect(body: Node) -> void:
 	var rifle_name := Weapons.display_name(weapon_id)
 	if first:
 		gameplay.select_rifle(weapon_id)
-	gameplay.ammo = MAGAZINE
+	gameplay.ammo = gameplay.mag_size
 	gameplay.reserve = mini(RESERVE_CAP, gameplay.reserve + RESERVE_BONUS)
 	if first:
 		# Picking a rifle up means you want to use it: hands it over ready to fire.
 		if not gameplay.action_mode:
 			gameplay.set_action_mode(true)
 		gameplay.game.person.set_weapon_equipped(true)
-		gameplay.life.toast("Picked up %s • tap FIRE / left click • P toggles fire mode" % rifle_name)
+		gameplay.life.toast("Picked up %s" % rifle_name)
 	elif new_rifle:
-		gameplay.life.toast("Picked up %s • press 2 or tap ⇄ to switch rifles" % rifle_name)
+		gameplay.life.toast("Picked up %s" % rifle_name)
+		gameplay.life.hint("rifle_swap", "Swap rifles with 2 or the swap button")
 	else:
-		gameplay.life.toast("%s ammo +%d" % [rifle_name, RESERVE_BONUS])
+		gameplay.life.toast("%d %s rounds" % [RESERVE_BONUS, rifle_name])
 	gameplay.life.save_progress()
 	_used = true
 	hide()

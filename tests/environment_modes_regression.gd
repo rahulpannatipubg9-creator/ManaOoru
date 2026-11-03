@@ -34,9 +34,9 @@ func run_checks() -> void:
 	environment._process(8.0)
 	assert(environment.rain == 0.0, "Clear selection must stop rain")
 	controls.open_menu()
-	assert(paused and controls._panel.visible, "Menu must pause gameplay")
+	assert(paused and controls.is_open(), "Menu must pause gameplay")
 	controls.close_menu()
-	assert(not paused and not controls._panel.visible, "Closing menu must resume gameplay")
+	assert(not paused and not controls.is_open(), "Closing menu must resume gameplay")
 	environment.set_weather_mode("Automatic")
 	environment.set_time_mode("Automatic")
 	var before := environment.hour

@@ -3,7 +3,7 @@ extends Node3D
 ## Dimensions and appearance remain photo-based approximations.
 const DEFINITIONS := [
 	{"slug":"srinivasa_theatre", "place":"Srinivasa Theatre"},
-	{"slug":"mythri_rajesh_theatre", "place":"rajesh theatre", "map_point": Vector2(-750.0, -665.0), "face_point": Vector2(-726.0, -679.9)},
+	{"slug":"mythri_rajesh_theatre", "place":"Mythri Rajesh Theatre"},
 	{"slug":"sai_leela_residency", "place":"Hotel Sai Leela Residency"},
 	{"slug":"destination_dine_in", "place":"Destination Family Restaurant"},
 	{"slug":"godavarikhani_bus_station", "place":"TGSRTC  Bus Station , Godavarikhani", "lon":79.5082894,"lat":18.7601255},

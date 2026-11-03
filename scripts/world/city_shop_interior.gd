@@ -27,7 +27,7 @@ func build() -> void:
 	title.modulate = Color("#693d27")
 	add_child(title)
 	var exit := Label3D.new()
-	exit.text = "EXIT TO STREET"
+	exit.text = "EXIT"
 	exit.position = Vector3(0, 2.7, 3.2)
 	exit.rotation.y = PI
 	exit.font_size = 32

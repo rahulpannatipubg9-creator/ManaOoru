@@ -20,7 +20,7 @@ Rahul replaced player v2 as the default (local and remote players) on 2026-10-29
 exported one frame past the cycle (the game reads the last frame as a repeat of the first). With a rifle out the
 Rifle_* clips set the body and the game still solves the arms onto its own rifle (`_pose_armed`); the
 `Weapon_R` socket is not used by the game (its rifle is placed by `person_controller.gd`). Check:
-`rahul_rifle_stance_regression`, `character_clip_library_regression`, `tests/capture_rahul_ingame.gd`.
+`rahul_rifle_stance_regression`, `character_clip_library_regression`, `tools/captures/capture_rahul_ingame.gd`.
 
 ## Entries
 

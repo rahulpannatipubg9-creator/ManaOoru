@@ -442,6 +442,18 @@ barrel forward along Godot +Z. Includes receiver, tactical foregrip, folding but
 suppressor, and red-dot sight. Playable weapon in free roam and multiplayer (Weapons.BREN2).
 - **Licence: not confirmed.** User-supplied download. Confirm original author and licence before any public release.
 
+
+
+## UI fonts (`assets/fonts/`)
+
+Noto Sans Bold and Noto Sans Telugu Bold by the Noto Project Authors, under the SIL Open Font License 1.1. Copied from
+`tools/signboards/fonts/`.
+
+## Gun sounds (`assets/audio/guns/`)
+
+Original work. Synthesised by `tools/generate_gun_audio.py` with the Python standard library, using no recorded or
+downloaded audio. Rifle shots, distant shots, a passing-round crack, dry fire, reload sounds and hit feedback.
+- **Licence:** project-owned, redistributable with the game.
 ## Banana Tree / Arati Chettu (`assets/models/foliage/banana_tree.glb`)
 
 Converted by `tools/export_banana_tree.py` from user-supplied `Banana_Plant_01.obj` (CGTrader download).
@@ -608,3 +620,9 @@ Includes `electrical_pylon.glb`, `metal_crash_barrier.glb`, `sign_slippery_road.
 - Source: user supplied `~/Downloads/Virat.glb`, 2026-11-01.
 - Author/licence: not supplied; redistribution permission unverified. Local testing only pending licence confirmation.
 - Adapted skin: `assets/models/characters/virat/virat.glb`; gameplay rig and clips retained from existing project.
+
+### Roadside Irani Chai Tea Stall (`irani_chai_stall`)
+- **Source:** Created in-house via live Blender MCP modeling for Mana Ooru.
+- **License / Terms:** CC0 / MIT (In-house project asset).
+- **Specs:** 1,088 triangles, 72.05 KB GLB, 1 draw call, box collision, 50m mobile visibility culling.
+- **Location:** Market Street Pedestrian Verges (`[105.0, 0.0, -35.0]`) in Saturday Market & Commercial Strip.

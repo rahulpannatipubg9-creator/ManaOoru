@@ -16,66 +16,82 @@
   own camera, so the game camera stays current (the rifle and HUD follow the game camera).
 - The game blocks input while unfocused; captures set `GameplayControls.blocked = false` when they need input.
 
+`tools/run_tests.sh [timeout] [filter]` runs every `tests/*_regression.gd` and prints a table. Set `GODOT` to the
+binary, or `GODOT_RUNNER` to a wrapper such as `run_godot.sh`. Scripts that only take pictures or inspect a model live
+in `tools/captures/`.
+
 ## Entries
 
-### Incremental Android installs can disappear after reporting success (2026-11-02)
-- **Symptom:** A successful incremental installation disappeared before launch. PackageManager subsequently removed its incremental storage mount. A separate session was also installing diagnostics under the original shared package ID.
-- **Cause:** Incremental installation reported success before the APK was fully delivered. That result did not establish a durable installation. The earlier source-patched APK separately failed script/remap parsing before reaching gameplay.
-- **Rule:** Use `adb install --no-incremental`, a unique benchmark package (`com.manaooru.pad7bench`) and a complete Godot export. Verify package presence after installation, clean script loading and actual gameplay before collecting FPS. Keep the device foreground stable and record interrupted runs as incomplete.
-- **Check:** `Android Performance` exports the complete current project; `tools/performance/run_pad7_probe.py` preserves raw device logs, frame distributions, memory and temperature samples. A parse or install failure is not an FPS result.
+### Xiaomi Pad 7 3.2K display GLES3 lag & SSAO fillrate stall (2026-11-02)
+- **Symptom:** game was super laggy (~15-20 FPS) on physical Xiaomi Pad 7 (3200x2136 screen).
+- **Cause:** SSAO, Bloom/Glow, Color Adjustments, and cubemap ReflectionProbe were enabled unconditionally in `main.gd`; at 6.8 million pixels on mobile OpenGL ES 3.0 Compatibility renderer, this stalls the GPU fillrate. In addition, `_park_all_vehicles()` and `_activate_only()` ran redundantly in `_process()` every single frame, and traffic was unconstrained at 25 vehicles.
+- **Rule:** Guard expensive screen-space passes (SSAO, Bloom, Color Adjustments, cubemap ReflectionProbes) behind `if not is_mobile:`. Vehicle state transitions must only run when `control_state != _applied_control_state`. Clamp mobile traffic vehicles to 12, enforce directional shadow size of 1024 on mobile, and apply 0.55 viewport scaling for 3K+ displays while keeping the 2D HUD at crisp native resolution.
+- **Check:** `tests/movement_regression.gd`, `tests/device_performance_manager_regression.gd`, `tests/performance_integration_regression.gd`.
 
-### A signed and zip-aligned APK can still fail Android installation (2026-11-02)
-- **Symptom:** Pad 7 rejected the performance copy with error -124: Android R+ requires an uncompressed, 4-byte-aligned `resources.arsc`.
-- **Cause:** `tools/performance/package_probe.py` compressed every replacement, including the resource table. Signature verification and zipalign alone did not detect that requirement.
-- **Rule:** Store `resources.arsc` uncompressed, align the completed APK, verify its signature, and require successful installation before reporting gameplay results. Preserve the original game's package/data.
-- **Check:** Inspect the resource table's ZIP compression method as well as running zipalign and apksigner; the actual Pad 7 installation is the final packaging check.
+### Line endings: `.gitattributes` added, repo not renormalised (2026-10-30)
+- **Symptom:** a Windows checkout with `core.autocrlf=true` turns about 890 text files to CRLF; Mac and Windows fight.
+- **Cause:** nothing in the repo set a line-ending rule.
+- **Rule:** `* text=auto eol=lf`, plus `binary` for images, audio, models and fonts. Every new checkout gets LF. Do not
+  mix `git add --renormalize .` into a feature branch.
+- **To do:** after the UI branches merge, run `git add --renormalize .` alone in one commit. Only
+  `assets/models/indian_water_tank/source/tank.mtl` and `tank.obj` should change: they are the only text files stored
+  with CRLF. Existing clones convert a file when it is next touched; a fresh clone is cleanest.
+- **Check:** `git ls-files --eol | grep i/crlf` prints nothing.
 
-### Android profiling builds need signature and space checks (2026-11-02)
-- **Symptom:** Latest APK signing exhausted host disk space; installing a manually signed APK failed with `INSTALL_FAILED_UPDATE_INCOMPATIBLE`.
-- **Cause:** Export and signing held large APK copies alongside editor memory/swap. The installed tablet build's signature did not match either local debug key or the repository release key.
-- **Rule:** Verify signing identity before a large transfer, sign after the exporter exits when space is tight, and never uninstall a user's game to bypass the mismatch. Use an explicitly labelled, separate debug test package when the original signing key is unavailable. Verify ZIP alignment and the APK signature after any debug-source packaging.
-- **Check:** `package_probe.py` creates package `com.manaooru.perfcheck` labelled `MANA PERF`, preserving the original app. Its first launch profiles; subsequent launches run the normal scene. Read installation success and device logs before claiming tablet validation.
+### Every shot allocated a mesh and a material (2026-10-30)
+- **Symptom:** sustained fire built new resources for each tracer and flash (BUGS 25).
+- **Cause:** a tracer's length was baked into its `CylinderMesh`.
+- **Rule:** `_tracer` shares a 1 m mesh and scales `axes.y`, the column of the basis. `Basis.scaled()` would scale
+  along the world axis instead, so an angled shot would shear.
+- **Check:** `save_and_feedback_regression` measures the length, centre and direction of a pooled tracer.
 
-### Custom rendering was replaced by tier defaults on restart (2026-11-02)
-- **Symptom:** Manually lowering rendering settings did not reliably survive the next launch.
-- **Cause:** `DevicePerformanceManager.setup()` saw the manual flag but regenerated the selected tier without restoring the saved performance fields. `save_settings()` also omitted weather effects. The tier-override test wrote its default path and could replace real user preferences.
-- **Rule:** Restore saved known performance fields over tier defaults for manual profiles; persist effects too. Allow setup and tier overrides to use an isolated settings path in tests. Do not equate a 60 FPS cap with measured 60 FPS rendering.
-- **Check:** `device_performance_manager_regression.gd` now saves custom scale, distances, actors, shadows, FPS and effects, creates a fresh manager, runs setup from the test file and checks all values survived.
+### A nested signal reaches later listeners out of order (2026-10-30)
+- **Symptom:** after armour absorbed a hit, a listener connected after `city_gameplay` would see the true health and
+  then the lower value (BUGS 18).
+- **Cause:** emitting `health_changed` inside its own handler delivers the new value first; the outer emit then goes
+  on to the remaining listeners with the old one.
+- **Rule:** when a handler corrects a signal's value, re-emit with `call_deferred`, reading the value when the call
+  runs. A value captured at the hit would overwrite a second hit in the same frame.
+- **Check:** `save_and_feedback_regression`, which listens after `city_gameplay` does.
 
-### Keep collision present when isolating ambient simulation (2026-11-02)
-- **Symptom:** Pausing the world fixture made parked cars fall; a rendered exit probe was refused immediately after zeroing velocity.
-- **Cause:** `PROCESS_MODE_DISABLED` can remove CollisionObject3D bodies through their disable mode. Separately, `main.gd.exit_vehicle()` checks controller `current_speed`, which was still the previous physics tick's driving speed.
-- **Rule:** For an input-ownership fixture, stop world process/physics callbacks while preserving collision and every enterable vehicle subtree. For rendered exit checks, brake normally and allow physics to update speed before requesting exit. Keep live-city smoke checks separate from isolated ownership checks.
-- **Check:** Required movement regression passes with parked physics enabled; the M1 smoke probe logs speed at the exit request.
-
-### Camera fixture quit with engine audio still playing (2026-11-01)
-- **Symptom:** Chase-camera assertions passed but the test leaked Ogg and generator playback resources at shutdown.
-- **Cause:** The standalone driving fixture was still running its engine when the test called `quit()`; queued audio teardown had not retired playback.
-- **Rule:** Park/mute the fixture, allow playback retirement, free owned fixture nodes and drain deferred frees before quitting. Keep the camera assertions intact. Accelerated fixed-FPS runs are not evidence of real-time audio teardown timing.
-- **Check:** `godot --headless --path . --verbose --script tests/chase_camera_regression.gd` passes without resource-leak warnings after fixture cleanup.
-
-
-### Cloud CI/CD and Codespaces Godot Android export keystores and editor settings (2026-10-30)
-- **Symptom:** Cloud headless exports in GitHub Actions / Codespaces failed with errors regarding missing Android keystores or unconfigured Android SDK paths; local exports failed on non-developer machines due to hardcoded absolute Mac paths in `export_presets.cfg`.
-- **Cause:**
-  1. `export_presets.cfg` referenced an absolute macOS filesystem path (`/Users/rahulpannati/Downloads/.../builds/manaooru-release.keystore`), which broke on Linux runners (GitHub Actions Ubuntu / Codespaces).
-  2. Godot headless exporter requires `export/android/sdk_path` and `export/android/java_sdk_path` in `~/.config/godot/editor_settings-4.tres` before it will compile APKs from the command line.
-  3. `builds/` is git-ignored, so fresh cloud runner checkouts lack keystores unless generated during pre-export setup.
-- **Rule:**
-  1. Always use relative Godot paths (`res://builds/manaooru-release.keystore`) inside `export_presets.cfg`.
-  2. Dev container and CI/CD workflow scripts must create `builds/` and auto-generate fallback debug and release keystores if not present.
-  3. Dev container setup and CI/CD jobs must write `~/.config/godot/editor_settings-4.tres` mapping `export/android/sdk_path` to `${ANDROID_HOME}` and `export/android/java_sdk_path` to `${JAVA_HOME}`.
-- **Check:** `godot --headless --export-debug "Android" builds/ManaOoru.apk` runs cleanly without path errors; GitHub Actions `.github/workflows/build_android_apk.yml` and `.devcontainer/setup.sh` pass quality gates.
-
-### Touch screen camera drag lag and physics interpolation queue delay (2026-10-30)
-- **Symptom:** "evern after fix i feel laggy" on mobile and tablets (Xiaomi Pad 7); camera rotation felt sluggish, heavy, and unresponsive to thumb swipes and gyroscope movements despite steady 50-60 FPS rendering.
-- **Cause:** Three separate latency traps in `camera_controller.gd`:
-  1. `_unhandled_input` required `event.relative.length_squared() > 16.0` (over 4 physical pixels in a single drag event) before assigning `_look_touch_index`. On 120Hz/240Hz touch polling digitizers, subtle, small, or precise finger swipes produce 1-2 pixel deltas per event, meaning every drag was discarded (`if event.index != _look_touch_index: return`), creating a deadzone where gentle swipes did nothing until the player violently flicked.
-  2. Camera rotation was only applied in `_physics_process()` (60 Hz tick). Touch drag, mouse motion, gyroscope, and chase camera calculations updated `_yaw` and `_pitch` in input handlers and `_process(delta)`, but render frames drew with stale orientations until the next physics step.
-  3. With `common/physics_interpolation=true`, `CameraPivot` inherited physics interpolation from the player/vehicle body, which delayed camera orientation changes by 1-2 full physics ticks (16-33 ms) and smoothed them out.
-- **Rule:**
-  1. Touch look zone touches must immediately claim `_look_touch_index` on press and accept all drag events without artificial single-frame distance thresholds.
-  2. `CameraPivot` must disable physics interpolation (`physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF`) so view rotation updates instantly on the render frame while still inheriting the parent body's interpolated spatial position.
+### Saves: keep what you cannot read (2026-10-30)
+- **Symptom:** a corrupt save, or one from a newer build, started a new game and the next autosave destroyed it
+  (BUGS 19). Android lost up to 30 s because it rarely sends a close request (BUGS 17).
+- **Cause:** `load_progress` treated "unreadable" as "no save". `main._notification` only knew the desktop close.
+- **Rule:** `save_progress` copies the old save to `.bak`. An unreadable save moves to `.rejected`, and the `.bak` is
+  restored to `save_path`, because `city_gameplay` reads that file itself. When `SAVE_VERSION` rises, add the
+  migration to `_read_save` and make `city_gameplay` read through it too.
+- **Check:** `save_and_feedback_regression`.
+### Feel checks that counted frames failed on a busy machine (2026-10-30)
+- **Symptom:** `feel_regression` passed or failed on ADS, landing and reload depending on what else was running.
+- **Cause:** waiting a number of `process_frame`s assumed 60 fps. Headless draws faster when idle and slower under load.
+- **Rule:** wait `physics_frame`s for a fixed time, or measure real seconds and metres per second.
+- **Check:** `feel_regression` while another worker runs Godot.
+### A test printed PASS over a script error (2026-10-30)
+- **Symptom:** `pause_menu_regression` and `environment_modes_regression` printed PASS and exited 0, and the same
+  output held `Invalid access to property or key 'city_life'`.
+- **Cause:** `main._handle_menu_input` calls `pause_menu.owns_keys()` before the menu's first `_process` had set
+  `_game` (`scripts/ui/pause_menu.gd`). The menu's touch-bridge wiring also waited for the first `open_menu()`, so
+  Settings opened directly over a live match got no touch.
+- **Rule:** anything another node may call checks its own setup first, and setup must not wait for one particular
+  screen to open. Read test output for `SCRIPT ERROR`: an exit code or a PASS line does not rule it out.
+- **Check:** `tests/pause_menu_regression.gd` asserts the bridge is wired before the first open; its output must hold
+  no `SCRIPT ERROR`.
+### Pushing to a HUD another worker was writing (2026-10-30)
+- **Symptom:** none yet when found: `city_gameplay.gd` `_send_hud` would have failed on every ammo or mission change,
+  and the guarded calls hid it from the compiler. `main.gd` also blanked the prompt pill for 2 s on V or a stray E.
+- **Cause:** `_send_hud` called `set_ammo` with a bool and `set_objective` with a float by `callv`, written against a
+  brief, while `hud.gd` takes Strings and already reads this state itself in `_read_game_state`. An empty
+  `_show_control_hint("")` still started the hint timer.
+- **Rule:** read the other branch's signatures before calling across workers. `has_method` proves a name, not its
+  arguments, and `callv` defers the failure to play. One owner per readout: the HUD pulls, gameplay does not push.
+- **Check:** `tests/on_screen_text_regression.gd` (`_test_no_hud_push`, `_test_control_hints`).
+### Camera controller physics interpolation vs. orbit rotation jitter (2026-10-30)
+- **Symptom:** In third-person and first-person on-foot camera modes, rapid mouse/touch look produced visible jitter or micro-stuttering against 60 FPS physics bodies.
+- **Cause:** When physics interpolation (`physics/common/physics_interpolation=true`) is active in Godot 4, manual spatial modifications applied inside `_physics_process(delta)` fight with the interpolation engine between physics frames.
+- **Rule:** For smooth on-foot and vehicular camera movement in Godot 4 with physics interpolation enabled:
+  1. Let `SpringArm3D` and `CameraPivot` follow the player CharacterBody3D automatically via the scene tree hierarchy.
+  2. Set `top_level = false` on `CameraPivot` so its orientation updates instantly on the render frame while still inheriting the parent body's interpolated spatial position.
   3. Call `_apply_orbit_rotation()` immediately upon mouse/touch look events and at the end of `_process(delta)` so render frames reflect real-time input without waiting for physics ticks.
 - **Check:** `tests/movement_regression.gd`, `tests/camera_regression.gd`, `tests/chase_camera_regression.gd`.
 
@@ -95,11 +111,42 @@
   4. Always check `OS.has_feature("android") or OS.has_feature("ios") or OS.has_feature("mobile")` when configuring mouse mode, HUD touch overlays, and platform performance tiers.
 - **Check:** `tools/build_ios.sh` and headless export `godot --headless --export-debug "iOS" builds/ios/ManaOoru.ipa` followed by `grep TARGETED_DEVICE_FAMILY builds/ios/ManaOoru.xcodeproj/project.pbxproj`.
 
+### A test can print PASS after a script error (2026-10-30)
+- **Symptom:** `hud_states_regression` and `hud_layout_profiles_regression` printed PASS and exited 0 while most of a
+  test function never ran.
+- **Cause:** a SCRIPT ERROR aborts only the current GDScript function; the caller carries on to its PASS line. Here it
+  was assigning an untyped array to an `Array[int]` stub (`_play.owned = [0, 1]`) and a removed `PeekLeft` slot.
+- **Rule:** read test output for SCRIPT ERROR, never only the last line. Fill typed arrays with `.assign()`.
+- **Check:** `grep -E "SCRIPT ERROR|^FAIL|^PASS"` on the output of each run.
+
+### Compass letters drawn as blocks (2026-10-30)
+- **Symptom:** in `capture_hud` the desktop compass showed pale blocks instead of NW and NE.
+- **Likely cause:** `hud_compass.gd` `_draw` only ran when the heading moved, and recorded `draw_string` glyphs seem to
+  go stale when the font atlas grows. Not proven by isolating the atlas; the capture is the evidence.
+- **Rule:** custom `_draw` text must redraw from time to time; prefer a Label where one will do.
+- **Check:** `hud_states_regression` (periodic redraw) and `tests/capture_hud.gd`, desktop shots.
 ### Hardware-aware device tier classification & settings persistence (2026-10-30)
 - **Symptom:** Different mobile devices and tablets either stuttered or overheated when running uniform graphics presets without hardware inspection.
 - **Cause:** GPU, CPU cores, RAM, and screen refresh rate were not inspected at boot to choose appropriate viewport scaling, shadow cascades, and frame rates.
 - **Rule:** Use `DevicePerformanceManager` at boot to classify into Tier 1 (Budget Mobile 30 FPS, 0.65x scale, no shadows), Tier 2 (Mid-Range 60 FPS, 0.80x scale, 1-cascade 35m shadow), Tier 3 (Flagship Killer 90 FPS, 0.85x scale), and Tier 4 (Pro Tablet/Desktop, 0.75x scale on 3K+ tablets to prevent throttling, 1.0x native on PC/Mac, with tablet ergonomics insetting HUD on 4:3 and 16:10 screens). Persist device profiles to `user://settings.cfg`.
 - **Check:** `tests/device_performance_manager_regression.gd`, `tests/scene_regression.gd`, and `tests/performance_integration_regression.gd`.
+
+### A real click reached a capture window (2026-10-30)
+- **Symptom:** `credits_mid.png` from `tests/capture_front_door.gd --screens` showed the loading screen, and Godot
+  segfaulted on exit.
+- **Cause:** most likely a real mouse click on the window. A traced rerun logged real clicks and wheel events
+  reaching `title_screen.gd`, though that rerun did not start loading. The segfault was not reproduced; it fits
+  `quit()` during the threaded load.
+- **Rule:** when a windowed capture shows an impossible state, log its input before blaming the UI. Don't use the
+  mouse over capture windows.
+- **Check:** view the PNGs; `credits_mid.png` must show credits.
+
+### A check ran one frame after the state it guards (2026-10-30)
+- **Symptom:** `front_door_regression` failed "the player must not fall" although the player had not fallen.
+- **Cause:** the `while world.building` loop checks after its `await`, and by the last pass `main.gd` had rightly
+  moved the player to the spawn.
+- **Rule:** after an `await` in a polling loop, test the loop's condition again before asserting.
+- **Check:** `tests/front_door_regression.gd`.
 
 ### Tuk-tuk driver test checks a hidden rig (2026-10-29, open)
 - **Symptom:** `tuk_tuk_driver_pose_regression` fails ("Driver wrist must contact its handlebar grip").
@@ -118,14 +165,3 @@
 - Two Claude sessions worked in ManaOoru at once (player v2 swap and the AK-47).
 - **Rule:** back up or diff the files you will change, and check they are unchanged just before writing; merge by
   hand if not. Never overwrite someone else's change with an older copy.
-
-### Settings navigation and live-match input (2026-10-31)
-- A settings close may fail to save: callbacks must check panel.visible before opening missions or changing maps.
-- Live multiplayer deliberately does not pause SceneTree. Include visible settings in the shared input gate so movement, gyro and firing stop locally while the match continues.
-- Numeric slider labels need explicit refresh when a restored value equals the initial minimum; value_changed otherwise does not fire.
-- Capture helpers should call settings navigation instead of traversing fixed parent chains.
-
-### Android export template disables CLI path overrides (2026-11-02)
-- **Symptom:** Godot Android export template aborts immediately upon boot with `ERROR: Scene path was specified on the command line, but this Godot binary was compiled without support for path overrides. Aborting.`
-- **Cause:** Specifying a `.tscn` path inside `command_line/extra_args` in `export_presets.cfg` or passing a scene path in the launch Intent. Official Godot Android templates are compiled with `disable_path_overrides=yes` for security and stability.
-- **Rule:** Never pass scene paths via `extra_args` or CLI flags for Android exports. Use Godot's built-in feature overrides in `project.godot`: e.g. `run/main_scene.android="res://scenes/performance/android_probe_boot.tscn"`. Keep `command_line/extra_args=""` in `export_presets.cfg`.

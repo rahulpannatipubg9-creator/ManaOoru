@@ -22,12 +22,6 @@ func _ready() -> void:
 	preload("res://scripts/gameplay/city_assets.gd").vehicle(self, "police")
 	for side in [-1.0, 1.0]:
 		lamps.append(_box(Vector3(side * 0.45, 1.7, 0), Vector3(0.5, 0.15, 0.28), Color.RED if side < 0 else Color.BLUE))
-	var label := Label3D.new()
-	label.text = "POLICE"
-	label.position.y = 2.1
-	label.font_size = 30
-	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	add_child(label)
 	siren = AudioStreamPlayer3D.new()
 	siren.stream = load("res://assets/audio/gameplay/siren.wav")
 	if siren.stream is AudioStreamWAV:

@@ -52,8 +52,8 @@ func _test_apply() -> void:
 	var corner: Rect2 = profiles.apply(Profiles.COMBAT, defaults, safe, min_target)[&"Jump"]
 	_check(safe.encloses(corner), "A button dropped in the corner stays fully on screen (%s)" % corner)
 
-	profiles.set_slot(Profiles.COMBAT, &"PeekLeft", Vector2(0.3, 0.3), 0.6)
-	var small: Rect2 = profiles.apply(Profiles.COMBAT, defaults, safe, min_target)[&"PeekLeft"]
+	profiles.set_slot(Profiles.COMBAT, &"Swap", Vector2(0.3, 0.3), 0.6)
+	var small: Rect2 = profiles.apply(Profiles.COMBAT, defaults, safe, min_target)[&"Swap"]
 	_check(minf(small.size.x, small.size.y) >= min_target - 0.01, "Shrinking never goes below the touch minimum (%.1f)" % minf(small.size.x, small.size.y))
 
 	profiles.set_slot(Profiles.COMBAT, &"Joystick", Vector2(0.75, 0.6), 1.0)

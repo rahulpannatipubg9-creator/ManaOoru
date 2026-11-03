@@ -28,6 +28,8 @@ func _init() -> void:
 	_test_environment_death_credit()
 	_test_disconnect_reconnect_and_forfeit()
 	_test_late_join_and_rematch()
+	_test_team_changes()
+	_test_regen_curve()
 	print("TDM match regression: %d checks, %d failed" % [_checks, _failures])
 	quit(1 if _failures > 0 else 0)
 
@@ -67,6 +69,58 @@ func _kill_with(match_rules: Match, shooter: int, victim: int) -> void:
 		match_rules.apply_hit(shooter, victim, 34.0)
 
 # --- Tests -----------------------------------------------------------------
+
+func _test_team_changes() -> void:
+	var even := _lobby(2)
+	var even_rules: Match = even.match
+	check(even_rules.change_team(1, BLUE).contains("uneven"), "a 1v1 refuses a swap and says why")
+	check(even.roster.member(1).team == RED, "the refused player stays put")
+	check(even_rules.change_team(1, RED) == "", "joining your own team is not an error")
+
+	var lobby := _lobby(3)
+	var rules: Match = lobby.match
+	check(rules.change_team(3, BLUE) == "", "2v1 lets a player even up in the lobby")
+	check(lobby.roster.member(3).team == BLUE, "the player moved to Blue")
+	check(rules.change_team(1, BLUE) != "", "the last Red player cannot leave a 1v2")
+
+	var live := _live(3)
+	rules = live.match
+	var switched := {"count": 0, "seconds": 0.0}
+	rules.team_switched.connect(func(_id: int, seconds: float) -> void:
+		switched.count += 1
+		switched.seconds = seconds)
+	var deaths_before: int = live.roster.member(3).deaths
+	rules.apply_hit(2, 3, 20.0)
+	check(rules.change_team(3, BLUE) == "", "a live switch is allowed when it keeps teams balanced")
+	check(switched.count == 1 and switched.seconds == rules.config.respawn_seconds, "a live switch costs the normal respawn")
+	check(not rules.is_alive(3) and live.roster.member(3).team == BLUE, "the player leaves the field for the new side")
+	check(live.roster.member(3).deaths == deaths_before and live.roster.team_kills == [0, 0], "a switch keeps K/D and gives nobody a kill")
+	rules.tick(rules.config.respawn_seconds + 0.1)
+	check(rules.is_alive(3) and rules.health_of(3) == rules.config.max_health, "the player respawns at full health")
+	check(rules.position_of(3).x > 0.0, "the respawn is on the new team's side")
+	check(rules.change_team(3, RED).contains("again in"), "a second switch waits for the cooldown")
+	rules.tick(rules.config.team_switch_cooldown_seconds)
+	check(rules.change_team(3, RED) == "", "the cooldown runs out")
+
+	var countdown := _lobby(3)
+	var counting: Match = countdown.match
+	counting.start()
+	check(counting.change_team(3, BLUE).contains("locked"), "teams are locked during the countdown")
+
+func _test_regen_curve() -> void:
+	var live := _live(2)
+	var rules: Match = live.match
+	rules.apply_hit(1, 2, 100.0 - 1.0)
+	rules.tick(rules.config.regen_delay_seconds - 0.05)
+	var seconds := 0.0
+	var first_second := 0.0
+	while rules.health_of(2) < rules.config.max_health and seconds < 30.0:
+		rules.tick(0.05)
+		seconds += 0.05
+		if is_equal_approx(seconds, 1.05):
+			first_second = rules.health_of(2) - 1.0
+	check(first_second < rules.config.regen_per_second * 0.5, "regeneration eases in (%.1f in the first second)" % first_second)
+	check(seconds > 9.0 and seconds < 11.0, "a full refill takes about 10 s (%.1f)" % seconds)
 
 func _test_config() -> void:
 	var cfg := Config.new()

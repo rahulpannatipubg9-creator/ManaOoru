@@ -17,6 +17,58 @@ Code: `scripts/vehicle/` (`vehicle_entry.gd` for getting in and out and the seat
 
 ## Entries
 
+### Benglooru Driving Feel, Camera Dynamics, Tire Visual Feedback & APK Diet (2026-11-04)
+- **Symptom:** Driving felt sluggish, floaty, and detached compared to Benglooru (`benglooru.com`). Severe understeer at speed, bounciness, horizon-locked sterile camera, zero tire smoke or traction feedback, and APK size was over 1 GB with heavy VRAM pressure on mobile.
+- **Cause:** 
+  1. `camera_controller.gd` deliberately eliminated all chassis roll and bump vibrations (`_apply_orbit_rotation`), disconnecting the player from road speed and asphalt texture.
+  2. `rigid_vehicle.gd` locked out 75% of steering lock at speed (`high_speed_steer_share = 0.25`), steer rate was slow (`2.5 rad/s`), and suspension was underdamped (`damping_ratio = 0.45`), causing cars to bounce and float like boats on waves.
+  3. `vehicle_effects.gd` had no tire smoke or traction feedback during normal driving (only damage fire below 35% HP).
+  4. Hundreds of unreferenced loose duplicate vehicle textures, raw 4K debris textures, and prototype character folders (`player_character*`, `player_v2*`, `references/`) were packed into the export, bloating APK to 1.04 GB.
+- **Rule:** 
+  1. In `camera_controller.gd`, add dynamic high-frequency road rumble micro-vibration above 45 km/h, cornering roll tilt leaning the camera into turns based on yaw rate, and acceleration FOV widening with spring-arm extension.
+  2. In `rigid_vehicle.gd`, maintain responsive high-speed steering authority (`high_speed_steer_share = 0.42`), sharp turn-in (`steer_rate = 3.8 rad/s`), immediate wheel return (`steer_return_rate = 6.0 rad/s`), planted suspension damping (`damping_ratio = 0.68`), and crisp tire bite (`tyre_cornering_stiffness = 18.0`). Apply matching responsive tiers across bus, tuk-tuk, and motorcycles.
+  3. In `vehicle_effects.gd`, emit dynamic unshaded billboarded tire smoke puffs whenever `tyre_slip > 0.16`.
+  4. Exclude unreferenced loose vehicle textures (GLBs embed their own assets) and legacy prototype character assets, reducing APK down to ~477 MB. Enable FSR/Bilinear 3D viewport scaling (`scaling_3d_scale = 0.65`) for 120 FPS / 144 FPS stability.
+- **Check:** `tests/test_vehicle_button_controls.gd`, `tests/hud_states_regression.gd`, `tests/movement_regression.gd`, and headless Godot export verification.
+
+### PUBG/BGMI Vehicle Button Driving Controls & Mobile Texture Pipeline (2026-11-04)
+- **Symptom:** Driving ground vehicles on mobile touchscreens relied on the on-foot floating joystick, which lacked discrete tactile steering and forward/reverse response. Players requested the familiar two-cluster "Button Controls" setup (vertical Forward/Back and horizontal Steer Left/Right) with a swap toggle. Furthermore, the APK had grown to 1.3 GB, exceeding mobile bandwidth targets, and default refresh was capped at 60 FPS despite 120Hz/144Hz displays.
+- **Cause:** 
+  1. `hud.gd` routed vehicle driving through `FloatingJoystick` instead of dedicated directional buttons.
+  2. Asset directories contained loose extracted uncompressed PNG/JPG files leftover from asset acquisition, which Godot imported losslessly into `.godot/imported/` despite the active `.glb` models already embedding their textures or having duplicate 63MB non-mobile models like `gdk_panipuri_cart.glb` and duplicate rig GLBs.
+  3. `graphics_settings.gd` clamped mobile FPS options to 60 FPS.
+- **Rule:** 
+  1. Ground vehicles switch `TouchControls` to discrete `DriveForward`, `DriveBack`, `DriveLeft`, and `DriveRight` buttons, hiding `JoystickBase`. Multi-touch and swipe transitions between Forward/Back and Left/Right must be supported via touch/drag zone bounding boxes, while respecting the "Swap left and right controls" preference and custom layout overrides.
+  2. For mobile exports, purge unreferenced GLBs and exclude duplicate loose textures, maintaining external textures only when declared as direct scene dependencies (`ResourceLoader.get_dependencies`).
+  3. Detect display refresh rate using `DisplayServer.screen_get_refresh_rate()` and provide 120 FPS / 144 FPS tiers.
+- **Check:** `tests/test_vehicle_button_controls.gd`, `tests/hud_states_regression.gd`, `tests/hud_custom_layout_regression.gd`, `tests/movement_regression.gd`, and live validation on Xiaomi Pad 7.
+
+### Traffic Vehicle Ground Pinning, Auto Rickshaw Bounds, Motorcycle Wheels & Flyover Corridor (2026-11-03)
+- **Symptom:** Auto-rickshaws were seen hovering 1.5m in mid-air over crossroads, floating alongside the flyover ramp, and colliding with procedural vehicles. Royal Enfield and Avenger motorcycles appeared empty without riders, and their wheels were rolling backwards and wobbling eccentrically. Giant clipping slabs trapped vehicles near the bridge.
+- **Cause:** 
+  1. In `traffic_vehicle.gd`, `CharacterBody3D.move_and_slide()` with 3D velocity pushed bodies upward when colliding with other traffic boxes or curbs; once elevated, downward velocity collided with underlying bodies, leaving vehicles suspended in mid-air.
+  2. Auto rickshaw collision width was set to 1.8m (like a large car) instead of 1.3m, causing frequent overlaps with adjacent lanes.
+  3. Motorcycle wheels had a -0.021m eccentric offset in `_mount_bullet_wheels`, and were rotated with `-step / radius` (backwards). Bajaj Avenger Cruise had no rider instantiated.
+  4. In `ramagundam_flyover_builder.gd`, `deck_height_at()` had a 9.5m distance cutoff. Lateral lane offsets (10m–14m) caused lanes to return `-INF`, plunging lanes 6m down to ground terrain and catapulting vehicles into the air. OSM way 817699105 duplicated ground road directly under the rising flyover ramp.
+- **Rule:** Traffic vehicles are lane-followers: zero out vertical velocity and clamp `global_position.y = target.y` every physics tick. Size auto-rickshaw collision bounds to 1.3m width x 1.4m height. Wheel meshes must be centered (`Vector3.ZERO`) on their rotation pivots and rolled forward (`+step / radius`). All motorcycles must call `_build_bike_rider()`. Flyover `deck_height_at()` must maintain a wide search tolerance (24.5m) to safely cover all multi-lane lateral offsets.
+- **Check:** `tests/movement_regression.gd`, `tests/scratch_check_active_traffic.gd`, `tests/scratch_check_flyover_lanes.gd`.
+- **Symptom:** Auto-rickshaws and ambient cars were floating in mid-air. Near the flyover, cars floated 6.5m alongside the ramp. Everywhere else on the map, auto-rickshaws hovered 1.4m above the ground with orange occupant boxes hanging underneath. Ambient Royal Enfield Bullet motorcycles were driving empty without a rider, and their wheels were tumbling and wobbling erratically like spinning plates.
+- **Cause:** Two separate height defects: (1) In `traffic_lane_builder.gd`, `world.flyover_height_at(point, height)` was applied indiscriminately to all roads within 9.5m of the flyover path without checking if the road was a bridge (`road.get("structure") == "bridge"`). (2) In `traffic_vehicle.gd`, `tuk_tuk.position.y = 1.40` was hardcoded under the false assumption that `gdk_tuk_tuk.glb` was centered vertically around 0, when in reality its tyre contact patch is already at ground level (`Y = -0.04m`), lifting the vehicle 1.4m into the air and dropping driver/passenger nodes to `y = -0.42` below the chassis. (3) In `traffic_vehicle.gd`, `_build_bike_rider()` was never called during motorcycle visual instantiation, and `FrontWheelMesh`/`RearWheelMesh` (which have their cylinder axis on local Y) were added with flat orientation and rotated along X (`wheel.rotate_x`) instead of being mounted to wheel pivots with `rot.z = PI * 0.5` and rotated along local UP (`wheel.rotate_object_local(Vector3.UP, -step / radius)`).
+- **Rule:** Never apply bridge/overpass deck height to road lanes unless the road is explicitly tagged with `road.get("structure") == "bridge"`. Never hardcode vertical offsets on imported GLB vehicles without measuring the actual tyre contact patch (`mesh.get_aabb()`); `gdk_tuk_tuk.glb` tyres rest on Y=0 so `tuk_tuk.position.y` must remain `0.04m`, with occupants seated inside (`y = 0.58m`). All vehicle wheel meshes whose cylinder axis is oriented on Y must be parented to pivots rotated by `PI * 0.5` around Z, and rolled along `Vector3.UP` in object-local space. All ambient two-wheelers must instantiate their designated rider (`_build_bike_rider()`). Ambient traffic vehicles monitor `_stuck_timer`: if stopped for > 8s when not at a red signal, they recycle via `set_active(false)` to prevent queue gridlock.
+- **Check:** `tests/test_traffic_lane_heights.gd`, `tests/test_ganga_nagar_bridge_and_clearance.gd`, `tests/test_ramagundam_flyover.gd`, `tests/bullet_motorcycle_regression.gd`, and `tests/movement_regression.gd`.
+
+### A helicopter parked in mid-air stayed in the sky (2026-10-30)
+- **Symptom:** dying in flight, or a match starting in flight, left the helicopter frozen in the air, out of reach.
+- **Cause:** `helicopter.gd set_driving_enabled(false)` always freezes the body where it is.
+- **Rule:** parking a craft with no ground under its skids sends it to `_safe_landing`.
+- **Check:** `save_and_feedback_regression`.
+
+### A wrecked helicopter kept a stale exit prompt (2026-10-30)
+- **Symptom:** after a wreck the prompt stayed on "LAND TO EXIT" even on the ground, and a wreck falling out of the world was never recovered.
+- **Cause:** `helicopter.gd _physics_process` returned on `condition <= 0.0` before the fall check and before updating `_grounded`.
+- **Rule:** an early return in a vehicle's physics step must not skip the state the HUD reads.
+- **Check:** `save_and_feedback_regression`.
+
 ### High-speed lookahead streaming and collision tunneling prevention at 120+ km/h (2026-11-02)
 - **Symptom:** At high velocities (120–135 km/h), vehicle lead vector capped at 100 m trailed chunk extrusion, single-sided concave terrain/road meshes lacked backface collision response risking physics tunneling on high-velocity frame steps, suspension wheel raycasts ignored backfaces, and default `fall_limit = -10.0 m` triggered false teleports in deep sectors like the Godavari River Bridge (deck Y = -25.1 m to -26.3 m) or Coal Mine (-30 m).
 - **Cause:** Lookahead lead wasn't scaled for high velocities (>33 m/s), `world.trees.focus` was unassigned in `main.gd`, `ConcavePolygonShape3D.backface_collision` defaults to `false` in Godot 4.7, suspension wheel ray queries had `hit_back_faces = false`, and `fall_limit` was hardcoded without checking the DEM elevation envelope (-30 m to +60 m).

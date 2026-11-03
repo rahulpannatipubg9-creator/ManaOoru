@@ -47,6 +47,8 @@ const KIND_LABELS := {
 var board_count := 0
 var terrain: TerrainData
 var signal_count := 0
+const TrafficLightController := preload("res://scripts/world/traffic_light_controller.gd")
+
 var street_plate_count := 0
 var junction_board_count := 0
 var _road_grid: Dictionary = {}
@@ -58,10 +60,12 @@ var _signal_lights: Dictionary = {}
 var _lamps: Dictionary = {}
 var _signal_time := 0.0
 var traffic_controller: TrafficLightController
+var _map_data: MapData
 
 func build(data: MapData, buildings: BuildingBuilder) -> void:
 	name = "Signage"
 	terrain = data.terrain
+	_map_data = data
 	_index_roads(data)
 	for poi in data.pois:
 		if poi.kind == "monument":
@@ -382,8 +386,10 @@ func _approaches(junction: Vector2) -> Array[Dictionary]:
 	return result
 
 func _on_carriageway(point: Vector2) -> bool:
+	if _map_data != null and _map_data.road_grid().any_within(point, 0.8):
+		return true
 	var road := _nearest_road(point, 15.0)
-	return not road.is_empty() and (road.point as Vector2).distance_to(point) < road.half_width + 0.3
+	return not road.is_empty() and (road.point as Vector2).distance_to(point) < road.half_width + 0.8
 
 func _lamp_transforms(group: int, colour: String) -> Array:
 	var key := "%d_%s" % [group, colour]

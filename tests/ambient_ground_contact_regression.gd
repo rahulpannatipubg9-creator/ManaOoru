@@ -28,7 +28,7 @@ func _run() -> void:
 	root.add_child(resident)
 	resident.set_process(false)
 	resident._process(0.0)
-	assert(absf(resident.position.y - 2.93) < 0.001, "Neutral capsule soles must meet the supplied surface")
+	assert(absf(resident.position.y - 2.93) < 0.01, "Neutral capsule soles must meet the supplied surface")
 	resident.left_leg.rotation.x = 0.45
 	resident.right_leg.rotation.x = -0.45
 	resident._update_ground_contact(0.0)

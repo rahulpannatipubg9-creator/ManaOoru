@@ -157,6 +157,12 @@ notes are in [characters/](characters/). Code: `scripts/player/test_character.gd
 - **Rule:** Test headroom strictly in the upper volume between current crouch height and standing height (`current_h` to `check_height`), never near the floor. Generate a dedicated time-reversed `Walk_Backward` loop for walking backward. Guard `Strafe` so turning with forward momentum never hijacks into lateral locomotion. Apply procedural knee flexion and hip drop (0.2s quadratic ease-out) upon landing from airborne states. Sync camera yaw with player spawn orientation.
 - **Check:** `tests/movement_regression.gd`, `tests/mixamo_gameplay_regression.gd`, `tests/character_physics_regression.gd`, `tests/character_stance_reactions_regression.gd`.
 
+### Lean and open hands carried into the driver's seat (2026-10-30)
+- **Symptom:** a lean held while the player boarded stayed on the driver for the whole drive, and Rahul's fingers stayed open on handlebars.
+- **Cause:** `person_controller.gd` stops updating `peek_input` during a scripted move, and `_pose_static_male` returns early when seated, so `male_model.rotation` kept its last value. `_pose_male_driving` only curled the fingers on the fallback wheel, not on vehicle grips.
+- **Rule:** anything a pose function sets every frame must be reset on the path that returns early.
+- **Check:** `save_and_feedback_regression` covers the lean. The fingers have no test, so look at a render.
+
 ### Armed sprint low-ready, dynamic footstep surface foley, and vehicle boarding threshold blend (2026-11-02)
 - **Symptom:** Sprints while holding a rifle forced `Walk_With_Rifle` to play at cartoonish 2.5× speed; footsteps lacked surface differentiation and dynamic cadence syncing; entering or exiting vehicles snapped character into `seated` immediately upon interaction before body cleared the doorway.
 - **Cause:** `_process_mixamo` played `Walk_With_Rifle` for all armed movement > 2.8 m/s without checking sprint speed or ADS state; footstep audio lacked stride-distance accumulation and physics raycast surface query; `vehicle_entry.gd` set `seated = true` instantly at $t = 0.0$ on `Phase.CLIMB`.

@@ -284,10 +284,10 @@ static func get_profile_for_tier(tier: int, hw: Dictionary) -> Dictionary:
 					"shadow_enabled": true,
 					"directional_shadow_mode": DirectionalLight3D.SHADOW_ORTHOGONAL,
 					"directional_shadow_max_distance": 35.0,
-					"view_distance": 550.0,
-					"simulation_distance": 220.0,
-					"actors": 28,
-					"effects": 0.6,
+					"view_distance": 450.0,
+					"simulation_distance": 180.0,
+					"actors": 20,
+					"effects": 0.5,
 					"tablet_hud_inset": tablet_inset
 				}
 			else:

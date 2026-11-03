@@ -23,11 +23,6 @@ func _ready() -> void:
 	material.albedo_color = Color("87342f")
 	visual.material_override = material
 	add_child(visual)
-	var label := Label3D.new()
-	label.text = "GANG MEMBER" if kind == "gang" else "SUSPECT"
-	label.position.y = 2.1
-	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	add_child(label)
 
 func _physics_process(delta: float) -> void:
 	if health <= 0:

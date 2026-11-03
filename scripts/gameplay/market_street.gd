@@ -112,7 +112,7 @@ func _add_stall(spot: Dictionary, index: int) -> void:
 	visitor.position = Vector3(1.0, 0, 1.9)
 	visitor.ground_sampler = visitor.sample_world_surface.bind(world)
 	var sign := Label3D.new()
-	sign.text = title + "\n[E] Browse • Delivery work"
+	sign.text = title
 	sign.position = Vector3(0, 3.6, 0)
 	sign.font_size = 26
 	sign.pixel_size = 0.008
@@ -135,38 +135,30 @@ func open_shop(record: Dictionary) -> void:
 	if life.has_modal() or game.control_state != game.ControlState.ON_FOOT:
 		return
 	var column: VBoxContainer = life._new_modal(record.name)
-	var description := Label.new()
-	description.text = "Fresh tea, produce and neighbourhood deliveries.\nDeliver a produce parcel to the chai stall for 12 coins."
-	description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	column.add_child(description)
-	life._button(column, "Tea • 1 coin", func() -> void:
-		life.toast("Tea purchased" if life.purchase("tea") else "Need 1 coin"))
-	life._button(column, "Snack • 2 coins", func() -> void:
-		life.toast("Snack purchased" if life.purchase("snack") else "Need 2 coins"))
-	life._button(column, "Accept produce delivery • 12 coins", func() -> void:
+	var wallet: Label = life._header_chip("")
+	life._refresh_wallet(wallet)
+	life._row(column, "Tea", "1", func() -> void: life._refresh_wallet(wallet, life.purchase("tea")))
+	life._row(column, "Snack", "2", func() -> void: life._refresh_wallet(wallet, life.purchase("snack")))
+	life._row(column, "Produce delivery", "+12", func() -> void:
 		life.close_modal()
 		start_delivery())
-	life._button(column, "Asset credits", func() -> void:
-		description.text = "Tea/cart/scooter/shopfront/stools: original MANA OORU assets (CC0).\nPanipuri Cart: Bongblender, Sketchfab, CC BY 4.0.\nSource and modification details are in ASSET_LICENSES.md.")
-	life._button(column, "Return to market", life.close_modal)
 
 func visit() -> bool:
 	if shops.is_empty():
-		game.city_life.toast("Market placement unavailable in this map")
+		game.city_life.toast("No market on this map")
 		return false
 	var at: Vector3 = shops[0].position
 	game.navigator.set_destination(Vector2(at.x, at.z), "Market Chai Corner")
-	game.city_life.toast("Market marked on GPS • walk to the counter and press E")
+	game.city_life.toast("Market marked on map")
 	return true
 
 func start_delivery() -> bool:
 	var gameplay: Node = game.gameplay
 	if shops.size() < 2 or not gameplay.mission.is_empty():
-		game.city_life.toast("Finish or cancel the current activity first")
+		game.city_life.toast("Finish your current job first")
 		return false
 	gameplay.mission = {"kind": "market_delivery", "title": "Market produce delivery", "points": [shops[1].position, shops[0].position], "index": 0, "stage": "Collect parcel at Fresh Produce", "time": 180.0, "reward": 12, "hold": 0.0}
 	gameplay._set_mission_target()
-	game.city_life.toast("Collect a parcel at Fresh Produce • then deliver to Chai Corner")
 	return true
 
 func _process(delta: float) -> void:

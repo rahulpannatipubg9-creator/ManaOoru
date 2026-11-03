@@ -13,6 +13,19 @@ storefront allocation (`docs/STOREFRONT_ALLOCATION_FIX.md`), imported exteriors 
 
 ## Entries
 
+### Mobile chunk cache and 144 FPS thermal throttling induced severe stutter and zRAM thrashing (2026-11-04)
+- **Symptom:** On Xiaomi Pad 7 (Adreno 732, 8GB RAM, 3.2K display), the game suffered heavy frame drops (15–25 FPS) and persistent lag after previously running smooth.
+- **Cause:** Two compounding issues:
+  1. `building_builder.gd` retained `MAX_CACHED_CHUNKS = 50` with an 880m unload radius (`load_distance + CHUNK_SIZE * 2.0`). In dense Godavarikhani (16,817 buildings), active + cached chunks bloated native heap to 1.19 GB and graphics memory to 789 MB. Physical RAM was exhausted (only 24 MB free), forcing Android to push 1.13 GB of Godot into compressed zRAM swap. Whenever chunks/nodes were touched, `kswapd0` pegged CPU at 56% decompressing pages, causing 65ms+ stalls.
+  2. The Auto preset on high-refresh-rate mobile panels automatically set `target_fps = 144`. Driving 144 FPS in full 3D open world drove the mobile SoC to 69.3°C, triggering hardware thermal throttling that slashed CPU/GPU clock speeds.
+  3. `sky.process_mode = Sky.PROCESS_MODE_REALTIME` re-rendered radiance maps every single frame on mobile compatibility.
+- **Rule:**
+  - On mobile, tighten the building stream radius: `load_distance = stream_radius + CHUNK_SIZE * 0.5`, `unload_distance = load_distance + CHUNK_SIZE * 0.75`, and cap chunk cache at 6 (`MAX_CACHED_CHUNKS = 6` on mobile) with immediate eviction via `queue_free()`.
+  - Use `Sky.PROCESS_MODE_QUALITY` on mobile rather than `REALTIME`.
+  - Keep Auto preset on mobile at a thermally sustainable 60 FPS baseline; when 90/120/144 FPS is chosen manually, reduce 3D scale and shadow distances to prevent thermal throttling.
+  - Throttle traffic spawn attempts on mobile to 15 instead of 80.
+- **Check:** `tests/movement_regression.gd`, `tests/hud_states_regression.gd`, verify memory and frame pacing on tablet via ADB.
+
 ### Main thread building extrusion stalls during high-speed driving (2026-11-02)
 - **Symptom:** Driving at 120+ km/h through dense Chowrasta districts caused p95 frame times of 178.9 ms with 3.3s freeze spikes, dropping FPS to 16.47.
 - **Cause:** When travelling at 35+ m/s, new 160m building chunks were entered every few seconds. Synchronous polygon triangulation (`Geometry2D.triangulate_polygon`) and wall extrusion ran on the main thread during `_process()`, blocking the render loop.
@@ -98,6 +111,12 @@ storefront allocation (`docs/STOREFRONT_ALLOCATION_FIX.md`), imported exteriors 
 ### Godavarikhani Commercial Corridors Expansion (Batch 030-135, 106 Shops) (2026-11-01)
 - **Requirement:** Ingest, geolocate, mount, and visually verify 106 newly surveyed Godavarikhani local business establishments (GDK-C100-030 to GDK-C100-135) across 6 key commercial corridors: New Ashok Theatre Rd, Chowrasta to Rajesh Theatre / Laxmi Nagar Rd, Markandeya Colony & Hospital spine, Addaguntapalli Chowrastha, Medhari Basthi & Onion Bazar, and Daily Vegetable Market / 1 Town Police Station.
 - **Implementation:** Enriched survey catalog and local shop definitions with GeoProjection game coordinates. Updated `scripts/world/user_shop_facades.gd` to store `shop_id` metadata on `UserShopFacade` instances, and allowed requested directory storefronts to mount without being blocked by unrequested background place names. Created modular chunk capture (`capture_cluster.gd`) keeping memory footprint $<400$ MB on 8GB Apple M1 during automated 106-shot high-res captures.
+
+### Building road clearance, Ganga Nagar bridge road connection, and barrier roadblocks (2026-11-03)
+- **Symptom:** Over 2,040 buildings in Godavarikhani were extruding directly into road lanes, physically blocking vehicular traffic. Ambient vehicles queued up permanently at barriers and poles. Rajiv Rahadari at the Ganga Nagar nala bridge had a 15m gap where no road mesh was paved because all bridge ways were skipped under the assumption that external 3D models existed for all bridges.
+- **Cause:** (1) `world_generator.gd` only passed `vidya_lane_clearance.gd` (Vidyanagar 2 only) to `buildings.setup`, leaving all other 18,850+ buildings unchecked against road carriageways. (2) `road_builder.gd` skipped every road with `structure == "bridge"`; only Godavari River Bridge and Ramagundam Flyover had dedicated models, leaving Ganga Nagar bridge ways (818523335, 818523337, 818523339, 818523341) completely unpaved. (3) 39 of 41 OSM jersey barriers in `data.barriers` intersected active road corridors, creating solid concrete walls across traffic lanes on collision layer 1. (4) Traffic signal poles at junctions were placed inside the swept path of turning lanes.
+- **Rule:** Filter building footprints with `map_data.road_grid().any_within(pt, -0.2)` so no building is extruded onto any road surface. Pave all bridge ways directly in `road_builder.gd` with seamless road meshes and outer concrete parapets unless they are explicitly handled by dedicated 3D model builders (`RamagundamFlyoverBuilder.FLYOVER_WAYS` or `GodavariBridgeBuilder`). Clip barriers against `road_grid` so no barrier wall penetrates or crosses active lanes. Guard traffic signal placement with `road_grid.any_within(pole, 0.8)` to keep poles 0.8m clear of all carriageways. Equip ambient traffic vehicles with an anti-gridlock watchdog to recycle stuck vehicles after 8 seconds.
+- **Check:** `tests/test_ganga_nagar_bridge_and_clearance.gd` (verifies all 4 Ganga Nagar bridge ways paved, 0 buildings on road surface, 2,045 conflicting footprints excluded, signals clear), `tests/test_traffic_lane_heights.gd`, and `tests/movement_regression.gd`.
 - **Verification:** Ran `tests/test_batch_030_135_facades.gd` achieving 106 / 106 (100.0%) mounted with 0 unplaced. Generated cropped signboard cards and 6 corridor showcase posters in `outputs/shop-images/batch_030_135/` and verified `tests/movement_regression.gd`.
 
 ### Godavarikhani Neighborhood Commercial Expansion (Batch 136-240, 105 Shops) (2026-11-01)

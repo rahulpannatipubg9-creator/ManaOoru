@@ -16,7 +16,7 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 
 config/name="MANA OORU"
 config/description="MANA OORU - 3D Exploration Prototype"
-run/main_scene="res://scenes/main.tscn"
+run/main_scene="res://scenes/boot.tscn"
 run/main_scene.android="res://scenes/performance/android_probe_boot.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 config/icon="res://assets/mana_ooru_icon.svg"
@@ -35,6 +35,15 @@ window/size/window_height_override=720
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 window/handheld/orientation=4
+window/size/resizable=true
+window/size/mode=3
+
+[rendering]
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+environment/defaults/default_clear_color=Color(0.38, 0.68, 0.88, 1)
+textures/default_filters/use_nearest_mipmap_filter=false
+textures/vram_compression/import_etc2_astc=true
 
 [input]
 
@@ -253,3 +262,7 @@ textures/vram_compression/import_s3tc_bptc=true
 textures/vram_compression/import_etc2_astc=true
 environment/defaults/default_clear_color=Color(0.38, 0.68, 0.88, 1)
 renderer/rendering_method.driver="opengl3"
+lights_and_shadows/directional_shadow/size.mobile=1024
+scaling_3d/mode=1
+scaling_3d/scale.mobile=0.65
+scaling_3d/fsr_sharpness=0.2

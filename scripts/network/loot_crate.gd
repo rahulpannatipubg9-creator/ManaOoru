@@ -5,6 +5,9 @@ class_name LootCrate
 @export var medkits_amount := 1
 @export var coins_amount := 15
 
+## The same ceiling as the shop (city_gameplay.gd buy_supply).
+const MAX_RESERVE := 999
+
 var crate_id: int = -1
 var network_manager: Node = null
 
@@ -13,6 +16,7 @@ var _beacon: MeshInstance3D
 var _label: Label3D
 var _lifetime := 180.0
 var _pulse := 0.0
+var _collected := false
 
 func _ready() -> void:
 	add_to_group("loot_crates")
@@ -57,7 +61,7 @@ func _ready() -> void:
 
 	# 3D Billboard label
 	_label = Label3D.new()
-	_label.text = "LOOT CRATE\n[L] to Loot"
+	_label.text = "Loot"
 	_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	_label.font_size = 20
 	_label.modulate = Color(1.0, 0.95, 0.4, 1.0)
@@ -80,26 +84,34 @@ func _process(delta: float) -> void:
 
 func _on_body_entered(body: Node3D) -> void:
 	if body is CharacterBody3D and body.has_method("is_weapon_equipped"):
-		_label.text = "LOOT CRATE\n[L] or Tap Loot"
+		_label.text = "[L] Loot"
 		_label.modulate = Color(0.3, 1.0, 0.5, 1.0)
 
 func _on_body_exited(body: Node3D) -> void:
 	if body is CharacterBody3D and body.has_method("is_weapon_equipped"):
-		_label.text = "LOOT CRATE"
+		_label.text = "Loot"
 		_label.modulate = Color(1.0, 0.95, 0.4, 1.0)
 
-func collect(by_player: Node3D, gameplay: Node = null) -> Dictionary:
+## Gives the loot once and leaves the world for this player at once; the host removes it for everyone.
+func collect(_by_player: Node3D, gameplay: Node = null) -> Dictionary:
+	if _collected:
+		return {}
+	_collected = true
+	remove_from_group("loot_crates")
+	visible = false
 	var loot := {
 		"ammo": ammo_amount,
 		"medkits": medkits_amount,
 		"coins": coins_amount
 	}
 	if gameplay:
-		if "ammo" in gameplay: gameplay.ammo += ammo_amount
+		if "reserve" in gameplay: gameplay.reserve = mini(MAX_RESERVE, gameplay.reserve + ammo_amount)
 		if "medkits" in gameplay: gameplay.medkits += medkits_amount
-	if network_manager and network_manager.has_method("notify_crate_looted"):
-		var looter_id: int = network_manager._get_id() if network_manager.has_method("_get_id") else 1
-		network_manager.notify_crate_looted(crate_id, looter_id)
+		var game: Node = gameplay.get("game")
+		if game != null and game.get("hud") != null:
+			game.hud.add_coins(coins_amount)
+	if network_manager and network_manager.is_active():
+		network_manager.request_loot(crate_id)
 	else:
 		queue_free()
 	return loot

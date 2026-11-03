@@ -28,16 +28,6 @@ static func cylinder(parent: Node3D, at: Vector3, radius: float, height: float, 
 	parent.add_child(node)
 	return node
 
-static func label(parent: Node3D, text: String, at: Vector3, size := 30) -> void:
-	var node := Label3D.new()
-	node.text = text
-	node.position = at
-	node.font_size = size
-	node.pixel_size = 0.007
-	node.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	node.visibility_range_end = 80
-	parent.add_child(node)
-
 static func vehicle(parent: Node3D, kind: String) -> Node3D:
 	var root := Node3D.new()
 	root.name = kind.capitalize() + "Visual"
@@ -63,7 +53,6 @@ static func vehicle(parent: Node3D, kind: String) -> Node3D:
 		if kind == "ambulance":
 			box(root,Vector3(0,1.35,-1.43),Vector3(.5,.12,.04),Color("bd2828"))
 			box(root,Vector3(0,1.35,-1.44),Vector3(.12,.5,.04),Color("bd2828"))
-	label(root,kind.to_upper(),Vector3(0,2.2,0))
 	return root
 
 static func stretcher(parent: Node3D) -> Node3D:
@@ -99,4 +88,3 @@ static func barricade(parent: Node3D) -> void:
 	for i in 8:
 		var stripe := box(parent,Vector3(-2+i*.55,0,.09),Vector3(.22,.68,.02),Color("25282d"))
 		stripe.rotation.z = -.35
-	label(parent,"POLICE • STOP",Vector3(0,.75,0),24)

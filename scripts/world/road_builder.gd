@@ -85,28 +85,48 @@ func build(data: MapData) -> void:
 		if not area.has("structure"):
 			_add_area(area)
 	for road in data.roads:
-		# Bridge decks are paved by the bridge model itself.
-		if road.get("structure", "") != "bridge":
+		# Decks with dedicated 3D models (Godavari River Bridge, Ramagundam ROB Flyover)
+		# are built by their own specialized builders. All other bridges (such as the
+		# Rajiv Rahadari Ganga Nagar canal bridge) are paved directly with full road mesh
+		# and concrete crash barriers so there is zero gap or alignment seam.
+		if not _is_external_bridge_model(road):
 			_add_road(road)
 	source_rendered_way_count = rendered_way_ids.size()
+	preload("res://scripts/performance/startup_profile.gd").mark("  road: osm geometry")
 	for road in data.topoexport_roads:
-		if _matches_existing_road(road, data.roads):
+		if _matches_existing_road(road, data.roads, data.osm_road_grid()):
 			topoexport_duplicate_count += 1
 		else:
 			_add_road(road)
 			topoexport_rendered_count += 1
+	preload("res://scripts/performance/startup_profile.gd").mark("  road: topo")
 	for crossing in data.crossings:
 		_add_zebra(crossing, data)
+	var road_grid: RefCounted = data.road_grid()
 	for barrier in data.barriers:
 		var tall: bool = barrier.kind != "jersey_barrier"
-		_add_wall(barrier.points, 0.3 if tall else 0.6, 2.0 if tall else 0.8,
-			Color("#c9bfae") if tall else Color("#b7b4ac"))
+		var thickness: float = 0.3 if tall else 0.6
+		var height: float = 2.0 if tall else 0.8
+		var color: Color = Color("#c9bfae") if tall else Color("#b7b4ac")
+		var subline := PackedVector2Array()
+		for pt in barrier.points:
+			var on_road: bool = road_grid != null and road_grid.any_within(pt, -0.2)
+			if not on_road:
+				subline.append(pt)
+			else:
+				if subline.size() >= 2:
+					_add_wall(subline, thickness, height, color)
+				subline = PackedVector2Array()
+		if subline.size() >= 2:
+			_add_wall(subline, thickness, height, color)
 	for railway in data.railways:
 		_add_railway(railway)
 	for area in data.areas:
 		if area.kind == "stadium":
 			_add_compound_wall(area.points, data)
+	preload("res://scripts/performance/startup_profile.gd").mark("  road: zebra walls rail")
 	_commit()
+	preload("res://scripts/performance/startup_profile.gd").mark("  road: commit")
 
 ## Compound wall around a mapped stadium, with a gate gap facing the nearest road.
 func _add_compound_wall(ring: PackedVector2Array, data: MapData) -> void:
@@ -174,6 +194,20 @@ func _add_road(road: Dictionary) -> void:
 		_add_disc(_surface_for(point), point, half, y, color, info)
 	if ENABLE_INFERRED_DRAINS and _has_residential_drain(road):
 		_add_side_drains(points, half)
+	if road.get("structure", "") == "bridge":
+		for edge in [-1.0, 1.0]:
+			var edge_line := PackedVector2Array()
+			for pt_idx in points.size():
+				var p: Vector2 = points[pt_idx]
+				var dir := Vector2.UP
+				if pt_idx < points.size() - 1:
+					dir = (points[pt_idx + 1] - p).normalized()
+				elif pt_idx > 0:
+					dir = (p - points[pt_idx - 1]).normalized()
+				var acr := dir.orthogonal()
+				edge_line.append(p + acr * edge * (half + SHOULDER_WIDTH))
+			if edge_line.size() >= 2:
+				_add_wall(edge_line, 0.35, 0.95, Color("#cfcac2"))
 	if unpaved:
 		return
 	var two_way_centre: bool = int(road.oneway) == 0 and half * 2.0 >= 5.5
@@ -187,15 +221,21 @@ func _add_road(road: Dictionary) -> void:
 ## TopoExport and OSM commonly describe the same centreline.  Keep the OSM
 ## version when a supplemental line follows it, while retaining genuinely
 ## missing service lanes and footways from the export.
-func _matches_existing_road(candidate: Dictionary, existing: Array[Dictionary]) -> bool:
+func _matches_existing_road(candidate: Dictionary, existing: Array[Dictionary], grid: RefCounted) -> bool:
 	var candidate_points: PackedVector2Array = candidate.points
 	if candidate_points.size() < 2:
 		return true
 	var samples: Array[Vector2] = [candidate_points[0], candidate_points[candidate_points.size() - 1]]
 	for index in range(1, candidate_points.size() - 1, 2):
 		samples.append(candidate_points[index])
-	for road in existing:
-		var road_points: PackedVector2Array = road.points
+	# Only a road passing within 7 m of the first sample can match, so test just those.
+	var tried: Dictionary = {}
+	for segment in grid.near(samples[0], 7.0):
+		var owner: int = grid.owners[segment]
+		if tried.has(owner):
+			continue
+		tried[owner] = true
+		var road_points: PackedVector2Array = existing[owner].points
 		var all_close := true
 		for sample in samples:
 			var closest_distance := INF
@@ -296,18 +336,20 @@ func _add_zebra(point: Vector2, data: MapData) -> void:
 	var best_road: Dictionary = {}
 	var best_direction := Vector2.ZERO
 	var best_point := point
-	for road in data.roads:
+	var grid: RefCounted = data.osm_road_grid()
+	for segment in grid.near(point, best_distance):
+		var road: Dictionary = data.roads[grid.owners[segment]]
 		if RoadStyle.is_path(road.kind):
 			continue
-		var points: PackedVector2Array = road.points
-		for index in range(1, points.size()):
-			var closest := Geometry2D.get_closest_point_to_segment(point, points[index - 1], points[index])
-			var distance := closest.distance_to(point)
-			if distance < best_distance and points[index - 1].distance_to(points[index]) > 0.01:
-				best_distance = distance
-				best_road = road
-				best_point = closest
-				best_direction = (points[index] - points[index - 1]).normalized()
+		var a: Vector2 = grid.starts[segment]
+		var b: Vector2 = grid.ends[segment]
+		var closest := Geometry2D.get_closest_point_to_segment(point, a, b)
+		var distance := closest.distance_to(point)
+		if distance < best_distance and a.distance_to(b) > 0.01:
+			best_distance = distance
+			best_road = road
+			best_point = closest
+			best_direction = (b - a).normalized()
 	if best_road.is_empty():
 		return
 	var half := RoadStyle.width(best_road) * 0.5
@@ -537,6 +579,15 @@ static func _vertex_color_material(roughness: float) -> StandardMaterial3D:
 	material.vertex_color_is_srgb = true
 	material.roughness = roughness
 	return material
+
+static func _is_external_bridge_model(road: Dictionary) -> bool:
+	var way_id: int = int(road.get("way_id", 0))
+	var road_name: String = str(road.get("name", ""))
+	if way_id in RamagundamFlyoverBuilder.FLYOVER_WAYS or road_name == "Flyover":
+		return true
+	if way_id in [-901, -902]:
+		return true
+	return false
 
 ## Vertex at a height above the terrain surface.
 func _v(point: Vector2, y: float) -> Vector3:

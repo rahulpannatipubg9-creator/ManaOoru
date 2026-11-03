@@ -39,6 +39,7 @@ func run_checks() -> void:
 	life.environment.set_hour(23)
 	check(life.environment.night > 0.95, "23:00 must activate night")
 	check(life.environment._lamps.size() <= 12, "Streetlight pool must remain bounded")
+	life.environment.effects_budget = 1.0
 	life.environment.set_weather(true)
 	life.environment._process(5.0)
 	check(life.environment.rain > 0.0 and life.environment.wetness > 0.0, "Rain must build gradually and wet surfaces")

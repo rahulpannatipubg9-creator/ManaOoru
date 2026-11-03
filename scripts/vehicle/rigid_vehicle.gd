@@ -59,7 +59,7 @@ const PERSON_HIT_COOLDOWN := 0.8
 @export var suspension_bump_travel := 0.15
 @export var suspension_droop_travel := 0.18
 @export var suspension_frequency := 1.6
-@export var suspension_damping_ratio := 0.45
+@export var suspension_damping_ratio := 0.68
 @export var center_of_mass_height := 0.55
 @export var anti_roll := 0.6
 @export_group("Tyres and steering")
@@ -70,12 +70,12 @@ const PERSON_HIT_COOLDOWN := 0.8
 @export var handbrake_rear_grip := 0.35
 @export var max_steer_angle := 0.6
 ## Steering lock left at high speed, as a share of max_steer_angle.
-@export var high_speed_steer_share := 0.25
-@export var steer_rate := 2.5
+@export var high_speed_steer_share := 0.42
+@export var steer_rate := 3.8
 ## How fast the wheel returns to centre when the steering is released (rad/s).
-@export var steer_return_rate := 4.5
+@export var steer_return_rate := 6.0
 ## Lateral grip build-up per radian of slip angle (higher = sharper turn-in).
-@export var tyre_cornering_stiffness := 14.0
+@export var tyre_cornering_stiffness := 18.0
 ## With no steering input, the front wheels follow a slide by this share of the
 ## body slip angle, so drifts are easy to catch, like GTA's driving assist.
 @export var countersteer_assist := 0.7

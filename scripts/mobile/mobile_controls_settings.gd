@@ -26,6 +26,7 @@ var gyro_invert_x := false
 var gyro_invert_y := false
 var joystick_deadzone := 0.12
 var sprint_lock := true
+var swap_vehicle_controls := false
 
 func load_from(path := DEFAULT_PATH) -> bool:
 	var config := ConfigFile.new()
@@ -44,6 +45,7 @@ func load_from(path := DEFAULT_PATH) -> bool:
 	gyro_invert_y = _flag(config, "gyro_invert_y", gyro_invert_y)
 	joystick_deadzone = _number(config, "joystick_deadzone", joystick_deadzone)
 	sprint_lock = _flag(config, "sprint_lock", sprint_lock)
+	swap_vehicle_controls = _flag(config, "swap_vehicle_controls", swap_vehicle_controls)
 	sanitize()
 	return true
 
@@ -51,7 +53,7 @@ func save_to(path := DEFAULT_PATH) -> Error:
 	sanitize()
 	var config := ConfigFile.new()
 	for key in ["sensitivity_preset", "ads_sensitivity", "ads_gyro_sensitivity", "button_scale", "opacity", "left_handed", "look_sensitivity", "gyro_mode",
-			"gyro_sensitivity", "gyro_invert_x", "gyro_invert_y", "joystick_deadzone", "sprint_lock"]:
+			"gyro_sensitivity", "gyro_invert_x", "gyro_invert_y", "joystick_deadzone", "sprint_lock", "swap_vehicle_controls"]:
 		config.set_value(SECTION, key, get(key))
 	return config.save(path)
 

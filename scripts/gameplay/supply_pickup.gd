@@ -20,11 +20,6 @@ func _ready() -> void:
 	material.emission = material.albedo_color * 0.3
 	visual.material_override = material
 	add_child(visual)
-	var label := Label3D.new()
-	label.text = kind.to_upper()
-	label.position.y = 0.7
-	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	add_child(label)
 	body_entered.connect(_collect)
 func _collect(body: Node) -> void:
 	if _used or body != gameplay.game.person:

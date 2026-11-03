@@ -27,10 +27,11 @@ static func build(world: Node3D, data: MapData, parent: Node3D) -> Array[Path3D]
 				lane.curve = Curve3D.new()
 				lane.curve.bake_interval = 1.0
 				var samples := maxi(1, ceili(a.distance_to(b) / 4.0))
+				var is_bridge: bool = str(road.get("structure", "")) == "bridge"
 				for j in range(samples + 1):
 					var point := a.lerp(b, float(j) / samples) + left
 					var height: float = world.ground_height(point)
-					if world.has_method("flyover_height_at"):
+					if is_bridge and world.has_method("flyover_height_at"):
 						height = world.flyover_height_at(point, height)
 					lane.curve.add_point(GeoProjection.map_to_world(point, height + RoadStyle.surface_height(str(road.kind))))
 				lane.set_meta("junction_point", b)

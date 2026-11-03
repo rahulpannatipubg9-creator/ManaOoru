@@ -71,20 +71,21 @@ func _init() -> void:
 	hud.get_node("TouchControls").visible = true
 	# Layouts arranged by the player (kept in memory; nothing is written to disk).
 	hud.layout_profiles = Profiles.new()
-	hud.layout_profiles.set_slot(Profiles.NORMAL, &"Fire", Vector2(0.12, 0.78), 1.0)
+	hud.layout_profiles.set_slot(Profiles.NORMAL, &"Run", Vector2(0.12, 0.78), 1.0)
 	hud.layout_profiles.set_slot(Profiles.COMBAT, &"Fire", Vector2(0.5, 0.5), 1.2)
 	hud.layout_profiles.set_slot(Profiles.VEHICLE, &"Fire", Vector2(0.9, 0.2), 1.0)
 	hud.layout_profiles.set_opacity(Profiles.VEHICLE, 0.5)
 	hud._layout_for_viewport()
 	await process_frame
 
+	var run: Button = hud.get_node("TouchControls/Run")
 	var fire: Button = hud.btn_fire_right
 	var zone: Rect2 = hud._stick.zone
 	_check(hud._applied_profile == Profiles.NORMAL, "On foot in PEACE uses the NORMAL layout")
-	_check(zone.has_point(fire.get_global_rect().get_center()), "Setup: NORMAL puts FIRE inside the joystick zone")
+	_check(zone.has_point(run.get_global_rect().get_center()), "Setup: NORMAL puts RUN inside the joystick zone")
 	var downs := [0]
-	fire.button_down.connect(func() -> void: downs[0] += 1)
-	_tap(viewport, fire.get_global_rect().get_center())
+	run.button_down.connect(func() -> void: downs[0] += 1)
+	_tap(viewport, run.get_global_rect().get_center())
 	await process_frame
 	_check(downs[0] == 1 and not hud._stick.is_active(), "A button moved onto the joystick zone gets the tap, not the stick")
 	_tap(viewport, zone.position + Vector2(8, 8))

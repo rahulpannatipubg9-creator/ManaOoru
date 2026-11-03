@@ -26,7 +26,7 @@ const UTILITY_POLE_SCENE := "res://assets/models/utility_pole/gdk_utility_pole.g
 const CCTV_SCENE := "res://assets/models/cctv/gdk_cctv.glb"
 const TEA_STALL_SCENE := "res://assets/models/market_street/tea_stall.glb"
 const STOOL_SCENE := "res://assets/models/market_street/wooden_stool.glb"
-const PANIPURI_SCENE := "res://assets/models/panipuri_cart/gdk_panipuri_cart.glb"
+const PANIPURI_SCENE := "res://assets/models/panipuri_cart/gdk_panipuri_cart_mobile.glb"
 const HOUSE_1_SCENE := "res://assets/models/houses/house_1.glb"
 const HOUSE_2_SCENE := "res://assets/models/houses/house_2.glb"
 const HOUSE_3_SCENE := "res://assets/models/houses/house_3.glb"
@@ -1075,7 +1075,7 @@ func _process(_delta: float) -> void:
 		var nearest := _nearest_vehicle()
 		if nearest and person.global_position.distance_to(nearest.global_position) < 4.0:
 			hud.set_enter_available(true)
-			hud.set_interaction_prompt("Press [F] or [E] to Drive %s" % nearest.name.replace("_", " "))
+			hud.set_interaction_prompt("[E] Drive %s" % nearest.name.replace("_", " "))
 			if Input.is_action_just_pressed("service") or Input.is_action_just_pressed("loot") or Input.is_key_pressed(KEY_F) or Input.is_key_pressed(KEY_E):
 				enter_vehicle(nearest)
 		else:
@@ -1083,7 +1083,7 @@ func _process(_delta: float) -> void:
 			hud.set_interaction_prompt("")
 	elif control_state == ControlState.DRIVING and active_vehicle:
 		hud.set_speed(active_vehicle.current_speed)
-		hud.set_interaction_prompt("Press [F] or [E] to Exit Vehicle")
+		hud.set_interaction_prompt("")
 		if Input.is_action_just_pressed("service") or Input.is_action_just_pressed("loot") or Input.is_key_pressed(KEY_F) or Input.is_key_pressed(KEY_E):
 			exit_vehicle()
 

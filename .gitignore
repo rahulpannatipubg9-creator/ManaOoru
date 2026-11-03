@@ -36,6 +36,14 @@ outputs/
 __pycache__/
 *.pyc
 
+# Python bytecode
+__pycache__/
+*.pyc
+
+# Output of tools/captures/capture_bridge_frame.gd
+bridge_viewport_capture.png
+bridge_viewport_capture.png.import
+
 # OS-specific metadata & logs
 .DS_Store
 Thumbs.db

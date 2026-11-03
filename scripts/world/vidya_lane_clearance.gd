@@ -2,10 +2,13 @@ extends RefCounted
 ## Exclude conflicting render footprints, never edit the geographic source.
 var segments: Array = []
 var excluded_count := 0
+## Bounds of every segment, widened by its clearance. A footprint outside them cannot conflict.
+var _reach := Rect2()
 
 func prepare(data: MapData) -> void:
 	segments.clear()
 	excluded_count = 0
+	_reach = Rect2()
 	var doc: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/local/vidyanagar2_photo_sequence.json"))
 	var references := PackedVector2Array()
 	for gps in doc.camera_points_lat_lon:
@@ -19,10 +22,18 @@ func prepare(data: MapData) -> void:
 			var middle := (a+b)*.5
 			for j in range(1,references.size()):
 				if middle.distance_to(Geometry2D.get_closest_point_to_segment(middle,references[j-1],references[j]))<12.0:
-					segments.append([a,b,RoadStyle.width(road)*.5+.15])
+					var half := RoadStyle.width(road)*.5+.15
+					segments.append([a,b,half])
+					var box := Rect2(a,Vector2.ZERO).expand(b).grow(half)
+					_reach = box if segments.size() == 1 else _reach.merge(box)
 					break
 
 func excludes(points: PackedVector2Array) -> bool:
+	var bounds := Rect2(points[0],Vector2.ZERO)
+	for point in points:
+		bounds = bounds.expand(point)
+	if not bounds.intersects(_reach,true):
+		return false
 	for segment in segments:
 		var a: Vector2 = segment[0]
 		var b: Vector2 = segment[1]

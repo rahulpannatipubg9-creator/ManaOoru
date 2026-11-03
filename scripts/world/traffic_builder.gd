@@ -1,5 +1,5 @@
 class_name TrafficBuilder
-extends TrafficManager
+extends "res://scripts/world/traffic_manager.gd"
 
 ## Preserve the world's existing TrafficBuilder entry point.
 func build(world: Node, data: MapData) -> void:
