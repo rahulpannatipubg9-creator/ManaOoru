@@ -465,8 +465,10 @@ func _process(delta: float) -> void:
 		_start_worker_chunk(cell)
 
 func _refresh_stream(center: Vector2) -> void:
-	var load_distance := stream_radius + CHUNK_SIZE
-	var unload_distance := load_distance + CHUNK_SIZE * 2.0
+	var is_mobile := OS.has_feature("mobile") or OS.has_feature("android") or OS.has_feature("ios")
+	var load_distance := stream_radius + CHUNK_SIZE * (0.5 if is_mobile else 1.0)
+	var unload_distance := load_distance + CHUNK_SIZE * (0.75 if is_mobile else 2.0)
+	var max_cached := 6 if is_mobile else MAX_CACHED_CHUNKS
 	_pending = _pending.filter(func(cell: Vector2i) -> bool:
 		return not _built.has(cell) and not _thread_tasks.has(cell) and _cell_center(cell).distance_to(center) <= load_distance)
 	var origin := _cell(center)
@@ -483,7 +485,7 @@ func _refresh_stream(center: Vector2) -> void:
 			_stream_nodes.erase(cell)
 			_built.erase(cell)
 			_chunk_cache[cell] = chunk
-			if _chunk_cache.size() > MAX_CACHED_CHUNKS:
+			while _chunk_cache.size() > max_cached:
 				var oldest: Vector2i = _chunk_cache.keys()[0]
 				var evicted: Node = _chunk_cache[oldest]
 				_chunk_cache.erase(oldest)

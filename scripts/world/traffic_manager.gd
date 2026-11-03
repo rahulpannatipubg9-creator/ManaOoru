@@ -41,6 +41,7 @@ func setup(world: Node3D, data: MapData) -> void:
 	_game = world.get_parent()
 	if OS.has_feature("mobile") or OS.has_feature("android") or OS.has_feature("ios"):
 		max_active_vehicles = 12
+		spawn_interval = 0.5
 	var config: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/vehicles/traffic_profiles.json"))
 	profiles = config.profiles
 	districts = config.districts
@@ -106,7 +107,8 @@ func _recount() -> void:
 func _try_spawn(focus: Vector3) -> void:
 	if _candidate_lanes.is_empty():
 		return
-	for attempt in 80:
+	var max_attempts := 15 if (OS.has_feature("mobile") or OS.has_feature("android") or OS.has_feature("ios")) else 80
+	for attempt in max_attempts:
 		var index := _rng.randi_range(0, _candidate_lanes.size() - 1)
 		if not _spawn_grid.is_empty():
 			var cell := Vector2i(floori(focus.x / 64.0), floori(focus.z / 64.0)) + Vector2i(_rng.randi_range(-2, 2), _rng.randi_range(-2, 2))

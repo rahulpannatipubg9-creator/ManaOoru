@@ -41,3 +41,15 @@ visible = false
 
 [node name="GearDown" type="Button" parent="TouchControls"]
 visible = false
+
+[node name="DriveForward" type="Button" parent="TouchControls"]
+visible = false
+
+[node name="DriveBack" type="Button" parent="TouchControls"]
+visible = false
+
+[node name="DriveLeft" type="Button" parent="TouchControls"]
+visible = false
+
+[node name="DriveRight" type="Button" parent="TouchControls"]
+visible = false

@@ -273,12 +273,14 @@ func _build_controls(page: VBoxContainer) -> void:
 	_touch_only.append(mode.get_parent())
 	_touch_only.append(_slider(page, "Gyro look", "gyro_sensitivity", 0.2, 4.0))
 	_touch_only.append(_slider(page, "Gyro aim", "ads_gyro_sensitivity", 0.2, 4.0))
-	for item: Array in [["Invert gyro horizontal", "gyro_invert_x"], ["Invert gyro vertical", "gyro_invert_y"]]:
+	for item: Array in [["Invert gyro horizontal", "gyro_invert_x"], ["Invert gyro vertical", "gyro_invert_y"], ["Swap left and right controls", "swap_vehicle_controls"]]:
 		var key: String = item[1]
 		var check := _toggle(page, item[0], func(value: bool) -> void:
 			if _syncing: return
 			hud.touch_settings.set(key, value)
-			_apply())
+			_apply()
+			if key == "swap_vehicle_controls":
+				hud._layout_for_viewport())
 		controls[key] = check
 		_touch_only.append(check)
 	_button(page, "Reset sensitivity", func() -> void:
@@ -623,7 +625,7 @@ func _build_graphics(page: VBoxContainer) -> void:
 	var shadows := _toggle(page, "Shadows", func(value: bool) -> void:
 		if not _graphics_sync: _graphics_change("shadows", value))
 	graphics_controls.shadows = shadows
-	var fps := _options(page, "Frame rate", ["30 FPS", "60 FPS", "90 FPS", "120 FPS", "Max / V-Sync"])
+	var fps := _options(page, "Frame rate", ["30 FPS", "60 FPS", "90 FPS", "120 FPS", "144 FPS", "Max / V-Sync"])
 	graphics_controls.fps = fps
 	fps.item_selected.connect(func(index: int) -> void:
 		var target := 60
@@ -632,7 +634,8 @@ func _build_graphics(page: VBoxContainer) -> void:
 			1: target = 60
 			2: target = 90
 			3: target = 120
-			4: target = 0
+			4: target = 144
+			5: target = 0
 		if not _graphics_sync: _graphics_change("fps", target))
 	_developer_toggle = _toggle(page, "Developer tools", func(value: bool) -> void:
 		if _syncing: return
@@ -665,6 +668,7 @@ func _refresh_graphics() -> void:
 				60: target_index = 1
 				90: target_index = 2
 				120: target_index = 3
-				0: target_index = 4
+				144: target_index = 4
+				0: target_index = 5
 			control.select(target_index)
 	_graphics_sync = false

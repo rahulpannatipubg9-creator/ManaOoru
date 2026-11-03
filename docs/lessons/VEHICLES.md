@@ -17,6 +17,18 @@ Code: `scripts/vehicle/` (`vehicle_entry.gd` for getting in and out and the seat
 
 ## Entries
 
+### PUBG/BGMI Vehicle Button Driving Controls & Mobile Texture Pipeline (2026-11-04)
+- **Symptom:** Driving ground vehicles on mobile touchscreens relied on the on-foot floating joystick, which lacked discrete tactile steering and forward/reverse response. Players requested the familiar two-cluster "Button Controls" setup (vertical Forward/Back and horizontal Steer Left/Right) with a swap toggle. Furthermore, the APK had grown to 1.3 GB, exceeding mobile bandwidth targets, and default refresh was capped at 60 FPS despite 120Hz/144Hz displays.
+- **Cause:** 
+  1. `hud.gd` routed vehicle driving through `FloatingJoystick` instead of dedicated directional buttons.
+  2. Asset directories contained loose extracted uncompressed PNG/JPG files leftover from asset acquisition, which Godot imported losslessly into `.godot/imported/` despite the active `.glb` models already embedding their textures or having duplicate 63MB non-mobile models like `gdk_panipuri_cart.glb` and duplicate rig GLBs.
+  3. `graphics_settings.gd` clamped mobile FPS options to 60 FPS.
+- **Rule:** 
+  1. Ground vehicles switch `TouchControls` to discrete `DriveForward`, `DriveBack`, `DriveLeft`, and `DriveRight` buttons, hiding `JoystickBase`. Multi-touch and swipe transitions between Forward/Back and Left/Right must be supported via touch/drag zone bounding boxes, while respecting the "Swap left and right controls" preference and custom layout overrides.
+  2. For mobile exports, purge unreferenced GLBs and exclude duplicate loose textures, maintaining external textures only when declared as direct scene dependencies (`ResourceLoader.get_dependencies`).
+  3. Detect display refresh rate using `DisplayServer.screen_get_refresh_rate()` and provide 120 FPS / 144 FPS tiers.
+- **Check:** `tests/test_vehicle_button_controls.gd`, `tests/hud_states_regression.gd`, `tests/hud_custom_layout_regression.gd`, `tests/movement_regression.gd`, and live validation on Xiaomi Pad 7.
+
 ### Traffic Vehicle Ground Pinning, Auto Rickshaw Bounds, Motorcycle Wheels & Flyover Corridor (2026-11-03)
 - **Symptom:** Auto-rickshaws were seen hovering 1.5m in mid-air over crossroads, floating alongside the flyover ramp, and colliding with procedural vehicles. Royal Enfield and Avenger motorcycles appeared empty without riders, and their wheels were rolling backwards and wobbling eccentrically. Giant clipping slabs trapped vehicles near the bridge.
 - **Cause:** 

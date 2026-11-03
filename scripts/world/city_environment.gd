@@ -49,7 +49,10 @@ func setup(game: Node) -> void:
 	var sky := Sky.new()
 	sky.sky_material = sky_material
 	sky.radiance_size = Sky.RADIANCE_SIZE_32
-	sky.process_mode = Sky.PROCESS_MODE_REALTIME
+	if OS.has_feature("mobile") or OS.has_feature("android") or OS.has_feature("ios"):
+		sky.process_mode = Sky.PROCESS_MODE_QUALITY
+	else:
+		sky.process_mode = Sky.PROCESS_MODE_REALTIME
 	_environment.sky = sky
 	_environment.background_mode = Environment.BG_SKY
 	_moon = DirectionalLight3D.new()

@@ -40,6 +40,16 @@ var settings_menu: CanvasLayer
 var _stick := FloatingJoystick.new()
 var _stick_rest := Vector2.ZERO
 var _vehicle: PhysicsBody3D
+var _drive_vert_finger: int = -1
+var _drive_horiz_finger: int = -1
+var _drive_forward_held := false
+var _drive_back_held := false
+var _drive_left_held := false
+var _drive_right_held := false
+var _drive_vert_rect := Rect2()
+var _drive_horiz_rect := Rect2()
+var _drive_vert_mid_y: float = 0.0
+var _drive_horiz_mid_x: float = 0.0
 var _game: Node
 var _navigator: GpsNavigator
 var minimap: Minimap
@@ -339,9 +349,12 @@ func _input(event: InputEvent) -> void:
 		_handle_wheel_key(event.pressed)
 	elif event is InputEventScreenTouch:
 		_handle_screen_touch(event)
-	elif event is InputEventScreenDrag and _stick.drag(event.index, event.position):
-		_apply_stick()
-		get_viewport().set_input_as_handled()
+	elif event is InputEventScreenDrag:
+		if _handle_drive_screen_drag(event):
+			get_viewport().set_input_as_handled()
+		elif _stick.drag(event.index, event.position):
+			_apply_stick()
+			get_viewport().set_input_as_handled()
 
 func _handle_wheel_key(pressed: bool) -> void:
 	if not pressed:
@@ -351,9 +364,13 @@ func _handle_wheel_key(pressed: bool) -> void:
 		action_wheel.key_down()
 
 func _handle_screen_touch(event: InputEventScreenTouch) -> void:
+	if _handle_drive_screen_touch(event):
+		get_viewport().set_input_as_handled()
+		return
 	if event.pressed:
 		var modal_open := (is_instance_valid(multiplayer_panel) and multiplayer_panel.visible) or _menu_open()
-		if $TouchControls.visible and not modal_open and not _touch_button_at(event.position) and _stick.press(event.index, event.position):
+		var on_foot_or_flying := _on_foot() or _flying()
+		if $TouchControls.visible and on_foot_or_flying and not modal_open and not _touch_button_at(event.position) and _stick.press(event.index, event.position):
 			_apply_stick()
 			get_viewport().set_input_as_handled()
 	elif event.canceled and event.index == _stick.finger:
@@ -363,6 +380,71 @@ func _handle_screen_touch(event: InputEventScreenTouch) -> void:
 	elif _stick.release(event.index):
 		_apply_stick()
 		get_viewport().set_input_as_handled()
+
+func _handle_drive_screen_touch(event: InputEventScreenTouch) -> bool:
+	if not ($TouchControls.visible and _driving() and not _flying()):
+		return false
+	if event.pressed:
+		if _drive_vert_rect.has_point(event.position):
+			_drive_vert_finger = event.index
+			_drive_forward_held = event.position.y < _drive_vert_mid_y
+			_drive_back_held = not _drive_forward_held
+			_update_drive_touch_input()
+			return true
+		elif _drive_horiz_rect.has_point(event.position):
+			_drive_horiz_finger = event.index
+			_drive_left_held = event.position.x < _drive_horiz_mid_x
+			_drive_right_held = not _drive_left_held
+			_update_drive_touch_input()
+			return true
+	else:
+		var handled := false
+		if event.index == _drive_vert_finger:
+			_drive_vert_finger = -1
+			_drive_forward_held = false
+			_drive_back_held = false
+			handled = true
+		if event.index == _drive_horiz_finger:
+			_drive_horiz_finger = -1
+			_drive_left_held = false
+			_drive_right_held = false
+			handled = true
+		if handled:
+			_update_drive_touch_input()
+			return true
+	return false
+
+func _handle_drive_screen_drag(event: InputEventScreenDrag) -> bool:
+	if not ($TouchControls.visible and _driving() and not _flying()):
+		return false
+	var handled := false
+	if event.index == _drive_vert_finger:
+		_drive_forward_held = event.position.y < _drive_vert_mid_y
+		_drive_back_held = not _drive_forward_held
+		handled = true
+	if event.index == _drive_horiz_finger:
+		_drive_left_held = event.position.x < _drive_horiz_mid_x
+		_drive_right_held = not _drive_left_held
+		handled = true
+	if handled:
+		_update_drive_touch_input()
+		return true
+	return false
+
+func _update_drive_touch_input() -> void:
+	if not _driving() or not is_instance_valid(_vehicle):
+		return
+	var steer := 0.0
+	if _drive_left_held: steer -= 1.0
+	if _drive_right_held: steer += 1.0
+	var throttle_y := 0.0
+	if _drive_forward_held: throttle_y -= 1.0
+	if _drive_back_held: throttle_y += 1.0
+	_vehicle.set_touch_move_input(Vector2(steer, throttle_y))
+	_set_lit($TouchControls/DriveForward, _drive_forward_held)
+	_set_lit($TouchControls/DriveBack, _drive_back_held)
+	_set_lit($TouchControls/DriveLeft, _drive_left_held)
+	_set_lit($TouchControls/DriveRight, _drive_right_held)
 
 func _apply_stick() -> void:
 	var on_foot: bool = _game == null or _game.control_state == _game.ControlState.ON_FOOT
@@ -422,6 +504,14 @@ func clear_touch_inputs() -> void:
 		action_wheel.close()
 	_stick.cancel()
 	_apply_stick()
+	_drive_vert_finger = -1
+	_drive_horiz_finger = -1
+	_drive_forward_held = false
+	_drive_back_held = false
+	_drive_left_held = false
+	_drive_right_held = false
+	if is_instance_valid(_vehicle):
+		_vehicle.set_touch_move_input(Vector2.ZERO)
 
 ## The context button: whatever the prompt offers, as E does on a keyboard.
 func _use_context() -> void:
@@ -504,6 +594,37 @@ func _layout_touch() -> void:
 	_draw_stick()
 	for button_name in ClawLayout.SCENE_BUTTON_SLOTS:
 		_set_slot_rect($TouchControls.get_node(String(button_name)), slots[ClawLayout.SCENE_BUTTON_SLOTS[button_name]])
+	# Vehicle driving button controls layout (Forward/Back & Left/Right)
+	var safe: Rect2 = context.safe
+	var left_center := stick.get_center()
+	var right_center := Vector2(safe.end.x - (left_center.x - safe.position.x), left_center.y)
+	var btn_diameter := minf(stick.size.x, stick.size.y) * 0.72
+	var gap := btn_diameter * 0.22
+	var swapped: bool = touch_settings.swap_vehicle_controls
+	var vert_center := right_center if swapped else left_center
+	var horiz_center := left_center if swapped else right_center
+
+	var fwd_rect := Rect2(vert_center.x - btn_diameter * 0.5, vert_center.y - btn_diameter - gap * 0.5, btn_diameter, btn_diameter)
+	var back_rect := Rect2(vert_center.x - btn_diameter * 0.5, vert_center.y + gap * 0.5, btn_diameter, btn_diameter)
+	var left_rect := Rect2(horiz_center.x - btn_diameter - gap * 0.5, horiz_center.y - btn_diameter * 0.5, btn_diameter, btn_diameter)
+	var right_rect := Rect2(horiz_center.x + gap * 0.5, horiz_center.y - btn_diameter * 0.5, btn_diameter, btn_diameter)
+
+	_set_slot_rect($TouchControls/DriveForward, fwd_rect)
+	_set_slot_rect($TouchControls/DriveBack, back_rect)
+	_set_slot_rect($TouchControls/DriveLeft, left_rect)
+	_set_slot_rect($TouchControls/DriveRight, right_rect)
+
+	_drive_vert_rect = Rect2(vert_center.x - btn_diameter * 0.8, vert_center.y - btn_diameter - gap * 0.5 - btn_diameter * 0.3, btn_diameter * 1.6, 2.0 * btn_diameter + gap + btn_diameter * 0.6)
+	_drive_vert_mid_y = vert_center.y
+
+	_drive_horiz_rect = Rect2(horiz_center.x - btn_diameter - gap * 0.5 - btn_diameter * 0.3, horiz_center.y - btn_diameter * 0.8, 2.0 * btn_diameter + gap + btn_diameter * 0.6, btn_diameter * 1.6)
+	_drive_horiz_mid_x = horiz_center.x
+
+	if not _flying() and not (layout_profiles.overrides.get(HudLayoutProfiles.VEHICLE, {}).has(&"Fire")):
+		var brake_btn: Button = $TouchControls/Handbrake
+		var brake_size := btn_diameter * 0.85
+		var brake_center := Vector2(right_center.x, right_center.y - btn_diameter * 1.25)
+		_set_slot_rect(brake_btn, Rect2(brake_center - Vector2(brake_size, brake_size) * 0.5, Vector2(brake_size, brake_size)))
 	var tactical := {&"Fire": btn_fire_right, &"Scope": btn_scope, &"Reload": btn_reload, &"Crouch": btn_crouch,
 		&"Swap": btn_swap, &"Wheel": btn_wheel, &"Menu": btn_menu, &"Context": btn_revive, &"ContextAlt": btn_loot}
 	for slot in tactical:
@@ -564,7 +685,8 @@ func _update_compass() -> void:
 func _setup_touch_buttons() -> void:
 	var controls: Control = $TouchControls
 	for scene_button: Button in [controls.get_node("Run"), controls.get_node("Jump"), controls.get_node("Enter"), controls.get_node("Exit"),
-			controls.get_node("Handbrake"), controls.get_node("Camera"), controls.get_node("GearUp"), controls.get_node("GearDown")]:
+			controls.get_node("Handbrake"), controls.get_node("Camera"), controls.get_node("GearUp"), controls.get_node("GearDown"),
+			controls.get_node("DriveForward"), controls.get_node("DriveBack"), controls.get_node("DriveLeft"), controls.get_node("DriveRight")]:
 		scene_button.mouse_filter = Control.MOUSE_FILTER_STOP
 		scene_button.focus_mode = Control.FOCUS_NONE
 		scene_button.draw.connect(_paint_icon.bind(scene_button))
@@ -576,6 +698,18 @@ func _setup_touch_buttons() -> void:
 	_set_icon(controls.get_node("Camera"), &"camera")
 	_set_icon(controls.get_node("GearUp"), &"plus")
 	_set_icon(controls.get_node("GearDown"), &"minus")
+	_set_icon(controls.get_node("DriveForward"), &"up")
+	_set_icon(controls.get_node("DriveBack"), &"down")
+	_set_icon(controls.get_node("DriveLeft"), &"left")
+	_set_icon(controls.get_node("DriveRight"), &"right")
+	$TouchControls/DriveForward.button_down.connect(func() -> void: _drive_forward_held = true; _update_drive_touch_input())
+	$TouchControls/DriveForward.button_up.connect(func() -> void: _drive_forward_held = false; _update_drive_touch_input())
+	$TouchControls/DriveBack.button_down.connect(func() -> void: _drive_back_held = true; _update_drive_touch_input())
+	$TouchControls/DriveBack.button_up.connect(func() -> void: _drive_back_held = false; _update_drive_touch_input())
+	$TouchControls/DriveLeft.button_down.connect(func() -> void: _drive_left_held = true; _update_drive_touch_input())
+	$TouchControls/DriveLeft.button_up.connect(func() -> void: _drive_left_held = false; _update_drive_touch_input())
+	$TouchControls/DriveRight.button_down.connect(func() -> void: _drive_right_held = true; _update_drive_touch_input())
+	$TouchControls/DriveRight.button_up.connect(func() -> void: _drive_right_held = false; _update_drive_touch_input())
 	$TouchControls/Run.pressed.connect(_on_run_pressed)
 	$TouchControls/Run.button_down.connect(_on_run_held.bind(true))
 	$TouchControls/Run.button_up.connect(_on_run_held.bind(false))
@@ -656,7 +790,7 @@ func _paint_icon(button: Button) -> void:
 	var middle := button.size * 0.5
 	var radius := minf(button.size.x, button.size.y) * 0.5
 	if not button.get_meta(&"bare", false):
-		var fill: Color = Color(UiTheme.ACCENT, 0.55) if button.is_pressed() else button.get_meta(&"fill", UiTheme.SURFACE)
+		var fill: Color = Color(UiTheme.ACCENT, 0.55) if (button.is_pressed() or button.get_meta(&"lit", false)) else button.get_meta(&"fill", UiTheme.SURFACE)
 		button.draw_circle(middle, radius - 1.0, fill, true, -1.0, true)
 		button.draw_arc(middle, radius - 1.0, 0.0, TAU, 64, UiTheme.LINE, 1.5, true)
 	var lit: bool = button.get_meta(&"lit", false)
@@ -988,12 +1122,18 @@ func _refresh_touch() -> void:
 	var foot := _on_foot()
 	var driving := _driving()
 	var flying := _flying()
+	var car_driving := driving and not flying
 	var play := _play()
 	var action: bool = foot and play != null and play.get("action_mode") == true
 	var has_rifle: bool = play == null or play.get("has_rifle") != false
 	var owned: Array[int] = []
 	if play != null and play.has_method("rifles"):
 		owned = play.rifles()
+	controls.get_node("JoystickBase").visible = foot or flying
+	controls.get_node("DriveForward").visible = car_driving
+	controls.get_node("DriveBack").visible = car_driving
+	controls.get_node("DriveLeft").visible = car_driving
+	controls.get_node("DriveRight").visible = car_driving
 	controls.get_node("Run").visible = foot or flying
 	controls.get_node("Jump").visible = foot
 	controls.get_node("Enter").visible = foot and (_enter_available or _prompt_usable)

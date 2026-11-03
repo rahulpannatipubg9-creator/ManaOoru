@@ -25,6 +25,18 @@ func select(name: String) -> void:
 			values.scale = minf(float(values.get("scale", 0.8)), 0.55)
 		values.distance = minf(float(values.get("distance", 550.0)), 450.0)
 		values.actors = mini(int(values.get("actors", 28)), 20)
+		# Auto preset on mobile uses a thermally stable 60 FPS baseline.
+		# Players can explicitly choose 90, 120, or 144 FPS in Settings.
+		if profile == "Auto" or preset == "Auto":
+			values.fps = 60
+		else:
+			var refresh := DisplayServer.screen_get_refresh_rate()
+			if refresh >= 140.0:
+				values.fps = 144
+			elif refresh >= 115.0:
+				values.fps = 120
+			elif refresh >= 85.0:
+				values.fps = 90
 
 func sanitize() -> void:
 	var defaults: Dictionary = PROFILES.Medium
@@ -46,8 +58,16 @@ func sanitize() -> void:
 		values.fps = 60
 	elif raw_fps <= 105:
 		values.fps = 90
-	else:
+	elif raw_fps <= 130:
 		values.fps = 120
+	elif raw_fps <= 150:
+		values.fps = 144
+	else:
+		values.fps = 0
+	if (OS.has_feature("mobile") or OS.has_feature("android") or OS.has_feature("ios")) and values.fps >= 90:
+		values.scale = minf(float(values.scale), 0.50)
+		values.distance = minf(float(values.distance), 400.0)
+		values.effects = minf(float(values.effects), 0.40)
 
 func load_from(path := PATH) -> void:
 	var config := ConfigFile.new()

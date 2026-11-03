@@ -40,6 +40,8 @@ static func paint(item: CanvasItem, id: StringName, center: Vector2, size: float
 		&"camera": _camera(pen)
 		&"up": _arrow(pen, -1.0)
 		&"down": _arrow(pen, 1.0)
+		&"left": _arrow_h(pen, -1.0)
+		&"right": _arrow_h(pen, 1.0)
 		&"plus": _plus(pen)
 		&"minus": _minus(pen)
 		&"gearbox": _gearbox(pen)
@@ -256,6 +258,11 @@ static func _arrow(pen: _Pen, direction: float) -> void:
 	pen.fill([Vector2(0.0, direction * 0.78), Vector2(0.74, direction * -0.1), Vector2(0.28, direction * -0.1),
 		Vector2(0.28, direction * -0.78), Vector2(-0.28, direction * -0.78), Vector2(-0.28, direction * -0.1),
 		Vector2(-0.74, direction * -0.1)])
+
+static func _arrow_h(pen: _Pen, direction: float) -> void:
+	pen.fill([Vector2(direction * 0.78, 0.0), Vector2(direction * -0.1, 0.74), Vector2(direction * -0.1, 0.28),
+		Vector2(direction * -0.78, 0.28), Vector2(direction * -0.78, -0.28), Vector2(direction * -0.1, -0.28),
+		Vector2(direction * -0.1, -0.74)])
 
 static func _plus(pen: _Pen) -> void:
 	pen.line([Vector2(-0.66, 0.0), Vector2(0.66, 0.0)], 0.2)

@@ -244,12 +244,14 @@ func _test_touch_table() -> void:
 	_play.action_mode = false
 	_person.equipped = false
 	_game.control_state = _game.ControlState.DRIVING
-	await _expect_buttons("Driving automatic", ["Handbrake", "Exit", "Camera", "BtnWheel", "BtnMenu"])
+	await _expect_buttons("Driving automatic", ["DriveBack", "DriveForward", "DriveLeft", "DriveRight", "Handbrake", "Exit", "Camera", "BtnWheel", "BtnMenu"])
+	_check(not _hud.get_node("TouchControls/JoystickBase").visible, "JoystickBase is hidden while driving car")
 	_hud.set_gear("3", 3000.0, false)
-	await _expect_buttons("Driving manual", ["Handbrake", "Exit", "Camera", "GearUp", "GearDown", "BtnWheel", "BtnMenu"])
+	await _expect_buttons("Driving manual", ["DriveBack", "DriveForward", "DriveLeft", "DriveRight", "Handbrake", "Exit", "Camera", "GearUp", "GearDown", "BtnWheel", "BtnMenu"])
 	_hud.set_gear("D3", 3000.0, true)
 	_game.control_state = _game.ControlState.ON_FOOT
 	await process_frame
+	_check(_hud.get_node("TouchControls/JoystickBase").visible, "JoystickBase is visible while on foot")
 
 func _test_prompt_parsing() -> void:
 	# A still compass still redraws, or its glyphs stay as blocks after the font atlas grows.

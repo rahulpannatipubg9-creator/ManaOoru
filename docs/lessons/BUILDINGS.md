@@ -13,6 +13,19 @@ storefront allocation (`docs/STOREFRONT_ALLOCATION_FIX.md`), imported exteriors 
 
 ## Entries
 
+### Mobile chunk cache and 144 FPS thermal throttling induced severe stutter and zRAM thrashing (2026-11-04)
+- **Symptom:** On Xiaomi Pad 7 (Adreno 732, 8GB RAM, 3.2K display), the game suffered heavy frame drops (15–25 FPS) and persistent lag after previously running smooth.
+- **Cause:** Two compounding issues:
+  1. `building_builder.gd` retained `MAX_CACHED_CHUNKS = 50` with an 880m unload radius (`load_distance + CHUNK_SIZE * 2.0`). In dense Godavarikhani (16,817 buildings), active + cached chunks bloated native heap to 1.19 GB and graphics memory to 789 MB. Physical RAM was exhausted (only 24 MB free), forcing Android to push 1.13 GB of Godot into compressed zRAM swap. Whenever chunks/nodes were touched, `kswapd0` pegged CPU at 56% decompressing pages, causing 65ms+ stalls.
+  2. The Auto preset on high-refresh-rate mobile panels automatically set `target_fps = 144`. Driving 144 FPS in full 3D open world drove the mobile SoC to 69.3°C, triggering hardware thermal throttling that slashed CPU/GPU clock speeds.
+  3. `sky.process_mode = Sky.PROCESS_MODE_REALTIME` re-rendered radiance maps every single frame on mobile compatibility.
+- **Rule:**
+  - On mobile, tighten the building stream radius: `load_distance = stream_radius + CHUNK_SIZE * 0.5`, `unload_distance = load_distance + CHUNK_SIZE * 0.75`, and cap chunk cache at 6 (`MAX_CACHED_CHUNKS = 6` on mobile) with immediate eviction via `queue_free()`.
+  - Use `Sky.PROCESS_MODE_QUALITY` on mobile rather than `REALTIME`.
+  - Keep Auto preset on mobile at a thermally sustainable 60 FPS baseline; when 90/120/144 FPS is chosen manually, reduce 3D scale and shadow distances to prevent thermal throttling.
+  - Throttle traffic spawn attempts on mobile to 15 instead of 80.
+- **Check:** `tests/movement_regression.gd`, `tests/hud_states_regression.gd`, verify memory and frame pacing on tablet via ADB.
+
 ### Main thread building extrusion stalls during high-speed driving (2026-11-02)
 - **Symptom:** Driving at 120+ km/h through dense Chowrasta districts caused p95 frame times of 178.9 ms with 3.3s freeze spikes, dropping FPS to 16.47.
 - **Cause:** When travelling at 35+ m/s, new 160m building chunks were entered every few seconds. Synchronous polygon triangulation (`Geometry2D.triangulate_polygon`) and wall extrusion ran on the main thread during `_process()`, blocking the render loop.
