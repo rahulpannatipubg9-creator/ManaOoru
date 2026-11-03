@@ -148,10 +148,8 @@ func _build_visual() -> void:
 	if vehicle_kind == "tuk_tuk" or vehicle_kind == "auto":
 		var tuk_tuk := TUK_TUK_SCENE.instantiate() as Node3D
 		tuk_tuk.name = "TukTukModel"
-		# The converted GLB already imports in metres.  Its mesh is centred on
-		# the source origin, so lift it by half its 2.89m height to rest wheels on
-		# the mapped road instead of shrinking it to a centimetre.
-		tuk_tuk.position.y = 1.40
+		# The converted GLB wheels already rest at Y ~= 0.0, so place it at ground height.
+		tuk_tuk.position.y = 0.04
 		add_child(tuk_tuk)
 		_add_auto_occupants(tuk_tuk)
 		return
@@ -325,22 +323,22 @@ func _build_bike_rider() -> void:
 		_scooter_box("Arm", Vector3(side * 0.24, 1.08, 0.18), Vector3(0.11, 0.11, 0.44), Color("#2e3d48"), rider)
 
 func _add_auto_occupants(tuk_tuk: Node3D) -> void:
-	# Front Driver in khaki uniform
+	# Front Driver in khaki uniform seated at the driver bench
 	var driver := Node3D.new()
 	driver.name = "AutoDriver"
-	driver.position = Vector3(0.0, -0.42, 0.22)
+	driver.position = Vector3(0.0, 0.58, 0.22)
 	tuk_tuk.add_child(driver)
-	_scooter_box("DriverTorso", Vector3(0, 0.40, 0), Vector3(0.38, 0.48, 0.22), Color("#c29d5b"), driver)
+	_scooter_box("DriverTorso", Vector3(0, 0.24, 0), Vector3(0.38, 0.48, 0.22), Color("#c29d5b"), driver)
 	var d_head := MeshInstance3D.new()
 	var d_sph := SphereMesh.new()
 	d_sph.radius = 0.13
 	d_sph.height = 0.26
 	d_head.mesh = d_sph
-	d_head.position = Vector3(0, 0.72, 0)
+	d_head.position = Vector3(0, 0.56, 0)
 	d_head.material_override = _material(Color("#935f43"))
 	driver.add_child(d_head)
 	for side in [-1, 1]:
-		_scooter_box("Arm", Vector3(side * 0.22, 0.38, 0.24), Vector3(0.10, 0.10, 0.42), Color("#c29d5b"), driver)
+		_scooter_box("Arm", Vector3(side * 0.22, 0.24, 0.22), Vector3(0.10, 0.10, 0.42), Color("#c29d5b"), driver)
 
 	# Seated rear passengers on the passenger bench
 	var p_colors := [Color("#2a688a"), Color("#c95a28"), Color("#3b823b")]
@@ -348,15 +346,15 @@ func _add_auto_occupants(tuk_tuk: Node3D) -> void:
 		var side_x := -0.32 if p_idx == 0 else 0.32
 		var pass_node := Node3D.new()
 		pass_node.name = "AutoPassenger_%02d" % (p_idx + 1)
-		pass_node.position = Vector3(side_x, -0.42, -0.55)
+		pass_node.position = Vector3(side_x, 0.58, -0.55)
 		tuk_tuk.add_child(pass_node)
-		_scooter_box("PassTorso", Vector3(0, 0.40, 0), Vector3(0.34, 0.46, 0.20), p_colors[p_idx % p_colors.size()], pass_node)
+		_scooter_box("PassTorso", Vector3(0, 0.24, 0), Vector3(0.34, 0.46, 0.20), p_colors[p_idx % p_colors.size()], pass_node)
 		var p_head := MeshInstance3D.new()
 		var p_sph := SphereMesh.new()
 		p_sph.radius = 0.125
 		p_sph.height = 0.25
 		p_head.mesh = p_sph
-		p_head.position = Vector3(0, 0.70, 0)
+		p_head.position = Vector3(0, 0.54, 0)
 		p_head.material_override = _material(Color("#a0694a") if p_idx == 0 else Color("#824d32"))
 		pass_node.add_child(p_head)
 

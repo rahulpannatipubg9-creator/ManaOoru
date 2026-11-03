@@ -103,7 +103,21 @@ func run() -> void:
 	bike._physics_process(0.1)
 	assert(fp.rotation != prev_fp_rot, "Wheel must roll during movement")
 
+	# 3. Verify Auto-Rickshaw Traffic Vehicle Setup
+	var auto := TrafficVehicleClass.new()
+	auto.vehicle_kind = "auto"
+	root.add_child(auto)
+	auto._ready()
+
+	var tuk_tuk := auto.get_node_or_null("TukTukModel")
+	assert(tuk_tuk != null, "Auto must have TukTukModel")
+	assert(tuk_tuk.position.y <= 0.05, "Auto-rickshaw must not be lifted in the air! position.y must be <= 0.05m")
+	var auto_driver := tuk_tuk.get_node_or_null("AutoDriver")
+	assert(auto_driver != null, "Auto must have AutoDriver")
+	assert(auto_driver.position.y > 0.0, "Driver must be seated inside the auto, not hanging below!")
+
 	# Cleanup
+	auto.queue_free()
 	bike.queue_free()
 	dummy_lane.queue_free()
 	lanes_parent.queue_free()
