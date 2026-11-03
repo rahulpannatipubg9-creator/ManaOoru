@@ -47,7 +47,7 @@ Every imported model must satisfy these rules before entering the game world:
    - **Ground props, buildings, foliage, vehicles:** Bottom rests at $Z=0$ (ground plane), centered at $(X=0, Y=0)$.
    - **Weapons:** Origin placed at pistol/rifle grip.
    - **Characters:** Origin placed at soles of feet.
-5. **Real-world scale (Meters):** Apply all scale and rotation transforms in Blender ($1.0 = 1\text{ meter}$). glTF exporter handles Y-up automatically; do not counter-rotate in Godot.
+5. **Real-world scale (Meters):** Apply all scale and rotation transforms in Blender ($1.0 = 1\text{ meter}$). glTF exporter handles Y-up automatically; do not counter-rotate in Godot. Never allow models with raw ripped submeshes exceeding bounding thresholds (e.g. `tdm_1.glb` had submeshes exceeding 5,000 meters that covered entire districts in giant clipping slabs). Reject or prune any asset whose submesh AABB exceeds reasonable district building bounds ($>100\text{m}$).
 6. **Standardized PBR Materials:** Ensure Principled BSDF with clean roughness/metallic ranges.
 
 ---

@@ -69,6 +69,23 @@ static func add_to_map(data: MapData) -> void:
 		var road_name: String = str(road.get("name", ""))
 		if way_id in FLYOVER_WAYS or road_name == "Flyover":
 			road["structure"] = "bridge"
+		elif way_id == 817699105:
+			# Way 817699105 is an old pre-flyover centerline that extends across the entire
+			# flyover span. Truncate it at South Abutment so it provides the approach road
+			# without duplicating ground road or traffic lanes underneath the flyover structure.
+			var truncated := PackedVector2Array()
+			var truncated_ids: Array = []
+			var south_abutment := PATH_NODES[0]
+			for idx in range(road.points.size()):
+				var pt: Vector2 = road.points[idx]
+				if idx <= 5:
+					truncated.append(pt)
+					if idx < road.node_ids.size():
+						truncated_ids.append(road.node_ids[idx])
+			truncated.append(south_abutment)
+			truncated_ids.append(-817699105)
+			road["points"] = truncated
+			road["node_ids"] = truncated_ids
 	data.landmarks.append({
 		"name": "Ramagundam ROB Flyover",
 		"category": "Bridge",
@@ -137,8 +154,8 @@ func deck_height_at(point: Vector2) -> float:
 			best_dist = d
 			var t := (closest - a).length() / maxf(a.distance_to(b), 0.001)
 			best_s = _cumulative_dists[i] + t * (a.distance_to(b))
-	if best_dist <= TOTAL_WIDTH * 0.5 + 1.0 and best_s >= 0.0 and best_s <= _total_length:
-		var sample := sample_path(best_s)
+	if best_dist <= TOTAL_WIDTH * 0.5 + 16.0 and best_s >= -10.0 and best_s <= _total_length + 10.0:
+		var sample := sample_path(clampf(best_s, 0.0, _total_length))
 		return sample.deck_y
 	return -INF
 

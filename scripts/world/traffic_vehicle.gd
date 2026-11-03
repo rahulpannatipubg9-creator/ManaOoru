@@ -48,7 +48,9 @@ func _ready() -> void:
 		_shape.name = "CollisionShape3D"
 		add_child(_shape)
 	var box := BoxShape3D.new()
-	box.size = Vector3(0.65 if vehicle_kind == "bike" else 1.8, 1.2, vehicle_length)
+	var w: float = 0.65 if vehicle_kind in ["bike", "bullet", "avenger", "scooter"] else (1.3 if vehicle_kind in ["auto", "tuk_tuk"] else 1.8)
+	var h: float = 1.4 if vehicle_kind in ["auto", "tuk_tuk"] else 1.2
+	box.size = Vector3(w, h, vehicle_length)
 	_shape.shape = box
 	_shape.position.y = 0.8
 	_build_visual()
@@ -121,15 +123,16 @@ func _physics_process(delta: float) -> void:
 		step = minf(step, manager.free_distance(self, heading))
 	var next_progress := minf(progress + step, lane.curve.get_baked_length())
 	var target := lane.to_global(lane.curve.sample_baked(next_progress))
-	velocity = (target - global_position) / maxf(delta, 0.001)
+	velocity = Vector3((target.x - global_position.x) / maxf(delta, 0.001), 0.0, (target.z - global_position.z) / maxf(delta, 0.001))
 	move_and_slide()
+	global_position.y = target.y
 	# Advance only by actual horizontal travel, never through a blocking body.
 	var offset := lane.curve.get_closest_offset(lane.to_local(global_position))
 	progress = clampf(offset, progress, next_progress)
 	rotation.y = atan2(heading.x, heading.z)
 	for wheel in _bike_wheels:
 		var radius: float = wheel.get_meta("radius", 0.335)
-		wheel.rotate_object_local(Vector3.UP, -step / radius)
+		wheel.rotate_object_local(Vector3.UP, step / radius)
 	var waiting_at_signal: bool = stop != null and stop.must_stop()
 	if not waiting_at_signal and current_speed < 0.2:
 		_stuck_timer += delta
@@ -180,6 +183,7 @@ func _build_visual() -> void:
 		var avenger := AVENGER_SCENE.instantiate() as Node3D
 		avenger.name = "AvengerModel"
 		add_child(avenger)
+		_build_bike_rider()
 		return
 	if vehicle_kind == "suv":
 		var suv := SUV_SCENE.instantiate() as Node3D
@@ -382,7 +386,7 @@ func _mount_bullet_wheels(bullet: Node3D) -> void:
 		fw.owner = null
 		fw.get_parent().remove_child(fw)
 		fw_pivot.add_child(fw)
-		fw.position = Vector3(0.0, -0.021, 0.0)
+		fw.position = Vector3.ZERO
 		fw.rotation = Vector3.ZERO
 		_bike_wheels.append(fw_pivot)
 	if rw:
@@ -395,7 +399,7 @@ func _mount_bullet_wheels(bullet: Node3D) -> void:
 		rw.owner = null
 		rw.get_parent().remove_child(rw)
 		rw_pivot.add_child(rw)
-		rw.position = Vector3(0.0, -0.021, 0.0)
+		rw.position = Vector3.ZERO
 		rw.rotation = Vector3.ZERO
 		_bike_wheels.append(rw_pivot)
 	if hb:
@@ -475,4 +479,6 @@ func configure(profile: Dictionary) -> void:
 				child.queue_free()
 		_build_visual()
 	if _shape != null:
-		(_shape.shape as BoxShape3D).size = Vector3(0.65 if vehicle_kind == "bike" else 1.8, 1.2, vehicle_length)
+		var w: float = 0.65 if vehicle_kind in ["bike", "bullet", "avenger", "scooter"] else (1.3 if vehicle_kind in ["auto", "tuk_tuk"] else 1.8)
+		var h: float = 1.4 if vehicle_kind in ["auto", "tuk_tuk"] else 1.2
+		(_shape.shape as BoxShape3D).size = Vector3(w, h, vehicle_length)
